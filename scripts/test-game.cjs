@@ -28,6 +28,13 @@ assert.equal(Island.heightAt(Island.mountain.x,Island.mountain.y),38);
 assert(!walkable(Island.pond.x,Island.pond.y));
 assert(!walkable(561,0));
 for(const building of Island.buildings)assert(!walkable(building.x,building.y));
+function finishTiming(){
+  const before=activities.done.size;
+  assert(activities.challenge);
+  assert.equal(activities.interact(mauz,false).type,'miss');assert.equal(activities.done.size,before);
+  while(activities.challenge){activities.tick(.92,mauz,false,false);activities.interact(mauz,false);}
+  assert.equal(activities.done.size,before+1);
+}
 function walkRoute(waypoints){
   keys.add('w');keys.add('shift');
   for(const [x,y] of waypoints){
@@ -86,7 +93,7 @@ for(const id of ['clean','garden','repair']){
       activities.tick(.5,mauz,false,true);
       activities.tick(.1,mauz,false,false);assert.equal(activities.progress,0,'Releasing E resets work');
       activities.tick(spec.seconds+.1,mauz,true,true);assert.equal(activities.progress,0,'Cannot work from a car');
-      assert(activities.tick(spec.seconds+.1,mauz,false,true));
+      assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();
     }
   }
   const before=job.coins;
@@ -104,9 +111,9 @@ assert(activities.interact(taxi.points[0],false).message);assert(!activities.pas
 assert(activities.interact(taxi.points[0],true,5).message);assert(!activities.passenger,'Passenger requires a stopped car');
 assert(activities.interact(taxi.points[0],true,0));assert(activities.passenger);
 const beforeTaxi=job.coins;
-assert.equal(activities.interact(taxi.points[1],true,0).reward,140);
-assert.equal(job.coins,beforeTaxi+140);assert(!activities.active);
-assert.equal(sandbox.createDeliveryJob(storage,Island).coins,540,'All five job earnings share a saved wallet');
+assert.equal(activities.interact(taxi.points[1],true,0).reward,260);
+assert.equal(job.coins,beforeTaxi+260);assert(!activities.active);
+assert.equal(sandbox.createDeliveryJob(storage,Island).coins,660,'All five job earnings share a saved wallet');
 
 // Every model can be called at every booth without materialising inside obstacles.
 for(const booth of Island.booths)for(const id of ['compact','roadster','pickup']){
@@ -144,7 +151,7 @@ for(const id of ['fishing','orchard','electric','trail']){
     if(id==='orchard')walkRoute([[mauz.x,-4],[p.x,-4],[p.x,p.y]]);
     else if(id==='electric')walkRoute([[mauz.x,100],[p.x,100],[p.x,p.y]]);
     else walkRoute([[p.x,p.y]]);
-    if(spec.kind==='hold')assert(activities.tick(spec.seconds+.1,mauz,false,true));
+    if(spec.kind==='hold'){assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();}
     else assert(activities.interact(mauz,false));
   }
   assert.equal(activities.done.size,spec.points.length);
@@ -154,7 +161,7 @@ for(const id of ['fishing','orchard','electric','trail']){
   const balance=job.coins;
   assert.equal(activities.interact(mauz,false).reward,spec.reward);assert.equal(job.coins,balance+spec.reward);
 }
-assert.equal(job.coins,1270);
+assert.equal(job.coins,1390);
 const empty=sandbox.createDeliveryJob({getItem:()=>null,setItem(){}},Island);
 assert(!empty.purchaseHome('village').ok);assert.equal(empty.coins,0);assert.equal(empty.ownedHomes.length,0);
 assert(!job.purchaseHome('unknown').ok);
@@ -163,7 +170,7 @@ assert(job.purchaseHome('village').ok);assert.equal(job.coins,beforePurchase-180
 assert(!job.purchaseHome('village').ok);assert.equal(job.coins,beforePurchase-180,'No double charge');
 assert(job.purchaseHome('east').ok);assert(job.setHome('east'));assert(!job.setHome('south'));
 const homeowner=sandbox.createDeliveryJob(storage,Island);
-assert.equal(homeowner.homeId,'east');assert.equal(homeowner.ownedHomes.length,2);assert.equal(homeowner.coins,740);
+assert.equal(homeowner.homeId,'east');assert.equal(homeowner.ownedHomes.length,2);assert.equal(homeowner.coins,860);
 homeowner.addReward(10);assert.equal(sandbox.createDeliveryJob(storage,Island).ownedHomes.length,2,'Later wages preserve home ownership');
 const failing=sandbox.createDeliveryJob({getItem:()=>JSON.stringify({coins:1000,completed:2}),setItem(){throw Error('Disk full');}},Island);
 assert(!failing.purchaseHome('village').ok);assert.equal(failing.coins,1000);assert.equal(failing.ownedHomes.length,0,'Failed storage must not charge money');
@@ -203,3 +210,6 @@ assert(outdoorCameraLimit(-18,-18,Math.PI/2,11,4)<2,'Vehicle camera stops before
 assert(outdoorHit({x:-18,y:-35,z:3},{x:-18,y:-18,z:2.6})<1,'House hides marker behind it');
 assert.equal(outdoorHit({x:0,y:0,z:100},{x:0,y:10,z:100}),1,'Unobstructed ray stays visible');
 console.log('PASS outdoor camera collision and opaque obstacle sightlines');
+
+assert(Math.hypot(taxi.points[1].x-taxi.points[0].x,taxi.points[1].y-taxi.points[0].y)>750,'Long cross-island taxi journey');
+for(let y=-307;y<=460;y+=2)assert(vehicles.clearAt(0,y,Math.PI/2,vehicles.car.model),'Taxi main road blocked at '+y);

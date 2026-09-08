@@ -67,11 +67,11 @@ const Island = (() => {
   const jobs=[
     {id:'clean',name:'Strassenreinigung',x:-6,y:20,reward:70,action:'Abfall sammeln',kind:'collect',points:[{x:-6,y:31},{x:6,y:44},{x:-7,y:68},{x:7,y:86},{x:-6,y:102}]},
     {id:'garden',name:'Gartenpflege',x:-150,y:8,reward:85,action:'Giessen',kind:'hold',seconds:1.5,points:[{x:-162,y:4},{x:-150,y:-4},{x:-138,y:4}]},
-    {id:'repair',name:'Mechaniker',x:160,y:8,reward:100,action:'Reparieren',kind:'hold',seconds:2,points:[{x:148,y:4},{x:160,y:-4},{x:172,y:4}]},
-    {id:'taxi',name:'Taxi',x:8,y:8,reward:140,action:'Fahrgast abholen',kind:'taxi',points:[{x:7,y:-16,name:'Fahrgast am Stadtplatz'},{x:5,y:169,name:'Fahrgast zum Hafen'}]},
-    {id:'fishing',name:'Angeln',x:-86,y:40,reward:190,action:'Angeln',kind:'hold',seconds:3,doneText:'Fisch gefangen',points:[{x:-85,y:50},{x:-85,y:58},{x:-85,y:66}]},
+    {id:'repair',timing:true,name:'Mechaniker',x:160,y:8,reward:100,action:'Reparieren',kind:'hold',seconds:2,points:[{x:148,y:4},{x:160,y:-4},{x:172,y:4}]},
+    {id:'taxi',name:'Taxi',x:8,y:8,reward:260,action:'Fahrgast abholen',kind:'taxi',points:[{x:0,y:-307,name:'Fahrgast in der Nordstadt'},{x:0,y:460,name:'Strand im tiefen Süden'}]},
+    {id:'fishing',timing:true,name:'Angeln',x:-86,y:40,reward:190,action:'Angeln',kind:'hold',seconds:3,doneText:'Fisch gefangen',points:[{x:-85,y:50},{x:-85,y:58},{x:-85,y:66}]},
     {id:'orchard',name:'Obsternte',x:-350,y:8,reward:140,action:'Apfel ernten',kind:'collect',item:'Apfel',points:[{x:-362,y:-4},{x:-350,y:-4},{x:-338,y:-4},{x:-350,y:-16}]},
-    {id:'electric',name:'Elektriker',x:300,y:108,reward:180,action:'Schaltkasten prüfen',kind:'hold',seconds:2,doneText:'Schaltkasten geprüft',points:[{x:280,y:108},{x:300,y:96},{x:320,y:108}]},
+    {id:'electric',timing:true,name:'Elektriker',x:300,y:108,reward:180,action:'Schaltkasten prüfen',kind:'hold',seconds:2,doneText:'Schaltkasten geprüft',points:[{x:280,y:108},{x:300,y:96},{x:320,y:108}]},
     {id:'trail',name:'Bergkontrolle',x:130,y:-40,reward:220,action:'Wegmarkierung prüfen',kind:'collect',item:'Wegmarkierung',points:[{x:122,y:-40},{x:112,y:-36},{x:103,y:-42},{x:88,y:-40}]}
   ];
   const pond={x:-65,y:58,rx:17,ry:12};

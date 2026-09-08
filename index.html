@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Animal World</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -28,16 +28,18 @@
 <button id="interact" class="interact" hidden></button>
 <button id="vehicle-action" class="vehicle-action" hidden>F · Einsteigen</button>
 <div id="toast" class="toast" role="status" hidden></div>
-<nav class="touch" aria-label="Bewegung">
-<button data-key="arrowup" aria-label="Vorwärts">↑</button>
-<div><button data-key="arrowleft" aria-label="Links drehen">←</button><button data-key="arrowdown" aria-label="Rückwärts">↓</button><button data-key="arrowright" aria-label="Rechts drehen">→</button></div>
+<nav class="touch" aria-label="Touch-Steuerung">
+<div id="joystick" role="group" aria-label="Joystick: ziehen zum Laufen oder Lenken"><span id="joystick-knob"></span></div>
+<div class="touch-actions"><button data-key="shift" aria-label="Rennen halten">Rennen</button><button id="touch-jump" data-key=" " aria-label="Springen oder bremsen">Hüpfen</button></div>
 </nav>
+<div id="skill-game" class="skill-game" hidden><strong id="skill-title"></strong><div class="skill-track"><span class="skill-zone"></span><i id="skill-needle"></i></div><small>Im grünen Bereich: Aktion antippen / E drücken</small></div>
 </div>
 <section id="pause-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
 <div class="pause-card">
 <p class="eyebrow">KURZ DURCHATMEN</p>
 <h2 id="pause-title">Pause</h2>
 <p class="instructions"><strong>W / S</strong> Laufen / Gas und rückwärts<br><strong>A / D</strong> Drehen / Lenken<br><strong>Shift</strong> Rennen<br><strong>Leertaste</strong> Hüpfen / Bremsen<br><strong>E</strong> Interagieren (bei Pflege/Reparatur halten)<br><strong>F</strong> Einsteigen / angehalten aussteigen<br><strong>M</strong> Inselkarte</p>
+<p class="touch-instructions">Links am Joystick ziehen: laufen oder lenken. Rechts: Rennen halten, springen oder bremsen. Am Ziel die Aktion antippen oder halten. Bei der Geschicklichkeitsanzeige loslassen und im grünen Bereich erneut tippen.</p>
 <button id="resume" class="primary">Weiterspielen</button>
 <button id="back" class="secondary">Zum Startbildschirm</button>
 <div class="audio-settings"><button id="mute-audio" class="secondary">Ton ausschalten</button><label>Musik <input id="music-volume" type="range" min="0" max="100" value="30"></label><label>Geräusche <input id="effects-volume" type="range" min="0" max="100" value="55"></label></div>

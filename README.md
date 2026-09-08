@@ -27,11 +27,11 @@ Mit E an einer Station beginnen. Immer nur ein Auftrag gleichzeitig. In der Näh
 | Paketpost | Paket abholen und liefern; drei wiederkehrende Routen | 35 / 60 / 50 |
 | Strassenreinigung | Fünf Abfälle einsammeln | 70 |
 | Gartenpflege | Drei Beete je 1,5 Sekunden giessen | 85 |
-| Mechaniker | Drei Motoren je 2 Sekunden reparieren | 100 |
-| Taxi | Im angehaltenen Auto Fahrgast abholen und zum Hafen bringen | 140 |
-| Angeln | An drei Stellen westlich des Sees je 3 Sekunden angeln | 190 |
+| Mechaniker | Drei Motoren: vorbereiten und je zwei Timing-Treffer | 100 |
+| Taxi | Nordstadt bis zum Südstrand: 767 Meter | 260 |
+| Angeln | Drei Fische: Angel halten und im richtigen Moment einholen | 190 |
 | Obsternte | Vier Äpfel beim Obstgarten im Westen ernten | 140 |
-| Elektriker | Drei Schaltkästen im Ostviertel je 2 Sekunden prüfen | 180 |
+| Elektriker | Drei Schaltkästen: vorbereiten und je zwei Timing-Treffer | 180 |
 | Bergkontrolle | Vier Markierungen bis zum Gipfel kontrollieren | 220 |
 
 Gartenpflege, Reparaturen, Sammelarbeiten und die neuen Jobs werden zu Fuss erledigt. Für Taxi braucht man ein Auto. Die Musik passt sich dem Auftrag an.
@@ -90,3 +90,13 @@ Das Projekt ist eine statische Website ohne Backend. `vercel.json` setzt Framewo
 Das Repository in Vercel importieren und **AnimalWorld** als Root Directory waehlen, falls das Repository noch andere Projekte enthaelt. Alternativ im Projektordner `npx vercel` fuer eine Vorschau oder `npx vercel --prod` fuer die Produktion ausfuehren und das gewuenschte Vercel-Projekt verknuepfen. Eine Anmeldung ist erforderlich. Fuer manuelle statische Hosts ausschliesslich den Inhalt von `dist/` veroeffentlichen.
 
 Der lokale Node-Server wird auf Vercel nicht benoetigt. Es werden keine Windows-Programme ausgeliefert. Alle Spielressourcen liegen im Web-Paket; Musik wird im Browser erzeugt. Zum ersten Laden einer Vercel-Adresse ist Internet noetig. Ein Offline-Cache ist noch nicht eingerichtet. Spielstaende bleiben im Browser und sind an die jeweilige Adresse gebunden: localhost, Vorschau und Produktionsdomain haben getrennte Speicher.
+
+## Touch und neue Job-Aufgaben
+
+Auf Touch-Geraeten erscheint automatisch ein analoger Joystick. Ziehen: laufen / lenken; loslassen: stoppen. Rechts liegen Rennen, Huepfen (im Auto Bremse), Arbeit und Ein-/Aussteigen. Mehrere Finger funktionieren gleichzeitig. Menues und Karten bleiben per Tippen bedienbar. Beim Pausieren oder Wechseln der App wird die Eingabe zurueckgesetzt.
+
+Taxi: Fahrgast an der Nordstadt abholen, 767 Meter zum suedlichen Strand fahren und dort anhalten. Lohn: 260 Muenzen. Der Fahrgast winkt.
+
+Angeln, Mechaniker und Elektriker: zuerst die Aktion halten, danach loslassen und im gruenen Bereich der Anzeige erneut tippen (Tastatur: E). Angeln braucht einen Treffer, Reparatur und Elektriker zwei. Fehlversuche koennen wiederholt werden; Weggehen setzt die aktuelle Vorbereitung zurueck. Gartenpflege bleibt eine Halteaufgabe. Wasser, Funken, wachsende Blumen, eine bewegte Angel und Mauz' Jubel zeigen den Fortschritt.
+
+`npm run test:touch` prueft Joystick, mehrere Finger, Loslassen, Pause und Geschicklichkeitseingaben in einem Touch-Browser in Hoch- und Querformat.

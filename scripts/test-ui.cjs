@@ -106,7 +106,7 @@ const root=path.resolve(__dirname,'..');
       if(t.state().activity!==id)throw Error('Cannot start '+id);
       await new Promise(resolve=>setTimeout(resolve,150));
       if(t.state().theme!==id)throw Error('Wrong music for '+id);
-      for(const [px,py] of points){t.visit(px,py);press('e');if(hold)t.advance(hold);window.dispatchEvent(new KeyboardEvent('keyup',{key:'e'}));}
+      for(const [px,py] of points){t.visit(px,py);press('e');if(hold)t.advance(hold);while(t.state().challenge){t.advance(.92);press('e');}window.dispatchEvent(new KeyboardEvent('keyup',{key:'e'}));}
       if(t.state().done!==points.length)throw Error('Work did not finish for '+id);
       t.visit(x,y);press('e');if(t.state().activity)throw Error('Cannot collect job payment');
     }
@@ -114,9 +114,9 @@ const root=path.resolve(__dirname,'..');
     await new Promise(resolve=>setTimeout(resolve,150));
     if(t.state().theme!=='taxi')throw Error('Taxi music did not switch');
     t.visit(10,-3);press('e');document.querySelector('[data-car="compact"]').click();
-    t.visit(10,4);press('f');t.visit(7,-16);press('e');if(!t.state().passenger)throw Error('Passenger did not enter');
-    t.visit(5,169);press('e');if(t.state().passenger||t.state().activity)throw Error('Passenger did not arrive');
-    if(t.state().coins!==430)throw Error('Incorrect total job rewards: '+t.state().coins);
+    t.visit(10,4);press('f');t.visit(0,-307);press('e');if(!t.state().passenger)throw Error('Passenger did not enter');
+    t.visit(0,460);press('e');if(t.state().passenger||t.state().activity)throw Error('Passenger did not arrive');
+    if(t.state().coins!==550)throw Error('Incorrect total job rewards: '+t.state().coins);
     t.park();return t.state();
   })()`);
   const audioStarted=await page.evaluate('window.__animalTest.audio()',true);
@@ -127,7 +127,7 @@ const root=path.resolve(__dirname,'..');
   await page.evaluate("for(const [id,value] of [['music-volume',15],['effects-volume',25]]){const input=document.getElementById(id);input.value=value;input.dispatchEvent(new Event('input'));}");
   await page.reload();
   const savedState=await page.evaluate('window.__animalTest.state()');
-  if(savedState.coins!==430||!savedState.muted)throw Error('Job earnings or sound settings did not persist');
+  if(savedState.coins!==550||!savedState.muted)throw Error('Job earnings or sound settings did not persist');
   if(savedState.audioSettings.music!==.15||savedState.audioSettings.effects!==.25)throw Error('Volume did not persist');
   await page.evaluate('window.__animalTest.audio()',true);
   await new Promise(resolve=>setTimeout(resolve,150));
@@ -139,18 +139,18 @@ const root=path.resolve(__dirname,'..');
     for(const [id,x,y,points,hold] of specs){
       t.visit(x,y);press('e');if(t.state().activity!==id)throw Error('Cannot start '+id);
       await new Promise(resolve=>setTimeout(resolve,150));if(t.state().theme!==id)throw Error('Missing music for '+id);
-      for(const [px,py] of points){t.visit(px,py);press('e');if(hold)t.advance(hold);window.dispatchEvent(new KeyboardEvent('keyup',{key:'e'}));}
+      for(const [px,py] of points){t.visit(px,py);press('e');if(hold)t.advance(hold);while(t.state().challenge){t.advance(.92);press('e');}window.dispatchEvent(new KeyboardEvent('keyup',{key:'e'}));}
       t.visit(x,y);press('e');if(t.state().activity)throw Error('Cannot finish '+id);
     }
-    if(t.state().coins!==1160)throw Error('Incorrect newest job earnings');
+    if(t.state().coins!==1280)throw Error('Incorrect newest job earnings');
     t.visit(-12,65.5);press('e');if(t.state().mode!=='home'||document.querySelector('#home-buy').disabled)throw Error('Cannot review affordable house');
   })()`);
   await new Promise(resolve=>setTimeout(resolve,150));
   fs.writeFileSync(path.join(root,'test-results','house-offer.png'),(await capture()).toPNG());
   await page.evaluate(`(() => {
     const t=window.__animalTest;document.querySelector('#home-buy').click();
-    if(t.state().coins!==980||!t.state().ownedHomes.includes('village')||t.state().homeId!=='village')throw Error('House purchase failed');
-    document.querySelector('#home-buy').click();if(t.state().coins!==980)throw Error('Double charge for house');
+    if(t.state().coins!==1100||!t.state().ownedHomes.includes('village')||t.state().homeId!=='village')throw Error('House purchase failed');
+    document.querySelector('#home-buy').click();if(t.state().coins!==1100)throw Error('Double charge for house');
   })()`);
   await new Promise(resolve=>setTimeout(resolve,150));
   fs.writeFileSync(path.join(root,'test-results','house-owned.png'),(await capture()).toPNG());
@@ -160,6 +160,7 @@ const root=path.resolve(__dirname,'..');
     window.dispatchEvent(new KeyboardEvent('keydown',{key:'f'}));if(t.state().driving)throw Error('Outdoor car accessible indoors');
     window.dispatchEvent(new KeyboardEvent('keydown',{key:'m'}));if(t.state().mode!=='playing')throw Error('Outdoor map opened indoors');
   })()`);
+  await page.waitForFunction(()=>window.__animalTest.state().depthRenderer);
   await page.evaluate(`(() => {
     // Actual GPU regression: a near wall must hide a red object regardless of submission order.
     const r=createIndoorRenderer(),sprite=document.createElement('canvas');sprite.width=sprite.height=64;
@@ -176,7 +177,7 @@ const root=path.resolve(__dirname,'..');
   }
   await page.evaluate(`(() => {
     const t=window.__animalTest;t.visit(0,10);window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));
-    if(t.state().interior||Math.hypot(t.state().x+12,t.state().y-65.5)>.01||t.state().coins!==980)throw Error('Interior exit failed');
+    if(t.state().interior||Math.hypot(t.state().x+12,t.state().y-65.5)>.01||t.state().coins!==1100)throw Error('Interior exit failed');
   })()`);
   await page.evaluate(`(() => {
     document.querySelector('#home-close').click();document.querySelector('#map-open').click();document.querySelector('#map-plus').click();
@@ -188,7 +189,7 @@ const root=path.resolve(__dirname,'..');
   fs.writeFileSync(path.join(root,'test-results','map-owned.png'),(await capture()).toPNG());
   await page.reload();
   const homeState=await page.evaluate('window.__animalTest.state()');
-  if(homeState.coins!==980||homeState.homeId!=='village'||homeState.ownedHomes.length!==1||Math.hypot(homeState.x+12,homeState.y-65.5)>.01)throw Error('Home ownership or spawn did not persist');
+  if(homeState.coins!==1100||homeState.homeId!=='village'||homeState.ownedHomes.length!==1||Math.hypot(homeState.x+12,homeState.y-65.5)>.01)throw Error('Home ownership or spawn did not persist');
   console.log('PASS four newest jobs, purchase review, insufficient funds, no duplicate charge, saved ownership/home spawn and map zoom');
   console.log('PASS phone menu, three cars, driving/braking, four new jobs, audio activation/muting and persistence',JSON.stringify(addedJobs));
   if(errors.length)throw Error(errors.join('\n'));
