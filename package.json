@@ -1,0 +1,18 @@
+{
+  "name": "animal-world",
+  "version": "0.1.0",
+  "description": "Animal World - Browser-Spiel mit Mauz",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/browser.cjs",
+    "dev": "node scripts/browser.cjs --no-open",
+    "build": "node scripts/build.cjs",
+    "preview": "node scripts/browser.cjs --preview",
+    "test": "node scripts/test-game.cjs && node scripts/test-audio.cjs && node scripts/test-browser.cjs",
+    "test:ui": "npm run build && node scripts/test-ui.cjs",
+    "test:browser": "node scripts/test-browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

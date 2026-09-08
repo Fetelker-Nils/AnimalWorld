@@ -1,0 +1,65 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animal World</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="world" aria-label="Mauz auf seiner Grasinsel"></canvas>
+<main id="start-screen" class="start-screen">
+<div class="start-card">
+<div class="emblem" aria-hidden="true">✿</div>
+<p class="eyebrow">DEIN KLEINES ABENTEUER</p>
+<h1>animal<br><span>world.</span></h1>
+<p class="welcome">Eine kleine Welt wartet auf dich und Mauz.</p>
+<button id="play" class="primary" autofocus>Offline spielen <span aria-hidden="true">→</span></button>
+<p class="offline-note">Ganz ohne Internet. Einfach losspielen.</p>
+</div>
+<span class="start-version">ANIMAL WORLD · 0.1</span>
+<button id="menu-audio" class="menu-audio">Musik einschalten</button>
+</main>
+<div id="game-ui" hidden>
+<button id="menu" class="menu-button" aria-label="Spielmenü öffnen" title="Menü (Esc)">☰</button>
+<button id="map-open" class="map-button" title="Inselkarte (M)">Karte · M</button>
+<div id="job-status" class="job-status"><strong id="job-title"></strong><small id="job-detail"></small></div>
+<button id="interact" class="interact" hidden></button>
+<button id="vehicle-action" class="vehicle-action" hidden>F · Einsteigen</button>
+<div id="toast" class="toast" role="status" hidden></div>
+<nav class="touch" aria-label="Bewegung">
+<button data-key="arrowup" aria-label="Vorwärts">↑</button>
+<div><button data-key="arrowleft" aria-label="Links drehen">←</button><button data-key="arrowdown" aria-label="Rückwärts">↓</button><button data-key="arrowright" aria-label="Rechts drehen">→</button></div>
+</nav>
+</div>
+<section id="pause-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+<div class="pause-card">
+<p class="eyebrow">KURZ DURCHATMEN</p>
+<h2 id="pause-title">Pause</h2>
+<p class="instructions"><strong>W / S</strong> Laufen / Gas und rückwärts<br><strong>A / D</strong> Drehen / Lenken<br><strong>Shift</strong> Rennen<br><strong>Leertaste</strong> Hüpfen / Bremsen<br><strong>E</strong> Interagieren (bei Pflege/Reparatur halten)<br><strong>F</strong> Einsteigen / angehalten aussteigen<br><strong>M</strong> Inselkarte</p>
+<button id="resume" class="primary">Weiterspielen</button>
+<button id="back" class="secondary">Zum Startbildschirm</button>
+<div class="audio-settings"><button id="mute-audio" class="secondary">Ton ausschalten</button><label>Musik <input id="music-volume" type="range" min="0" max="100" value="30"></label><label>Geräusche <input id="effects-volume" type="range" min="0" max="100" value="55"></label></div>
+</div>
+</section>
+<section id="map-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="map-title" hidden>
+<div class="map-card"><div class="map-heading"><h2 id="map-title">Deine Insel</h2><button id="map-close">Zurück · M</button></div><div class="map-controls"><button id="map-minus" aria-label="Karte verkleinern">−</button><button id="map-plus" aria-label="Karte vergrössern">+</button><button id="map-locate">Bei Mauz</button><button id="map-reset">Ganze Insel</button></div><canvas id="map-canvas" width="600" height="600" aria-label="Verschiebbare Inselkarte. Jobs violett, Telefonzellen türkis, Häuser golden oder grün bei Eigentum, Mauz blau."></canvas><p>Blau: Mauz · Orange: Ziel · Violett: Jobs · Türkis: Telefonzellen<br>Goldene Häuser: kaufen · Grüne Häuser: dein Eigentum<br>1 Post · 2 Reinigung · 3 Garten · 4 Mechaniker · 5 Taxi<br>6 Angeln · 7 Obsternte · 8 Elektriker · 9 Bergkontrolle<br>Ziehen: Karte verschieben · Mausrad / + −: zoomen</p></div>
+</section>
+<section id="garage-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="garage-title" hidden>
+<div class="garage-card"><p class="eyebrow">TELEFONZELLE · AUTORUF</p><h2 id="garage-title">Dein Auto wartet.</h2><p>Wähle ein Auto. Es erscheint neben der Telefonzelle und ersetzt dein bisheriges Auto. Kostenlos, auch offline.</p>
+<div class="car-choices"><button data-car="compact"><strong>Kleinwagen</strong><span>Wendig und unkompliziert</span></button><button data-car="roadster"><strong>Roadster</strong><span>Schnell auf der Strasse</span></button><button data-car="pickup"><strong>Pickup</strong><span>Robust auf sanften Hängen</span></button></div>
+<p id="garage-message" role="status"></p><button id="garage-close" class="secondary">Zurück ins Spiel</button></div>
+</section>
+<section id="home-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="home-title" hidden>
+<div class="home-card"><p class="eyebrow">EIN PLATZ FÜR MAUZ</p><div class="home-picture" aria-hidden="true"><span>⌂</span></div><h2 id="home-title"></h2><p id="home-status"></p><div class="home-numbers"><span>Kaufpreis<strong id="home-price"></strong></span><span>Dein Guthaben<strong id="home-balance"></strong></span></div><p>Dein Haus bleibt gespeichert. Als Zuhause festgelegt startest du beim nächsten Öffnen der App vor seiner Tür.</p><button id="home-buy" class="primary"></button><button id="home-enter" class="primary" hidden>Haus betreten</button><button id="home-set" class="primary" hidden>Als Zuhause festlegen</button><p id="home-message" role="status"></p><button id="home-close" class="secondary">Zurück zur Welt</button></div>
+</section>
+<script src="world.js"></script>
+<script src="delivery.js"></script>
+<script src="activities.js"></script>
+<script src="vehicles.js"></script>
+<script src="sound.js"></script>
+<script src="indoor-renderer.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
