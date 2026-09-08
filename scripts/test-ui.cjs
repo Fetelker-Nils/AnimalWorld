@@ -206,6 +206,22 @@ const root=path.resolve(__dirname,'..');
   const homeState=await page.evaluate('window.__animalTest.state()');
   if(homeState.clock!=='09:00')throw Error('Clock not persisted');
   if(homeState.coins!==1100||homeState.homeId!=='village'||homeState.ownedHomes.length!==1||Math.hypot(homeState.x+12,homeState.y-65.5)>.01)throw Error('Home ownership or spawn did not persist');
+  await page.evaluate(`document.querySelector('#play').click()`);
+  for(const [id,x,y] of [['clothes',-18,-18],['restaurant',18,-36],['police',-36,-54],['hospital',36,-72],['fire',-18,-90],['bank',18,-123],['market',-36,-123]]){
+    await page.evaluate(`(() => {const t=window.__animalTest;t.visit(${x},${y});window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));if(t.state().interior!=='${id}')throw Error('Cannot enter public building ${id}');t.visit(0,6,-Math.PI/2);})()`);
+    await page.waitForTimeout(150);fs.writeFileSync(path.join(root,'test-results','venue-'+id+'.png'),(await capture()).toPNG());
+    await page.evaluate(`window.__animalTest.visit(0,10);window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));`);
+  }
+  await page.evaluate(`(() => {const t=window.__animalTest;t.visit(-18,-18);window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));t.visit(0,-3);window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));if(t.state().mode!=='clothes')throw Error('Clothing counter unavailable');})()`);
+  await page.waitForTimeout(150);fs.writeFileSync(path.join(root,'test-results','clothing-shop.png'),(await capture()).toPNG());
+  await page.locator('[data-outfit="street"]').click();
+  let dressed=await page.evaluate(()=>window.__animalTest.state());
+  if(dressed.coins!==1030||dressed.outfitId!=='street'||dressed.mode!=='playing')throw Error('Clothing purchase did not equip/deduct correctly');
+  await page.evaluate(`window.__animalTest.visit(0,6,-Math.PI/2)`);await page.waitForTimeout(150);
+  fs.writeFileSync(path.join(root,'test-results','mauz-outfit.png'),(await capture()).toPNG());
+  await page.reload();dressed=await page.evaluate(()=>window.__animalTest.state());
+  if(dressed.coins!==1030||dressed.outfitId!=='street'||!dressed.ownedOutfits.includes('street')||dressed.homeId!=='village')throw Error('Clothing/house save not preserved');
+  console.log('PASS seven public venues and clothing purchase, visible equip and browser reload persistence');
   console.log('PASS four newest jobs, purchase review, insufficient funds, no duplicate charge, saved ownership/home spawn and map zoom');
   console.log('PASS phone menu, three cars, driving/braking, four new jobs, audio activation/muting and persistence',JSON.stringify(addedJobs));
   if(errors.length)throw Error(errors.join('\n'));

@@ -108,3 +108,13 @@ Die kleine Karte rechts zeigt die Umgebung, Mauz' Blickrichtung und das aktuelle
 Unter der Minikarte stehen Uhrzeit und Tag. Ein kompletter Spieltag dauert 20 echte Minuten. In Menues und Pausen bleibt die Zeit stehen; Uhrzeit und Tagesnummer werden lokal gespeichert. Zwischen 18:00 und 21:00 wird es allmaehlich dunkel, zwischen 05:00 und 08:00 wieder hell. Die Strassenlaternen leuchten in der Daemmerung und nachts.
 
 In jedem gekauften Haus steht ein Bett im Schlafzimmer. Daneben treten und E druecken oder die Schlaf-Aktion antippen. Schlafen ist von 20:00 bis vor 06:00 moeglich; Mauz wacht um 07:00 auf. Eine kurze Schlafblende zeigt den Zeitsprung. Guthaben, Hausbesitz und Jobs bleiben erhalten.
+
+## Stadtgebaeude und Kleidung
+
+Sieben oeffentliche Gebaeude sind begehbar: **Mauz Mode**, **Restaurant Pfotenstube**, **Polizeistation**, **Krankenhaus**, **Feuerwehr**, **Pfotenbank** und **Stadtmarkt**. Rosa Markierungen zeigen ihre Tueren auf den Karten; beim Vergroessern der Inselkarte erscheinen die Namen. Vor der Tuer E druecken oder die Aktion antippen. Ein Hauskauf ist dafuer nicht noetig. Im Eingangsbereich fuehrt E wieder nach draussen.
+
+Alle Gebaeude haben eine eigene Einrichtung und einen Empfang. Restaurant, Polizei, Krankenhaus, Feuerwehr, Bank und Markt lassen sich erkunden; am Empfang gibt es passende Hinweise (bei der Bank auch das Guthaben). Eigene Bankkonten, medizinische Behandlungen und neue Einsatz-Jobs sind damit nicht verbunden.
+
+Im **Kleidershop** (erstes Stadthaus links, Tuer bei -18 / -18) zur Kasse gehen. Dort gibt es sieben Outfits fuer 70 bis 220 Muenzen, darunter Shirts, Wald-Outfit, Polizei-Outfit, Feuerwehr-Outfit und Arztkittel. Preise stehen vor dem Kauf auf den Knopfen. Kaufen zieht den Betrag einmalig ab und zieht das Outfit sofort an. Bereits gekaufte Kleidung kann hier kostenlos gewechselt oder ausgezogen werden.
+
+Outfit, Kleidersammlung, Guthaben und Haeuser werden gemeinsam gespeichert. Ein fehlgeschlagener Kauf zieht keine Muenzen ab. Vorhandene Spielstaende bleiben kompatibel.

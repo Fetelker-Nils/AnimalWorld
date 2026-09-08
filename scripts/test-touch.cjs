@@ -38,6 +38,8 @@ const {createServer}=require('./browser.cjs');
     const bounds=await page.locator('#joystick').boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=390);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     assert(await page.locator('#minimap').isVisible());await page.locator('#mini-open').tap();assert(await page.locator('#map-screen').isVisible());await page.locator('#map-close').tap();
+    await page.evaluate(()=>{window.__animalTest.visit(-18,-18);});await page.locator('#interact').tap();await page.evaluate(()=>window.__animalTest.visit(0,-3));await page.locator('#interact').tap();
+    assert(await page.locator('#clothes-screen').isVisible(),JSON.stringify(await page.evaluate(()=>({...window.__animalTest.state(),prompt:document.querySelector('#interact').textContent,toast:document.querySelector('#toast').textContent}))));assert(await page.locator('[data-outfit="street"]').isDisabled());await page.screenshot({path:path.resolve(__dirname,'../test-results/clothes-touch.png')});await page.locator('#clothes-close').tap();
     assert.deepEqual(errors,[]);console.log('PASS touch: analog joystick, multitouch, release, pause reset, timing job by touch and both orientations');
   } finally {if(browser)await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

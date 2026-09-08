@@ -30,6 +30,27 @@ const Island = (() => {
     const building={...h,homeId:h.id};buildings.push(building);
     homes.push({id:h.id,name:h.name,price:h.price,x:h.x,y:h.y+h.d/2+2,building});
   }
+  const outfits=[
+    {id:'street',name:'Rotes T-Shirt',price:70,color:'#c7685a',trim:'#efd7a1'},
+    {id:'ocean',name:'Meeres-Pullover',price:100,color:'#5f9fba',trim:'#d9ebe9'},
+    {id:'ranger',name:'Wald-Outfit',price:130,color:'#678452',trim:'#e3d3a2',hat:'#61774d'},
+    {id:'sunny',name:'Sonnen-Shirt',price:90,color:'#e2bf54',trim:'#fff0c9'},
+    {id:'police',name:'Polizei-Outfit',price:180,color:'#506b94',trim:'#eac879',hat:'#405777'},
+    {id:'fire',name:'Feuerwehr-Outfit',price:220,color:'#bb6049',trim:'#f2dc72',hat:'#dabb4d'},
+    {id:'medic',name:'Arztkittel',price:190,color:'#e5ece6',trim:'#6ba6a4'}
+  ];
+  const venues=[
+    {id:'clothes',name:'Mauz Mode',kind:'clothes',bx:-18,by:-25,color:'#d4b1cd',floor:'#d9cfbc',message:'Willkommen bei Mauz Mode! Schau dir unsere Outfits an.'},
+    {id:'restaurant',name:'Restaurant Pfotenstube',bx:18,by:-43,color:'#e8ba91',floor:'#dfc798',message:'Willkommen in der Pfotenstube! Such dir einen Platz zwischen den Tischen.'},
+    {id:'police',name:'Polizeistation',bx:-36,by:-61,color:'#a8c1d9',floor:'#c3d1d5',message:'Wir behalten die Stadt im Blick. Bitte fahre vorsichtig und halte an, bevor du aussteigst.'},
+    {id:'hospital',name:'Krankenhaus',bx:36,by:-79,color:'#d4e6dc',floor:'#dce9e0',message:'Willkommen am Empfang. Die Patientenzimmer liegen links und rechts.'},
+    {id:'fire',name:'Feuerwehr',bx:-18,by:-97,color:'#d99b85',floor:'#b9bcb1',message:'Hier stehen unsere Ausruestung und das Einsatzfahrzeug bereit.'},
+    {id:'bank',name:'Pfotenbank',bx:18,by:-130,color:'#d5cead',floor:'#d5d1bd',message:'Dein Guthaben wird zusammen mit deinen Haeusern und Kleidern lokal gespeichert.'},
+    {id:'market',name:'Stadtmarkt',bx:-36,by:-130,color:'#b5d2a1',floor:'#d5d6b8',message:'Hier lagern Obst, Gemuese und Vorratskisten fuer die Stadt.'}
+  ].map(v=>{
+    const building=buildings.find(b=>b.x===v.bx&&b.y===v.by);building.venueId=v.id;building.color=v.color;
+    return {...v,public:true,x:building.x,y:building.y+building.d/2+2,building};
+  });
   const depot={x:-10,y:-2,name:'Paketpost'};
   const deliveries=[
     {x:18,y:-18,name:'Stadt · Haus 18',reward:35},
@@ -87,10 +108,10 @@ const Island = (() => {
     for(let n=-length/2+12;n<length/2-8;n+=32){
       const side=Math.round(n/32)%2===0?1:-1;
       const x=road.x+(vertical?edge*side:n),y=road.y+(vertical?n:edge*side);
-      if(blocked(x,y)||onRoad(x,y,.3)||heightAt(x,y)>0||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<18)||[depot,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(t.x-x,t.y-y)<6))continue;
+      if(blocked(x,y)||onRoad(x,y,.3)||heightAt(x,y)>0||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<18)||[depot,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(t.x-x,t.y-y)<6))continue;
       lamps.push({x,y});
     }
   }
-  const reserved=(x,y)=>lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {radius,buildings,roads,lamps,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  const reserved=(x,y)=>lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  return {radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
