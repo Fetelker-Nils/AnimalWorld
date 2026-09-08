@@ -8,7 +8,7 @@
     "dev": "node scripts/browser.cjs --no-open",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/browser.cjs --preview",
-    "test": "node scripts/test-game.cjs && node scripts/test-audio.cjs && node scripts/test-browser.cjs",
+    "test": "node scripts/test-game.cjs && node scripts/test-audio.cjs && node scripts/test-day-cycle.cjs && node scripts/test-browser.cjs",
     "test:ui": "npm run build && node scripts/test-ui.cjs",
     "test:browser": "node scripts/test-browser.cjs",
     "test:touch": "npm run build && node scripts/test-touch.cjs"

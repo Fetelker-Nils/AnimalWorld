@@ -37,6 +37,7 @@ const {createServer}=require('./browser.cjs');
     await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.resolve(__dirname,'../test-results/touch-portrait.png')});
     const bounds=await page.locator('#joystick').boundingBox();assert(bounds.x>=0&&bounds.x+bounds.width<=390);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    assert(await page.locator('#minimap').isVisible());await page.locator('#mini-open').tap();assert(await page.locator('#map-screen').isVisible());await page.locator('#map-close').tap();
     assert.deepEqual(errors,[]);console.log('PASS touch: analog joystick, multitouch, release, pause reset, timing job by touch and both orientations');
   } finally {if(browser)await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

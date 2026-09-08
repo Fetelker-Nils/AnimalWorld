@@ -176,6 +176,14 @@ const root=path.resolve(__dirname,'..');
     fs.writeFileSync(path.join(root,'test-results',name+'.png'),(await capture()).toPNG());
   }
   await page.evaluate(`(() => {
+    const t=window.__animalTest,press=key=>window.dispatchEvent(new KeyboardEvent('keydown',{key}));
+    t.setTime(12*60);t.visit(-5.2,-8,Math.PI);press('e');if(t.state().sleeping)throw Error('Can sleep during daytime');
+    t.setTime(21*60);press('e');if(!t.state().sleeping)throw Error('Nighttime bed interaction failed');
+    t.advanceSleep(2.4);if(t.state().sleeping||t.state().clock!=='07:00'||t.state().day!==2)throw Error('Did not wake next morning');
+    if(t.state().interior!=='village'||t.state().coins!==1100)throw Error('Sleep changed house or wallet');
+    document.querySelector('#menu').click();const minutes=t.state().minutes;t.advance(30);if(t.state().minutes!==minutes)throw Error('Clock runs during pause');document.querySelector('#resume').click();
+  })()`);
+  await page.evaluate(`(() => {
     const t=window.__animalTest;t.visit(0,10);window.dispatchEvent(new KeyboardEvent('keydown',{key:'e'}));
     if(t.state().interior||Math.hypot(t.state().x+12,t.state().y-65.5)>.01||t.state().coins!==1100)throw Error('Interior exit failed');
   })()`);
@@ -187,8 +195,16 @@ const root=path.resolve(__dirname,'..');
   })()`);
   await new Promise(resolve=>setTimeout(resolve,150));
   fs.writeFileSync(path.join(root,'test-results','map-owned.png'),(await capture()).toPNG());
+  await page.evaluate(`document.querySelector('#map-close').click();window.__animalTest.setTime(22*60);window.__animalTest.visit(0,14,-Math.PI/2)`);
+  await page.waitForTimeout(200);
+  if(!await page.locator('#minimap').isVisible())throw Error('Minimap missing during play');
+  fs.writeFileSync(path.join(root,'test-results','night-lamps.png'),(await capture()).toPNG());
+  await page.evaluate(`window.__animalTest.setTime(9*60)`);await page.waitForTimeout(150);
+  fs.writeFileSync(path.join(root,'test-results','day-minimap.png'),(await capture()).toPNG());
+  await page.evaluate(`document.querySelector('#menu').click()`);
   await page.reload();
   const homeState=await page.evaluate('window.__animalTest.state()');
+  if(homeState.clock!=='09:00')throw Error('Clock not persisted');
   if(homeState.coins!==1100||homeState.homeId!=='village'||homeState.ownedHomes.length!==1||Math.hypot(homeState.x+12,homeState.y-65.5)>.01)throw Error('Home ownership or spawn did not persist');
   console.log('PASS four newest jobs, purchase review, insufficient funds, no duplicate charge, saved ownership/home spawn and map zoom');
   console.log('PASS phone menu, three cars, driving/braking, four new jobs, audio activation/muting and persistence',JSON.stringify(addedJobs));

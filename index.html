@@ -25,6 +25,7 @@
 <button id="menu" class="menu-button" aria-label="Spielmenü öffnen" title="Menü (Esc)">☰</button>
 <button id="map-open" class="map-button" title="Inselkarte (M)">Karte · M</button>
 <div id="job-status" class="job-status"><strong id="job-title"></strong><small id="job-detail"></small></div>
+<div class="mini-panel"><button id="mini-open" aria-label="Grosse Karte oeffnen"><canvas id="minimap" width="180" height="180" aria-label="Minikarte: Umgebung, Blickrichtung und Ziel"></canvas></button><div class="world-time"><time id="world-clock">09:00</time><span id="world-period">Tag 1</span></div></div>
 <button id="interact" class="interact" hidden></button>
 <button id="vehicle-action" class="vehicle-action" hidden>F · Einsteigen</button>
 <div id="toast" class="toast" role="status" hidden></div>
@@ -34,6 +35,7 @@
 </nav>
 <div id="skill-game" class="skill-game" hidden><strong id="skill-title"></strong><div class="skill-track"><span class="skill-zone"></span><i id="skill-needle"></i></div><small>Im grünen Bereich: Aktion antippen / E drücken</small></div>
 </div>
+<div id="sleep-screen" class="sleep-screen" role="status" hidden><span>Z z z</span><p>Mauz schläft bis 07:00 Uhr ...</p></div>
 <section id="pause-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
 <div class="pause-card">
 <p class="eyebrow">KURZ DURCHATMEN</p>
@@ -62,6 +64,7 @@
 <script src="vehicles.js"></script>
 <script src="sound.js"></script>
 <script src="indoor-renderer.js"></script>
+<script src="day-cycle.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

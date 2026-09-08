@@ -1,0 +1,18 @@
+﻿const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const fs=require('node:fs');
+const path=require('node:path');
+const sandbox={};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../day-cycle.js'),'utf8'),sandbox);
+let value=null;const store={getItem:()=>value,setItem:(_,v)=>{value=v;}};
+const clock=sandbox.createDayCycle(store);
+assert.equal(clock.label,'09:00');assert.equal(clock.darkness,0);assert(!clock.sleep());
+clock.tick(50);assert.equal(clock.label,'10:00');
+clock.set(23*60+59);clock.tick(1);assert.equal(clock.label,'00:00');assert.equal(clock.day,2);assert(clock.night);
+assert(clock.sleep());assert.equal(clock.label,'07:00');assert.equal(clock.day,2);
+clock.set(21*60);assert.equal(clock.darkness,1);assert(clock.sleep());assert.equal(clock.minutes,1440+420);
+assert.equal(sandbox.createDayCycle(store).minutes,clock.minutes);
+clock.set(18*60);assert.equal(clock.darkness,0);clock.set(19.5*60);assert.equal(clock.darkness,.5);clock.set(8*60);assert.equal(clock.darkness,0);
+clock.set(6*60);assert(!clock.sleep());clock.set(20*60);assert(clock.sleep());
+const failed=sandbox.createDayCycle({getItem(){throw Error('Unavailable');},setItem(){throw Error('Unavailable');}});failed.tick(30);failed.save();
+value='{"minutes":-1}';assert.equal(sandbox.createDayCycle(store).label,'09:00');
+console.log('PASS day cycle: rate, midnight/day rollover, dusk/dawn, night-only sleep, morning and persistence');

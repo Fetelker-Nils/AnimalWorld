@@ -80,6 +80,17 @@ const Island = (() => {
   const inPond=(x,y,pad=0)=>((x-pond.x)/(pond.rx+pad))**2+((y-pond.y)/(pond.ry+pad))**2<1;
   const onRoad=(x,y,pad=1)=>roads.some(r=>Math.abs(x-r.x)<r.w/2+pad&&Math.abs(y-r.y)<r.d/2+pad);
   const blocked=(x,y)=>Math.hypot(x,y)>radius-1||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
-  const reserved=(x,y)=>onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {radius,buildings,roads,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  const lamps=[];
+  for(const road of roads){
+    const vertical=road.d>road.w,length=vertical?road.d:road.w,edge=(vertical?road.w:road.d)/2+1.2;
+    if(length<60)continue;
+    for(let n=-length/2+12;n<length/2-8;n+=32){
+      const side=Math.round(n/32)%2===0?1:-1;
+      const x=road.x+(vertical?edge*side:n),y=road.y+(vertical?n:edge*side);
+      if(blocked(x,y)||onRoad(x,y,.3)||heightAt(x,y)>0||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<18)||[depot,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(t.x-x,t.y-y)<6))continue;
+      lamps.push({x,y});
+    }
+  }
+  const reserved=(x,y)=>lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  return {radius,buildings,roads,lamps,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();

@@ -100,3 +100,11 @@ Taxi: Fahrgast an der Nordstadt abholen, 767 Meter zum suedlichen Strand fahren 
 Angeln, Mechaniker und Elektriker: zuerst die Aktion halten, danach loslassen und im gruenen Bereich der Anzeige erneut tippen (Tastatur: E). Angeln braucht einen Treffer, Reparatur und Elektriker zwei. Fehlversuche koennen wiederholt werden; Weggehen setzt die aktuelle Vorbereitung zurueck. Gartenpflege bleibt eine Halteaufgabe. Wasser, Funken, wachsende Blumen, eine bewegte Angel und Mauz' Jubel zeigen den Fortschritt.
 
 `npm run test:touch` prueft Joystick, mehrere Finger, Loslassen, Pause und Geschicklichkeitseingaben in einem Touch-Browser in Hoch- und Querformat.
+
+## Minikarte, Uhrzeit und Schlafen
+
+Die kleine Karte rechts zeigt die Umgebung, Mauz' Blickrichtung und das aktuelle Ziel. Ziele ausserhalb des Ausschnitts erscheinen am Kartenrand. Antippen oeffnet die grosse Inselkarte. Im Haus zeigt sie stattdessen den Grundriss mit Bett und Ausgang.
+
+Unter der Minikarte stehen Uhrzeit und Tag. Ein kompletter Spieltag dauert 20 echte Minuten. In Menues und Pausen bleibt die Zeit stehen; Uhrzeit und Tagesnummer werden lokal gespeichert. Zwischen 18:00 und 21:00 wird es allmaehlich dunkel, zwischen 05:00 und 08:00 wieder hell. Die Strassenlaternen leuchten in der Daemmerung und nachts.
+
+In jedem gekauften Haus steht ein Bett im Schlafzimmer. Daneben treten und E druecken oder die Schlaf-Aktion antippen. Schlafen ist von 20:00 bis vor 06:00 moeglich; Mauz wacht um 07:00 auf. Eine kurze Schlafblende zeigt den Zeitsprung. Guthaben, Hausbesitz und Jobs bleiben erhalten.

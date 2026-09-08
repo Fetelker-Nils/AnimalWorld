@@ -9,7 +9,7 @@ const context=new Proxy({}, {get:(_,key)=>key==='measureText'?()=>({width:50}):k
 const nodes={};
 const sandbox={createIndoorRenderer:()=>({surface:{},render(){}}),Math,innerWidth:1280,innerHeight:850,devicePixelRatio:1,requestAnimationFrame(){},location:{hash:''},window:{localStorage:storage,addEventListener(){}},document:{querySelector(id){return nodes[id]||={hidden:true,focus(){},getContext:()=>context,addEventListener(){}};},querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
-for(const file of ['world.js','delivery.js','activities.js','vehicles.js','sound.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
+for(const file of ['world.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
 vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
 const {mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles}=sandbox.probe;
 // Regression: nearby walls remain visible even with an offscreen/behind-camera centre.
