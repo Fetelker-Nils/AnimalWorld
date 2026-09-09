@@ -25,3 +25,13 @@ assert(coarse.length<mesh.length*.6,'Distant animals use substantially fewer pol
 const references=mesh.flatMap(f=>f.points),unique=new Set(references);
 assert(unique.size<references.length*.6,'Faces share vertices instead of allocating duplicates');
 console.log('PASS bounded mesh detail and shared geometry vertices');
+
+for(const kind of ['tree','lamp','stone','ball','flower','grass','fruit','rod']){
+  const faces=c.sceneryMesh(kind,{x:0,y:0},0),points=faces.flatMap(f=>f.points);
+  assert(points.every(p=>p.every(Number.isFinite)));
+  for(let axis=0;axis<3;axis++)assert(Math.max(...points.map(p=>p[axis]))-Math.min(...points.map(p=>p[axis]))>.01,kind+' has volume in every axis');
+}
+const upright=c.sceneryMesh('tree',{x:0,y:0},0),fallen=c.sceneryMesh('tree',{x:0,y:0},0,{tilt:Math.PI/2});
+assert(Math.max(...fallen.flatMap(f=>f.points.map(p=>p[2])))<Math.max(...upright.flatMap(f=>f.points.map(p=>p[2])))/2,'Whole tree rotates when falling');
+assert(c.sceneryMesh('tree',{x:0,y:0},0,{detail:false}).length<upright.length,'Distant scenery reduces geometry');
+console.log('PASS scenery: volumetric world props, finite vertices, complete falling models and distance detail');

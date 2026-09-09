@@ -27,7 +27,7 @@ const {createServer}=require('./browser.cjs');
     await a.evaluate(()=>{if(window.__animalTest.state().mode==='pause')document.querySelector('#resume').click();window.__animalTest.visit(36,-72);});
     await a.click('#interact');
     assert.equal((await a.evaluate(()=>window.__animalTest.state())).interior,'hospital',JSON.stringify(errors));
-    await a.waitForFunction(()=>window.__animalTest.state().depthRenderer);
+    await a.waitForFunction(()=>window.__animalTest.state().depthRenderer).catch(async e=>{console.error('Interior diagnostics',errors,await a.evaluate(()=>({mode:window.__animalTest.state().mode,frames:window.__animalTest.state().renderedFrames})));throw e;});
     await a.evaluate(()=>{window.__animalTest.visit(0,10);document.querySelector('#interact').click();});
     assert(!(await a.evaluate(()=>window.__animalTest.state())).depthRenderer,'Release interior GPU resources');
     assert.deepEqual(errors,[]);console.log('PASS '+engine.name()+': two online clients, all 10 booths, all 3 car models, entering/driving/exiting, live remote cars, bounded graphics memory and interior cleanup');

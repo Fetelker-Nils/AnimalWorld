@@ -1,3 +1,43 @@
+// Cached world geometry: every face has world-space vertices, never billboard sprites.
+const sceneryTemplates=new Map();
+function sceneryMesh(kind,item,ground=0,options={}){
+  const detail=options.detail===false?4:7,key=kind+':'+detail+':'+(item.color||'')+':'+!!options.lit;
+  let template=sceneryTemplates.get(key);
+  if(!template){
+    template=[];
+    function face(points,color,shade=1){template.push({points,color:'#'+[1,3,5].map(i=>Math.min(255,Math.round(parseInt(color.slice(i,i+2),16)*shade)).toString(16).padStart(2,'0')).join('')});}
+    function cuboid(x,y,z,w,d,h,color){
+      const v=[[-1,-1,0],[1,-1,0],[1,1,0],[-1,1,0],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]].map(p=>[x+p[0]*w/2,y+p[1]*d/2,z+p[2]*h]);
+      [[0,3,2,1],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]].forEach((f,i)=>face(f.map(j=>v[j]),color,[.7,.85,.7,.8,.95,1][i]));
+    }
+    function ball(x,y,z,rx,ry,rz,color,n=detail){
+      const m=3,v=Array.from({length:m+1},(_,j)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+Math.cos(a)*Math.sin(b)*rx,y+Math.sin(a)*Math.sin(b)*ry,z+Math.cos(b)*rz];}));
+      for(let j=0;j<m;j++)for(let i=0;i<n;i++)face([v[j][i],v[j][(i+1)%n],v[j+1][(i+1)%n],v[j+1][i]],color,.72+.19*(1-j/m)+.09*Math.cos(i/n*Math.PI*2));
+    }
+    if(kind==='tree'){
+      cuboid(0,0,0,.34,.34,2.3,'#987551');cuboid(.3,0,1.5,.7,.18,.2,'#987551');
+      ball(0,0,2.7,1.05,.95,1.25,'#759c50');
+      if(detail>4){ball(-.65,.2,2.35,.65,.7,.8,'#648c46');ball(.55,-.2,2.65,.65,.75,.9,'#83a957');}
+    }else if(kind==='lamp'){
+      cuboid(0,0,0,.42,.42,.25,'#75817e');cuboid(0,0,.25,.16,.16,4.3,'#59686c');
+      cuboid(.24,0,4.4,.65,.16,.16,'#59686c');cuboid(.48,0,4.35,.6,.46,.12,'#59686c');
+      cuboid(.48,0,4.47,.42,.32,.4,options.lit?'#ffe9a3':'#b7ccc7');cuboid(.48,0,4.87,.65,.5,.13,'#59686c');
+      for(const x of [.28,.68])for(const y of [-.16,.16])cuboid(x,y,4.47,.04,.04,.4,'#59686c');
+    }else if(kind==='stone')ball(0,0,.23,.5,.4,.35,'#a6ac91',5);
+    else if(kind==='ball'||kind==='fruit')ball(0,0,.4,.4,.4,.4,item.color||'#cf7760');
+    else if(kind==='flower'){
+      cuboid(0,0,0,.035,.035,.4,'#628b43');ball(0,0,.43,.13,.13,.075,item.color||'#f6e4a0',5);
+    }else if(kind==='grass'){
+      for(let i=0;i<3;i++){const a=i*Math.PI*2/3,dx=Math.cos(a),dy=Math.sin(a);face([[-dy*.06,dx*.06,0],[dy*.06,-dx*.06,0],[dx*.12,dy*.12,.23+i*.04]],'#83aa57',.85+i*.06);}
+    }else if(kind==='rod'){
+      cuboid(0,0,0,.055,.055,1.7,'#86684b');cuboid(.35,0,1.67,.75,.04,.04,'#86684b');
+    }
+    sceneryTemplates.set(key,template);
+  }
+  const size=item.size||1,heading=item.heading||0,c=Math.cos(heading),s=Math.sin(heading),tilt=options.tilt||0,ct=Math.cos(tilt),st=Math.sin(tilt),vertices=new Map();
+  return template.map(f=>({color:f.color,points:f.points.map(p=>{if(!vertices.has(p)){const x=p[0]*ct+p[2]*st,y=p[1],z=-p[0]*st+p[2]*ct;vertices.set(p,[item.x+(c*x-s*y)*size,item.y+(s*x+c*y)*size,ground+z*size]);}return vertices.get(p);})}));
+}
+
 // Real, oriented 3D geometry shared by players, pedestrians and shopkeepers.
 function animalMesh(actor, outfit, ground=0, time=0, detail=1){
   const faces=[],kind=actor.species||'cat',fur=kind==='bear'?'#a77e59':kind==='rabbit'?'#c7b8a4':kind==='fox'?'#d68d4b':'#e7ab60';

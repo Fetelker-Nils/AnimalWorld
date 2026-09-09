@@ -173,3 +173,9 @@ Online neben ein angehaltenes Auto eines anderen Spielers treten und F oder den 
 Das Meer am Inselrand ist zu Fuss betretbar. Im Wasser wird die verbleibende Luft angezeigt. Nach zehn Sekunden wird die Figur an ihren sicheren Startpunkt zurueckgesetzt. Rechtzeitig an Land gehen fuellt die Luft wieder auf. Autos bleiben an Land.
 
 `npm run test:adventure` prueft Auswahl, Speicherung, Meer und Mitfahren mit zwei echten Online-Verbindungen. `npm test` prueft ausserdem die serverseitige Schlafabstimmung und Sitzplatzvergabe.
+
+## Raeumliche Weltobjekte
+
+Baeume mit Stamm und Baumkrone, vollstaendige Strassenlaternen, Steine, Baelle, Blumen, Grasbueschel, Obst und Angelruten bestehen aus Weltkoordinaten und perspektivisch gezeichneten Polygonen. Auch kleine Feuer- und Unfallpartikel sind raeumlich. Haeuser, Fahrzeuge und Inneneinrichtung behalten ihre bestehende 3D-Geometrie. Karten, Namensschilder und Bedienanzeigen bleiben lesbare Overlays.
+
+Beim Umfallen wird das komplette Baum- oder Laternenmodell um seine Basis gedreht. Laternen besitzen ein Gehaeuse und einen nachts hellen Leuchtkoerper. Geometrievorlagen werden wiederverwendet; entfernte Baeume erhalten weniger Flaechen. Die bestehenden Kollisions- und Wiederherstellungsregeln bleiben erhalten.
