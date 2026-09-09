@@ -19,8 +19,18 @@ const {createServer}=require('./browser.cjs');
     await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>p.y===-8));
     const [as,bs]=await Promise.all([a.evaluate(()=>window.__animalTest.state()),b.evaluate(()=>window.__animalTest.state())]);
     assert(Math.abs(as.minutes-bs.minutes)<2,'Shared clock');
+    await a.waitForFunction(()=>window.__animalTest.state().traffic[0].speed>0);
+    const trafficA=await a.evaluate(()=>window.__animalTest.state().traffic),trafficB=await b.evaluate(()=>window.__animalTest.state().traffic);
+    assert.equal(trafficA.length,8);assert.equal(trafficB.length,8);
+    assert(Math.hypot(trafficA[0].x-trafficB[0].x,trafficA[0].y-trafficB[0].y)<3,'Shared server traffic');
     await a.click('#wave');await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>Date.now()-p.wave<2500));
     await b.screenshot({path:'test-results/online-two-players.png'});
+    await a.evaluate(()=>window.__animalTest.visit(10,-5));await a.click('#interact');await a.click('[data-car="roadster"]');
+    assert(await a.evaluate(()=>window.__animalTest.crashSetup('lamp',0)));await a.waitForTimeout(500);
+    await a.evaluate(()=>window.__animalTest.crashSetup('lamp',100));await a.keyboard.down('w');
+    await a.waitForFunction(()=>!window.__animalTest.state().driving);await a.keyboard.up('w');
+    await b.waitForFunction(()=>window.__animalTest.state().fallen.some(f=>f.kind==='lamp'));
+    await b.waitForFunction(()=>window.__animalTest.state().fallen.length===0,null,{timeout:10000});
     for(const p of [a,b]){
       await p.evaluate(()=>{window.__animalTest.visit(-18,-18);document.querySelector('#interact').click();window.__animalTest.visit(0,1);});
     }
@@ -37,6 +47,6 @@ const {createServer}=require('./browser.cjs');
     await b.waitForFunction(()=>!document.querySelector('#play-online').disabled,null,{timeout:20000});
     await b.click('#play');assert.equal((await b.evaluate(()=>window.__animalTest.state())).online,false);
     assert.deepEqual(errors,[]);
-    console.log('PASS real server: two independent browsers, positions, shared clock, wave, public interior, disconnect and offline fallback');
+    console.log('PASS real server: two independent browsers, positions, shared clock, wave, public interior, shared NPC traffic, shared crash/respawn, disconnect and offline fallback');
   }finally{await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

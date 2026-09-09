@@ -16,7 +16,7 @@ function createIndoorRenderer(){
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   const textured=gl.getUniformLocation(program,'textured');
-  return {surface,render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth,extras=[]}){
+  return {surface,render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth,extras=[],mesh=[]}){
     if(surface.width!==sprite.width||surface.height!==sprite.height){surface.width=sprite.width;surface.height=sprite.height;}
     gl.viewport(0,0,surface.width,surface.height);gl.clearColor(.87,.86,.81,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.BLEND);gl.uniform1i(textured,0);
@@ -30,6 +30,7 @@ function createIndoorRenderer(){
       for(let i=0;i<4;i++){const a=c[i],e=c[(i+1)%4];quad([[...a,0],[...e,0],[...e,h],[...a,h]],b.color,i%2?.9:.97);}
       quad(c.map(p=>[...p,h]),b.top||b.color);
     }
+    for(const f of mesh){const rgb=[1,3,5].map(i=>parseInt(f.color.slice(i,i+2),16)/255);for(let i=1;i<f.points.length-1;i++)for(const v of [f.points[0],f.points[i],f.points[i+1]]){const p=point(...v);vertices.push(2*scale/width*p.u+(2*cx/width-1)*p.depth,2*scale/height*p.v+(1-2*cy/height)*p.depth,A*p.depth+B,p.depth,...rgb,0,0);}}
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,vertices.length/9);
     gl.uniform1i(textured,1);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     for(const layer of [{depth:catDepth},...extras]){

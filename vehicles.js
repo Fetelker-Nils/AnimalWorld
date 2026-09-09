@@ -3,7 +3,7 @@ const VehicleModels=[
   {id:'roadster',name:'Roadster',color:'#d48163',top:'#efb18e',speed:38,acceleration:19,steer:1.65,width:2.2,length:4.3,slope:.3,description:'Das schnellste Auto auf der Strasse'},
   {id:'pickup',name:'Pickup',color:'#88a05e',top:'#b1bc7b',speed:23,acceleration:12,steer:1.8,width:2.5,length:4.8,slope:.85,description:'Robust und auch auf sanften Hängen fahrbar'}
 ];
-function createVehicles(world,walkable){
+function createVehicles(world,walkable,onImpact=()=>{}){
   let car=null,driving=false;
   function clearAt(x,y,heading,model){
     const z=world.heightAt(x,y);
@@ -48,7 +48,16 @@ function createVehicles(world,walkable){
     const count=Math.max(1,Math.ceil(Math.abs(car.speed)*dt/.18));
     for(let i=0;i<count;i++){
       const x=car.x+Math.cos(car.heading)*car.speed*dt/count,y=car.y+Math.sin(car.heading)*car.speed*dt/count;
-      if(!clearAt(x,y,car.heading,m)){car.speed=0;break;}
+      if(!clearAt(x,y,car.heading,m)){
+        const impact={x,y,heading:car.heading,speed:Math.abs(car.speed),model:m,carX:car.x,carY:car.y};
+        car.speed=0;
+        if(impact.speed*3.6>70){
+          // Return the driver to the last safe centre before removing the vehicle.
+          player.x=car.x;player.y=car.y;player.jump=0;player.vz=0;driving=false;car=null;
+          onImpact(impact);return;
+        }
+        onImpact(impact);break;
+      }
       car.x=x;car.y=y;
     }
     player.x=car.x;player.y=car.y;player.heading=car.heading;player.moving=false;

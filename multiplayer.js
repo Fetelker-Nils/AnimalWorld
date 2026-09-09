@@ -1,4 +1,4 @@
-function createMultiplayer(onStatus, onClock) {
+function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}) {
   const endpoint='wss://animal-world-online.animal-world-mauz.workers.dev/play';
   let socket=null,id=null,status='offline',timer=null,timeout=null,lastState=null,wave=false,generation=0;
   const players=new Map();
@@ -25,9 +25,11 @@ function createMultiplayer(onStatus, onClock) {
           }report('online');}
         else if(data.type==='leave'){players.delete(data.id);report('online');}
         else if(data.type==='clock')onClock(data.minutes);
+        else if(data.type==='world')onWorld(data.state);
+        else if(data.type==='crash')onCrash(data.impact);
       };
       socket.onerror=()=>{socket.close();fail();};socket.onclose=fail;
     });
   }
-  return {connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
+  return {crash(impact){if(socket?.readyState===1)socket.send(JSON.stringify({type:'crash',x:impact.x,y:impact.y,heading:impact.heading,speed:impact.speed,model:impact.model.id}));},connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
 }

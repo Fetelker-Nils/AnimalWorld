@@ -44,6 +44,7 @@
 <h2 id="pause-title">Pause</h2>
 <p class="instructions"><strong>W / S</strong> Laufen / Gas und rückwärts<br><strong>A / D</strong> Drehen / Lenken<br><strong>Shift</strong> Rennen<br><strong>Leertaste</strong> Hüpfen / Bremsen<br><strong>E</strong> Interagieren (bei Pflege/Reparatur halten)<br><strong>F</strong> Einsteigen / angehalten aussteigen<br><strong>M</strong> Inselkarte</p>
 <p class="touch-instructions">Links am Joystick ziehen: laufen oder lenken. Rechts: Rennen halten, springen oder bremsen. Am Ziel die Aktion antippen oder halten. Bei der Geschicklichkeitsanzeige loslassen und im grünen Bereich erneut tippen.</p>
+<button id="view-toggle">Kamera vorne / hinten (V)</button>
 <button id="resume" class="primary">Weiterspielen</button>
 <button id="back" class="secondary">Zum Startbildschirm</button>
 <div class="audio-settings"><button id="mute-audio" class="secondary">Ton ausschalten</button><label>Musik <input id="music-volume" type="range" min="0" max="100" value="30"></label><label>Geräusche <input id="effects-volume" type="range" min="0" max="100" value="55"></label></div>
@@ -73,6 +74,7 @@
 <section id="service-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="service-title" hidden>
 <div class="pause-card"><p class="eyebrow">STADTLEBEN</p><h2 id="service-title"></h2><p id="service-balance"></p><div id="service-options" class="service-options"></div><p id="service-message" role="status"></p><button id="service-close">Zurück ins Spiel</button></div></section>
 <script src="multiplayer.js"></script><script src="city-services.js"></script>
+<script src="animal-mesh.js"></script><script src="city-life.js"></script><script src="collisions.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

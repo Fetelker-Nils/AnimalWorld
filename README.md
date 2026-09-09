@@ -145,3 +145,14 @@ Serverquellcode: `multiplayer-worker.mjs`; reproduzierbare Deployment-Konfigurat
 Neue Stadtauftraege beginnen **am Empfang im Gebaeude**. Erst alle Aufgaben erledigen, dann zum Empfang zurueckkehren und den Lohn abholen. Restaurant- und Krankenhausboni laufen nur waehrend des Spielens und enden beim Neuladen.
 
 Zusaetzliche Tests: `node scripts/test-city.cjs` prueft Wirtschaft und alle drei Auftraege; `node scripts/test-city-ui.cjs` prueft die Angebote per Touch gegen den fertigen Build. `npm run test:online` verbindet zwei getrennte Browserprofile mit dem echten Server und prueft Positionen, Uhr, Winken, oeffentliche Innenraeume und Trennung. Der Online-Test benoetigt Internet.
+
+
+## Tiere, Stadtverkehr und Unfaelle
+
+Mauz ist ein echtes, drehbares 3D-Modell mit Augen, Nase, Schnauze, Ohren, Pfoten und animiertem Schwanz. Mit **V** oder dem Kameraknopf im Pausenmenue zwischen Vorder- und Rueckansicht wechseln. Kleider bleiben sichtbar. Auch Empfangspersonal, Taxigast, Autofahrer und Schaufensterpuppen sind Tiere.
+
+24 Katzen, Hasen, Baeren und Fuechse laufen auf Gehweg-Rundwegen durch die Stadt, halten Abstand zu Mauz und anderen Passanten und machen Pausen. Acht NPC-Autos fahren auf versetzten Fahrspuren, bremsen vor Hindernissen und warten auf Fahrzeuge mit Vorrang an Engstellen. Das ist regelbasierte Wegfuehrung und Hindernisvermeidung; noch keine freie Stadt-KI oder Verkehrsampel-Simulation. Im Online-Modus berechnet der gemeinsame Server die NPC-Positionen fuer alle Spieler.
+
+Prallt dein Auto mit **mehr als 70 km/h** gegen ein Hindernis, explodiert es mit Partikeln und Sound. Mauz bleibt unverletzt am letzten sicheren Ort; ein neues Auto gibt es kostenlos an Telefonzellen. Langsamere Kollisionen stoppen das Auto. Bei schnellen Treffern kippen getroffene Baeume und Strassenlaternen in Fahrtrichtung, blockieren nicht mehr und erscheinen nach **fuenf Spielsekunden** wieder. Gefallene Laternen leuchten nicht. Online werden diese Unfaelle an Mitspieler uebertragen; dort laeuft die Wiederherstellung auch bei offenem Menue weiter.
+
+`npm run test:animals` prueft 3D-Ansichten, tierische Innenraeume und echte Fahrzeugkollisionen samt Wiederherstellung im Browser. Die Verkehrstests in `npm test` pruefen begehbare Routen, Fortschritt, Anhalten, die strikte 70-km/h-Grenze und sichere Fahrerpositionen.

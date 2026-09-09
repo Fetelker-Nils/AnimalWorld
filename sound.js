@@ -54,6 +54,8 @@ function createSound(storage){
     if(type==='reward'){for(const [i,f] of [523.25,659.25,783.99,1046.5].entries())tone(f,t+i*.08,.28,.12,'triangle');}
     else if(type==='phone'){for(let i=0;i<4;i++)tone(i%2?880:660,t+i*.12,.1,.09,'sine');}
     else if(type==='jump')tone(200,t,.18,.1,'sine',fx,520);
+    else if(type==='explosion'){noise(.8,.5,450);tone(110,t,.65,.24,'sawtooth',fx,25);}
+    else if(type==='crash'){noise(.15,.2,650);}
     else if(type==='car')tone(85,t,.3,.1,'triangle',fx,130);
     else if(type==='collect'){noise(.12,.09,1500);tone(640,t,.12,.08);}
     else tone(440,t,.08,.07,'sine',fx,580);
