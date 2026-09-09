@@ -26,5 +26,10 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   await world.webSocketMessage(passenger.ws,JSON.stringify({type:'state',x:99,y:99,heading:0,jump:0,room:'world',name:' Lilo ',species:'fox'}));assert.equal(passenger.p.x,10,'Passenger follows owner');assert.equal(passenger.p.name,'Lilo');assert.equal(passenger.p.species,'fox');
   a.p.vehicle.speed=0;await world.webSocketMessage(passenger.ws,JSON.stringify({type:'ride',owner:null}));assert.equal(passenger.p.riding,null);
   Object.assign(passenger.p,{x:10,y:0});await world.webSocketMessage(passenger.ws,JSON.stringify({type:'ride',owner:'a'}));await world.remove(a.ws);assert.equal(passenger.p.riding,null,'Owner disconnect frees passenger');
+  const pilot=add('pilot','world');now+=200;
+  const state={type:'state',x:900,y:155,heading:0,jump:0,room:'world',car:'helicopter',vehicle:{model:'helicopter',x:900,y:155,z:60,heading:0,speed:20}};
+  await world.webSocketMessage(pilot.ws,JSON.stringify(state));assert.equal(pilot.p.vehicle.z,60);assert.equal(pilot.p.x,900);
+  now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,x:1301}));assert.equal(pilot.p.x,900,'Server enforces world border');
+  now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,vehicle:{...state.vehicle,z:999}}));assert.equal(pilot.p.vehicle.z,60,'Server rejects invalid altitude');
   console.log('PASS shared server: all-player sleep vote, morning, cancellation/disconnect, saved clock offset, seat arbitration, safe exit, passenger movement and profiles');
 })().catch(e=>{console.error(e);process.exitCode=1;});

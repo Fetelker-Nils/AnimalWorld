@@ -40,6 +40,15 @@ const {createServer}=require('./browser.cjs');
     assert(await page.locator('#minimap').isVisible());await page.locator('#mini-open').tap();assert(await page.locator('#map-screen').isVisible());await page.locator('#map-close').tap();
     await page.evaluate(()=>{window.__animalTest.visit(-18,-18);});await page.locator('#interact').tap();await page.evaluate(()=>window.__animalTest.visit(0,-3));await page.locator('#interact').tap();
     assert(await page.locator('#clothes-screen').isVisible(),JSON.stringify(await page.evaluate(()=>({...window.__animalTest.state(),prompt:document.querySelector('#interact').textContent,toast:document.querySelector('#toast').textContent}))));assert(await page.locator('[data-outfit="street"]').isDisabled());await page.screenshot({path:path.resolve(__dirname,'../test-results/clothes-touch.png')});await page.locator('#clothes-close').tap();
+    await page.evaluate(()=>{window.__animalTest.visit(0,10);document.querySelector('#interact').click();window.__animalTest.visit(225,220);document.querySelector('#interact').click();});await page.locator('[data-car="helicopter"]').tap();
+    await page.evaluate(()=>{const c=window.__animalTest.state().carPosition;window.__animalTest.visit(c.x,c.y);});await page.locator('#vehicle-action').tap();
+    for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+      await page.setViewportSize(viewport);const up=await page.locator('[data-key="q"]').boundingBox();assert(up&&up.x>=0&&up.y>=0&&up.x+up.width<=viewport.width);
+      const before=(await page.evaluate(()=>window.__animalTest.state())).carPosition.z;
+      await touch('touchStart',[{id:6,x:up.x+up.width/2,y:up.y+up.height/2}]);await page.evaluate(()=>window.__animalTest.advance(.5));await touch('touchEnd',[]);
+      assert((await page.evaluate(()=>window.__animalTest.state())).carPosition.z>before+3,'Touch takeoff');
+    }
+    await page.screenshot({path:path.resolve(__dirname,'../test-results/touch-flight.png')});
     assert.deepEqual(errors,[]);console.log('PASS touch: analog joystick, multitouch, release, pause reset, timing job by touch and both orientations');
   } finally {if(browser)await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

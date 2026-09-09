@@ -1,4 +1,5 @@
 function createCityLife(world, models){
+  models=models.filter(m=>!m.kind);
   const cars=[],walkers=[];
   // Pavement circuits around city blocks. Lane offsets keep opposing cars apart.
   const blocks=[[-45,-27,-34,-70],[-27,0,-34,-88],[0,27,-34,-88],[27,45,-52,-106],[-45,-27,-121,-175],[0,27,-139,-193],[-27,0,-271,-325],[0,27,-289,-343]];

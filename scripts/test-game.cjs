@@ -26,7 +26,7 @@ assert((Island.radius/240)**2>=5,'At least five times the playable area');
 assert.equal(Island.buildings.filter(b=>b.city).length,56);
 assert.equal(Island.heightAt(Island.mountain.x,Island.mountain.y),38);
 assert(!walkable(Island.pond.x,Island.pond.y));
-assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(600,0));
+assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(1301,0));
 for(const building of Island.buildings)assert(!walkable(building.x,building.y));
 function finishTiming(){
   const before=activities.done.size;
@@ -116,7 +116,7 @@ assert.equal(job.coins,beforeTaxi+260);assert(!activities.active);
 assert.equal(sandbox.createDeliveryJob(storage,Island).coins,660,'All five job earnings share a saved wallet');
 
 // Every model can be called at every booth without materialising inside obstacles.
-for(const booth of Island.booths)for(const id of ['compact','roadster','pickup']){
+for(const booth of Island.booths.filter(b=>!b.kind))for(const id of ['compact','roadster','pickup']){
   mauz.x=booth.x;mauz.y=booth.y+2;
   assert(vehicles.spawn(id,booth,mauz),`${id} cannot spawn at ${booth.name}`);
   assert(vehicles.clearAt(vehicles.car.x,vehicles.car.y,vehicles.car.heading,vehicles.car.model));

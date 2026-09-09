@@ -179,3 +179,15 @@ Das Meer am Inselrand ist zu Fuss betretbar. Im Wasser wird die verbleibende Luf
 Baeume mit Stamm und Baumkrone, vollstaendige Strassenlaternen, Steine, Baelle, Blumen, Grasbueschel, Obst und Angelruten bestehen aus Weltkoordinaten und perspektivisch gezeichneten Polygonen. Auch kleine Feuer- und Unfallpartikel sind raeumlich. Haeuser, Fahrzeuge und Inneneinrichtung behalten ihre bestehende 3D-Geometrie. Karten, Namensschilder und Bedienanzeigen bleiben lesbare Overlays.
 
 Beim Umfallen wird das komplette Baum- oder Laternenmodell um seine Basis gedreht. Laternen besitzen ein Gehaeuse und einen nachts hellen Leuchtkoerper. Geometrievorlagen werden wiederverwendet; entfernte Baeume erhalten weniger Flaechen. Die bestehenden Kollisions- und Wiederherstellungsregeln bleiben erhalten.
+
+## Flugzeuge, Helikopter, Boote und Perleninsel
+
+An den Flugplatz-Terminals auf der Hauptinsel (225 / 220) und der Perleninsel (918 / 145) stehen Propellerflugzeug und Helikopter bereit. Mit E das Fahrzeug waehlen, hingehen und F einsteigen. W/S: beschleunigen und verlangsamen; A/D: lenken; Q: steigen; R: sinken; Leertaste: bremsen. Auf Touch-Geraeten erscheinen Steigen/Sinken neben den bestehenden Fahrkontrollen. Das Flugzeug braucht zum Abheben mehr als 12 m/s; der Helikopter startet senkrecht und kann schweben. Maximalhoehe: 100 Meter. Zum Aussteigen anhalten und auf freiem Land landen.
+
+Motorboote erscheinen an den Bootsstegen im Osten der Hauptinsel (550 / 0) und auf der Perleninsel (655 / 0). Auf den Steg gehen, mit F einsteigen und Richtung andere Insel fahren. Boote bleiben auf dem Meer, stoppen an Land und schuetzen ihre Insassen vor dem Ertrinken. Zum Aussteigen langsam an einen Steg heranfahren und anhalten.
+
+Die Perleninsel liegt oestlich bei 900 / 0. Ihre Flaeche betraegt ein Fuenftel der Hauptinsel. Dort stehen 20 kaufbare, begehbare Perlenvillen ab 2400 Muenzen; ausserdem gibt es Strassen, einen Flugplatz, Bootssteg und eine Fahrzeug-Telefonzelle. Hausbesitz wird wie bisher gespeichert.
+
+Die Weltgrenze liegt bei 1300 Metern Abstand vom Mittelpunkt der Hauptinsel. Ein violettes Gitter markiert sie in der Welt, eine gestrichelte Linie auf den Karten. Zu Fuss und mit Fahrzeugen kann sie nicht ueberschritten werden. Beide Inseln sind auf der Gesamtkarte sichtbar; zum Lesen kleiner Ortsnamen hineinzoomen.
+
+Die neuen Fahrzeuge und ihre Flughoehe werden online uebertragen. `npm run test:navigation` prueft Starten, Landen, Bootsfahrt, Anlegen, Villenkauf und die Synchronisierung aller drei Fahrzeuge mit einem zweiten Browser. `npm run test:touch` prueft auch die Flugtasten in beiden Bildschirmausrichtungen.

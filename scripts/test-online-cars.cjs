@@ -9,7 +9,7 @@ const {createServer}=require('./browser.cjs');
     const a=await browser.newPage({viewport:{width:2560,height:1440},deviceScaleFactor:2}),b=await browser.newPage();
     const errors=[];for(const page of [a,b]){page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>errors.push('Renderer process crashed'));
       await page.goto('http://127.0.0.1:'+server.address().port+'/#smoke-test');await page.click('#play-online');await page.waitForFunction(()=>window.__animalTest.state().network==='online',null,{timeout:20000});}
-    const booths=await a.evaluate(()=>Island.booths);
+    const booths=await a.evaluate(()=>Island.booths.filter(b=>!b.kind));
     for(const [i,booth] of booths.entries()){
       const model=['compact','roadster','pickup'][i%3];
       await a.evaluate(b=>{window.__animalTest.visit(b.x,b.y);document.querySelector('#interact').click();},booth);

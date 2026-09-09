@@ -1,5 +1,12 @@
 const Island = (() => {
-  const radius=560;
+  const radius=560,border=1300;
+  const luxury={x:900,y:0,radius:radius/Math.sqrt(5),name:'Perleninsel'};
+  const docks=[{x:559,y:0,w:28,d:6},{x:645,y:0,w:28,d:6}];
+  const airfields=[{x:210,y:230,w:32,d:110},{x:900,y:155,w:32,d:100}];
+  const inDock=(x,y)=>docks.some(d=>Math.abs(x-d.x)<d.w/2&&Math.abs(y-d.y)<d.d/2);
+  const inSea=(x,y)=>Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&!inDock(x,y);
+  const inBounds=(x,y)=>Math.hypot(x,y)<border;
+
   const buildings=[];
   const palette=['#e9d3af','#bfd7de','#d0d9bd','#e2c5bb','#d0ccdf'];
   for(const [row,y] of [-25,-43,-61,-79,-97].entries()) {
@@ -29,6 +36,11 @@ const Island = (() => {
   ]){
     const building={...h,homeId:h.id};buildings.push(building);
     homes.push({id:h.id,name:h.name,price:h.price,x:h.x,y:h.y+h.d/2+2,building});
+  }
+  for(let row=0;row<4;row++)for(let col=0;col<5;col++){
+    const x=760+col*65,y=-150+row*65,id='luxury-'+row+'-'+col;
+    const building={x,y,w:22,d:16,h:8+(col%2)*2,color:palette[(row+col)%5],roof:'#e7dfcd',homeId:id,luxury:true};
+    buildings.push(building);homes.push({id,name:'Perlenvilla '+(row*5+col+1),price:2400+row*400+col*250,x,y:y+10,building});
   }
   const outfits=[
     {id:'street',name:'Rotes T-Shirt',price:70,color:'#c7685a',trim:'#efd7a1'},
@@ -79,6 +91,8 @@ const Island = (() => {
     {x:-350,y:-5,w:3,d:38},{x:16,y:352,w:42,d:5},{x:-85,y:36,w:3,d:44});
   for(const x of [-45,-27,27,45])roads.push({x,y:-310,w:6,d:108});
   for(const y of [-271,-289,-307,-325,-343,-361])roads.push({x:0,y,w:98,d:6});
+  for(const y of [-130,-65,0,65])roads.push({x:900,y,w:340,d:6});
+  roads.push({x:710,y:35,w:6,d:70},{x:800,y:100,w:200,d:6},{x:550,y:8,w:30,d:6},{x:535,y:14,w:70,d:8},{x:655,y:8,w:20,d:6},{x:680,y:0,w:65,d:6},{x:900,y:130,w:6,d:60},{x:210,y:190,w:6,d:50});
   const booths=[
     {x:10,y:-5,sx:10,sy:1,name:'Startplatz'},
     {x:7,y:-106,sx:0,sy:-106,name:'Nordstadt'},
@@ -91,6 +105,7 @@ const Island = (() => {
     {x:7,y:-271,sx:0,sy:-271,name:'Neue Nordstadt'},
     {x:7,y:325,sx:0,sy:325,name:'Südviertel'}
   ];
+  booths.push({x:550,y:0,sx:563,sy:6,name:'Bootssteg Ost',kind:'boat'}, {x:655,y:0,sx:645,sy:6,name:'Perleninsel Hafen',kind:'boat'}, {x:225,y:220,sx:210,sy:230,name:'Flugplatz Hauptinsel',kind:'air'}, {x:918,y:145,sx:900,sy:155,name:'Perleninsel Flugplatz',kind:'air'}, {x:720,y:68,sx:720,sy:60,name:'Perleninsel Fahrzeuge'});
   const jobs=[
     {id:'clean',name:'Strassenreinigung',x:-6,y:20,reward:70,action:'Abfall sammeln',kind:'collect',points:[{x:-6,y:31},{x:6,y:44},{x:-7,y:68},{x:7,y:86},{x:-6,y:102}]},
     {id:'garden',name:'Gartenpflege',x:-150,y:8,reward:85,action:'Giessen',kind:'hold',seconds:1.5,points:[{x:-162,y:4},{x:-150,y:-4},{x:-138,y:4}]},
@@ -106,7 +121,7 @@ const Island = (() => {
   const heightAt=(x,y)=>mountain.height*Math.max(0,1-Math.max(0,Math.hypot(x-mountain.x,y-mountain.y)-4)/(mountain.radius-4));
   const inPond=(x,y,pad=0)=>((x-pond.x)/(pond.rx+pad))**2+((y-pond.y)/(pond.ry+pad))**2<1;
   const onRoad=(x,y,pad=1)=>roads.some(r=>Math.abs(x-r.x)<r.w/2+pad&&Math.abs(y-r.y)<r.d/2+pad);
-  const blocked=(x,y)=>Math.hypot(x,y)>radius-1||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
+  const blocked=(x,y)=>(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
   const lamps=[];
   for(const road of roads){
     const vertical=road.d>road.w,length=vertical?road.d:road.w,edge=(vertical?road.w:road.d)/2+1.2;
@@ -118,6 +133,6 @@ const Island = (() => {
       lamps.push({x,y});
     }
   }
-  const reserved=(x,y)=>lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {inSea:(x,y)=>Math.hypot(x,y)>radius-1,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  const reserved=(x,y)=>airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  return {inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();

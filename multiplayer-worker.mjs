@@ -4,6 +4,7 @@ import { DurableObject } from 'cloudflare:workers';
 // One public island, including its public interiors. No accounts or chat data.
 const rooms = new Set(['world','clothes','restaurant','hospital','police','fire','bank','market']);
 const outfits = new Set(['street','ocean','ranger','sunny','police','fire','medic']);
+const terrain=(x,y)=>38*Math.max(0,1-Math.max(0,Math.hypot(x-88,y+40)-4)/30);
 const clock = () => 540 + (Date.now() - Date.UTC(2026,8,8)) / 1000 * 1.2;
 export default {
   async fetch(request, env) {
@@ -72,11 +73,11 @@ export class World extends DurableObject {
       p.sleeping=data.sleeping===true;ws.serializeAttachment(p);await this.checkSleep();return;
     }
     if(data.type==='ride'){
-      if(data.owner===null){const car=this.vehicle(p.riding);if(car&&Math.abs(car.speed)>.6){this.send(ws,{type:'notice',message:'Zum Aussteigen muss das Auto anhalten.'});return;}
+      if(data.owner===null){const car=this.vehicle(p.riding);if(car&&(Math.abs(car.speed)>.6||(car.z||0)>terrain(car.x,car.y)+.3)){this.send(ws,{type:'notice',message:'Zum Aussteigen muss das Auto anhalten.'});return;}
         p.riding=null;ws.serializeAttachment(p);this.send(ws,{type:'ride',owner:null});return;
       }
       const owner=[...this.sessions.values()].find(o=>o.id===data.owner),car=owner?.vehicle;
-      if(!car||owner===p||p.room!=='world'||p.car||p.sleeping||Math.hypot(car.x-p.x,car.y-p.y)>4.5||Math.abs(car.speed)>.6||[...this.sessions.values()].some(o=>o.riding===owner.id)){
+      if(!car||owner===p||p.room!=='world'||p.car||p.sleeping||Math.hypot(car.x-p.x,car.y-p.y)>4.5||Math.abs(car.speed)>.6||(car.z||0)>terrain(car.x,car.y)+.3||[...this.sessions.values()].some(o=>o.riding===owner.id)){
         this.send(ws,{type:'notice',message:'Das Auto muss frei, in deiner Naehe und angehalten sein.'});return;
       }
       p.riding=owner.id;ws.serializeAttachment(p);this.send(ws,{type:'ride',owner:owner.id});return;
@@ -86,14 +87,14 @@ export class World extends DurableObject {
       p.crashed=now;p.impact={x:data.x,y:data.y,heading:data.heading,speed:data.speed,model:p.car,scenery:data.scenery===true,at:now};this.impacts=this.impacts.filter(i=>now-i.at<5000);this.impacts.push(p.impact);ws.serializeAttachment(p);this.broadcast({type:'crash',impact:p.impact},ws);return;
     }
     if(data.type!=='state'||now-p.last<80)return;
-    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||Math.hypot(data.x,data.y)>595||Math.abs(data.heading)>1e6||data.jump<0||data.jump>3)return;
+    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||Math.hypot(data.x,data.y)>=1300||Math.abs(data.heading)>1e6||data.jump<0||data.jump>3)return;
     const room=rooms.has(data.room)?data.room:data.room==='home'?'home:'+p.id:null;
     if(!room||(room!=='world'&&(Math.abs(data.x)>12||Math.abs(data.y)>12)))return;
     const v=data.vehicle;
-    if(v&&['compact','roadster','pickup'].includes(v.model)&&[v.x,v.y,v.heading,v.speed].every(Number.isFinite)&&Math.hypot(v.x,v.y)<561&&Math.abs(v.speed)<=40&&Math.abs(v.heading)<1e6){p.vehicle={model:v.model,x:v.x,y:v.y,heading:v.heading,speed:v.speed};}
+    if(v&&['compact','roadster','pickup','plane','helicopter','boat'].includes(v.model)&&[v.x,v.y,v.heading,v.speed].every(Number.isFinite)&&Math.hypot(v.x,v.y)<1300&&Math.abs(v.speed)<=65&&Number.isFinite(v.z??0)&&(v.z??0)>=0&&(v.z??0)<=100&&Math.abs(v.heading)<1e6){p.vehicle={model:v.model,x:v.x,y:v.y,heading:v.heading,speed:v.speed,z:v.z??0};}
     else if(v===null){p.vehicle=null;this.releaseRiders(p.id);}
     if(p.riding&&!this.vehicle(p.riding)){p.riding=null;this.send(ws,{type:'ride',owner:null});}
-    Object.assign(p,{x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup'].includes(data.car)?data.car:null,last:now});
+    Object.assign(p,{x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
     p.species=['cat','rabbit','bear','fox'].includes(data.species)?data.species:'cat';
     p.name=typeof data.name==='string'?data.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,18)||'Mauz':'Mauz';
     if(p.riding){const car=this.vehicle(p.riding);p.x=car.x;p.y=car.y;p.heading=car.heading;p.room='world';p.car=null;}
