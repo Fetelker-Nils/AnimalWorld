@@ -12,10 +12,10 @@ const {createServer}=require('./browser.cjs');
     for(const kind of ['lamp','tree']){
       await page.evaluate(()=>window.__animalTest.visit(10,-5));await page.click('#interact');await page.click('[data-car="roadster"]');
       assert(await page.evaluate(k=>window.__animalTest.crashSetup(k,100),kind));
-      await page.keyboard.down('w');await page.waitForFunction(()=>!window.__animalTest.state().driving);await page.keyboard.up('w');
-      const s=await page.evaluate(()=>window.__animalTest.state());assert.equal(s.car,null);assert(s.fallen.some(f=>f.kind===kind),'Hit must fell '+kind);
+      await page.keyboard.down('w');await page.waitForFunction(()=>window.__animalTest.state().fallen.length>0);await page.keyboard.up('w');
+      const s=await page.evaluate(()=>window.__animalTest.state());assert.equal(s.car,'roadster');assert(s.driving);assert(s.fallen.some(f=>f.kind===kind),'Hit must fell '+kind);
       await page.screenshot({path:'test-results/crash-'+kind+'.png'});
-      await page.evaluate(()=>window.__animalTest.advance(5.1));assert.equal((await page.evaluate(()=>window.__animalTest.state())).fallen.length,0);
+      await page.evaluate(()=>window.__animalTest.advance(5.1));assert.equal((await page.evaluate(()=>window.__animalTest.state())).fallen.length,0);await page.evaluate(()=>window.__animalTest.park());
     }
     await page.evaluate(()=>window.__animalTest.visit(36,-72));await page.click('#interact');await page.evaluate(()=>window.__animalTest.visit(0,-3));await page.screenshot({path:'test-results/animal-hospital.png'});
     assert.deepEqual(errors,[]);console.log('PASS browser: front-facing 3D Mauz, city animals, vehicle explosions, fallen lamps/trees, respawn and animal receptionist');

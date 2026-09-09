@@ -1,9 +1,9 @@
-function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}) {
+function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}, onSession=()=>{}) {
   const endpoint='wss://animal-world-online.animal-world-mauz.workers.dev/play';
   let socket=null,id=null,status='offline',timer=null,timeout=null,lastState=null,wave=false,generation=0;
-  const players=new Map();
+  const players=new Map();let rideOwner=null;
   function report(next){status=next;onStatus(status,players.size+(id?1:0));}
-  function stop(){generation++;clearInterval(timer);clearTimeout(timeout);timer=timeout=null;if(socket){socket.onclose=socket.onerror=socket.onmessage=null;socket.close();}socket=null;id=null;players.clear();report('offline');}
+  function stop(){generation++;clearInterval(timer);clearTimeout(timeout);timer=timeout=null;if(socket){socket.onclose=socket.onerror=socket.onmessage=null;socket.close();}socket=null;id=null;rideOwner=null;players.clear();report('offline');}
   function connect(){
     stop();const current=generation;report('connecting');
     return new Promise((resolve,reject)=>{
@@ -27,9 +27,12 @@ function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}) {
         else if(data.type==='clock')onClock(data.minutes);
         else if(data.type==='world')onWorld(data.state);
         else if(data.type==='crash')onCrash(data.impact);
+        else if(data.type==='ride'){rideOwner=data.owner||null;onSession(data);}
+        else if(['sleep','wake','notice'].includes(data.type)){if(data.type==='wake')onClock(data.minutes);onSession(data);}
       };
       socket.onerror=()=>{socket.close();fail();};socket.onclose=fail;
     });
   }
-  return {crash(impact){if(socket?.readyState===1)socket.send(JSON.stringify({type:'crash',x:impact.x,y:impact.y,heading:impact.heading,speed:impact.speed,model:impact.model.id}));},connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
+  function send(data){if(socket?.readyState===1)socket.send(JSON.stringify(data));}
+  return {sleep(sleeping){send({type:'sleep',sleeping});},ride(owner){send({type:'ride',owner});},get rideOwner(){return rideOwner;},crash(impact){send({type:'crash',x:impact.x,y:impact.y,heading:impact.heading,speed:impact.speed,model:impact.model.id,scenery:impact.scenery===true});},connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
 }

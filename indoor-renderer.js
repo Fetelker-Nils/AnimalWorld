@@ -16,7 +16,7 @@ function createIndoorRenderer(){
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   const textured=gl.getUniformLocation(program,'textured');
-  return {surface,render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth,extras=[],mesh=[]}){
+  return {surface,dispose(){gl.deleteTexture(texture);gl.deleteBuffer(buffer);gl.deleteProgram(program);gl.getExtension('WEBGL_lose_context')?.loseContext();surface.width=surface.height=1;},render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth,extras=[],mesh=[]}){
     if(surface.width!==sprite.width||surface.height!==sprite.height){surface.width=sprite.width;surface.height=sprite.height;}
     gl.viewport(0,0,surface.width,surface.height);gl.clearColor(.87,.86,.81,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.BLEND);gl.uniform1i(textured,0);

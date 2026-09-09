@@ -52,9 +52,10 @@ function createVehicles(world,walkable,onImpact=()=>{}){
         const impact={x,y,heading:car.heading,speed:Math.abs(car.speed),model:m,carX:car.x,carY:car.y};
         car.speed=0;
         if(impact.speed*3.6>70){
+          if(onImpact(impact)?.keepCar){break;}
           // Return the driver to the last safe centre before removing the vehicle.
           player.x=car.x;player.y=car.y;player.jump=0;player.vz=0;driving=false;car=null;
-          onImpact(impact);return;
+          return;
         }
         onImpact(impact);break;
       }

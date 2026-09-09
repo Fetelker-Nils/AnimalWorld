@@ -15,6 +15,7 @@
 <p class="eyebrow">DEIN KLEINES ABENTEUER</p>
 <h1>animal<br><span>world.</span></h1>
 <p class="welcome">Eine kleine Welt wartet auf dich und Mauz.</p>
+<div class="character-choice"><label for="character-name">Dein Name</label><input id="character-name" maxlength="18" value="Mauz" autocomplete="off"><label for="character-species">Dein Tier</label><select id="character-species"><option value="cat">Katze</option><option value="rabbit">Hase</option><option value="bear">Bär</option><option value="fox">Fuchs</option></select></div>
 <button id="play" class="primary" autofocus>Offline spielen <span aria-hidden="true">→</span></button>
 <button id="play-online" class="primary online-play">Online spielen <span aria-hidden="true">→</span></button>
 <p id="online-message" class="offline-note" role="status">Offline für dich. Online mit allen auf einer gemeinsamen Insel.</p>
@@ -28,6 +29,7 @@
 <button id="map-open" class="map-button" title="Inselkarte (M)">Karte · M</button>
 <div id="job-status" class="job-status"><strong id="job-title"></strong><small id="job-detail"></small></div>
 <div class="mini-panel"><button id="mini-open" aria-label="Grosse Karte oeffnen"><canvas id="minimap" width="180" height="180" aria-label="Minikarte: Umgebung, Blickrichtung und Ziel"></canvas></button><div class="world-time"><time id="world-clock">09:00</time><span id="world-period">Tag 1</span></div></div>
+<div id="water-status" class="water-status" role="status" hidden></div>
 <button id="interact" class="interact" hidden></button>
 <button id="vehicle-action" class="vehicle-action" hidden>F · Einsteigen</button>
 <div id="toast" class="toast" role="status" hidden></div>
@@ -37,7 +39,7 @@
 </nav>
 <div id="skill-game" class="skill-game" hidden><strong id="skill-title"></strong><div class="skill-track"><span class="skill-zone"></span><i id="skill-needle"></i></div><small>Im grünen Bereich: Aktion antippen / E drücken</small></div>
 </div>
-<div id="sleep-screen" class="sleep-screen" role="status" hidden><span>Z z z</span><p>Mauz schläft bis 07:00 Uhr ...</p></div>
+<div id="sleep-screen" class="sleep-screen" role="status" hidden><span>Z z z</span><p id="sleep-message">Mauz schläft bis 07:00 Uhr ...</p><button id="sleep-cancel" hidden>Aufstehen</button></div>
 <section id="pause-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
 <div class="pause-card">
 <p class="eyebrow">KURZ DURCHATMEN</p>
@@ -75,6 +77,7 @@
 <div class="pause-card"><p class="eyebrow">STADTLEBEN</p><h2 id="service-title"></h2><p id="service-balance"></p><div id="service-options" class="service-options"></div><p id="service-message" role="status"></p><button id="service-close">Zurück ins Spiel</button></div></section>
 <script src="multiplayer.js"></script><script src="city-services.js"></script>
 <script src="animal-mesh.js"></script><script src="city-life.js"></script><script src="collisions.js"></script>
+<script src="adventure.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

@@ -19,3 +19,9 @@ assert.equal(vehicles.car,null);assert(!vehicles.driving);assert(impacts[0].spee
 const mesh=c.animalMesh({x:0,y:0,heading:0},null,0,0);assert(mesh.length>100);assert(mesh.every(f=>f.points.every(p=>p.every(Number.isFinite))));
 assert(mesh.some(f=>f.points.some(p=>p[0]>.35)),'Face geometry projects forward');
 console.log('PASS traffic: building-free paths, progress, yielding; strict crash threshold, five-second respawn, safe ejection and real 3D geometry');
+
+const coarse=c.animalMesh({x:0,y:0,heading:0},null,0,0,.5);
+assert(coarse.length<mesh.length*.6,'Distant animals use substantially fewer polygons');
+const references=mesh.flatMap(f=>f.points),unique=new Set(references);
+assert(unique.size<references.length*.6,'Faces share vertices instead of allocating duplicates');
+console.log('PASS bounded mesh detail and shared geometry vertices');

@@ -9,7 +9,7 @@ const context=new Proxy({}, {get:(_,key)=>key==='measureText'?()=>({width:50}):k
 const nodes={};
 const sandbox={createIndoorRenderer:()=>({surface:{},render(){}}),Math,innerWidth:1280,innerHeight:850,devicePixelRatio:1,requestAnimationFrame(){},location:{hash:''},window:{localStorage:storage,addEventListener(){}},document:{querySelector(id){return nodes[id]||={hidden:true,focus(){},getContext:()=>context,addEventListener(){}};},querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
-for(const file of ['world.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
+for(const file of ['world.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
 vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
 const {mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles}=sandbox.probe;
 // Regression: nearby walls remain visible even with an offscreen/behind-camera centre.
@@ -26,7 +26,7 @@ assert((Island.radius/240)**2>=5,'At least five times the playable area');
 assert.equal(Island.buildings.filter(b=>b.city).length,56);
 assert.equal(Island.heightAt(Island.mountain.x,Island.mountain.y),38);
 assert(!walkable(Island.pond.x,Island.pond.y));
-assert(!walkable(561,0));
+assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(600,0));
 for(const building of Island.buildings)assert(!walkable(building.x,building.y));
 function finishTiming(){
   const before=activities.done.size;

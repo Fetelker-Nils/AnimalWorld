@@ -1,11 +1,14 @@
 // Real, oriented 3D geometry shared by players, pedestrians and shopkeepers.
-function animalMesh(actor, outfit, ground=0, time=0){
+function animalMesh(actor, outfit, ground=0, time=0, detail=1){
   const faces=[],kind=actor.species||'cat',fur=kind==='bear'?'#a77e59':kind==='rabbit'?'#c7b8a4':kind==='fox'?'#d68d4b':'#e7ab60';
   const h=actor.heading||0,c=Math.cos(h),s=Math.sin(h),base=ground+(actor.jump||0);
-  const transform=([side,forward,z])=>[actor.x+c*forward-s*side,actor.y+s*forward+c*side,base+z];
+  const vertices=new Map();
+  const transform=p=>{let v=vertices.get(p);if(!v){const [side,forward,z]=p;v=[actor.x+c*forward-s*side,actor.y+s*forward+c*side,base+z];vertices.set(p,v);}return v;};
   function face(points,color,shade=1){const rgb=[1,3,5].map(i=>Math.round(parseInt(color.slice(i,i+2),16)*shade).toString(16).padStart(2,'0'));faces.push({points:points.map(transform),color:'#'+rgb.join('')});}
   function ball(x,y,z,rx,ry,rz,color,n=8,m=5){
-    const p=(i,j)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+rx*Math.cos(a)*Math.sin(b),y+ry*Math.sin(a)*Math.sin(b),z+rz*Math.cos(b)];};
+    if(detail<1){n=Math.max(4,Math.round(n*detail));m=Math.max(3,Math.round(m*detail));}
+    const grid=Array.from({length:m+1},(_,j)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+rx*Math.cos(a)*Math.sin(b),y+ry*Math.sin(a)*Math.sin(b),z+rz*Math.cos(b)];}));
+    const p=(i,j)=>grid[j][i%n];
     for(let j=0;j<m;j++)for(let i=0;i<n;i++)face([p(i,j),p(i+1,j),p(i+1,j+1),p(i,j+1)],color,.77+.2*(1-j/m)+.03*Math.sin(i/n*Math.PI*2));
   }
   const stride=actor.moving?Math.sin(time*9+(actor.phase||0))*.13:0;

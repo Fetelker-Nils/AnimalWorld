@@ -122,11 +122,11 @@ Outfit, Kleidersammlung, Guthaben und Haeuser werden gemeinsam gespeichert. Ein 
 
 ## Online spielen
 
-Im Hauptmenue **Online spielen** druecken. Alle Teilnehmer landen ohne Raumcode auf derselben oeffentlichen Insel. Andere Mauz, ihre getragenen Kleider, gefahrenen Autos und Winkbewegungen werden live angezeigt; violette Punkte auf der Minikarte zeigen Mitspieler. Oeffentliche Innenraeume werden gemeinsam betreten. Private Wohnraeume bleiben pro Spieler getrennt.
+Im Hauptmenue **Online spielen** druecken. Alle Teilnehmer landen ohne Raumcode auf derselben oeffentlichen Insel. Andere Tiere mit ihren Namen, getragenen Kleidern, Autos und Winkbewegungen werden live angezeigt; violette Punkte auf der Minikarte zeigen Mitspieler. Oeffentliche Innenraeume werden gemeinsam betreten. Private Wohnraeume bleiben pro Spieler getrennt.
 
 Der gemeinsame Server ist bereits unter `wss://animal-world-online.animal-world-mauz.workers.dev/play` bereitgestellt. Er verwendet eine globale Durable-Object-Instanz mit WebSocket-Hibernation. Maximal 128 gleichzeitige Verbindungen; dies ist eine Schutzgrenze, kein Lasttest-Ergebnis. Ungueltige oder zu grosse Nachrichten werden verworfen bzw. geschlossen; verwaiste Verbindungen nach spaetestens etwa 90 Sekunden entfernt. Ein Verbindungsabbruch pausiert das Spiel. Zum Wiederverbinden im Hauptmenue erneut Online spielen waehlen.
 
-Die Online-Uhr ist fuer alle gleich und laeuft auch bei geoeffneten Menues weiter. Einzelne Spieler koennen die Nacht nicht fuer alle ueberspringen. Die Offline-Uhr bleibt separat erhalten. Muenzen, Sparkonto, Kleider und Hausbesitz bleiben im jeweiligen Browser; Jobs und ihre Ziele werden individuell erledigt. Es gibt noch keine gemeinsamen Missionen, gemeinsamen Fahrzeugbesitz, Handel oder servergepruefte Wirtschaft. Es werden keine Konten oder Chat-Nachrichten angelegt. Die zufaellige Mauz-Kennung gilt fuer die aktuelle Verbindung.
+Die Online-Uhr ist fuer alle gleich und laeuft auch bei geoeffneten Menues weiter. Nachts koennen alle Spieler in ihren eigenen Betten schlafen: Erst wenn alle verbundenen Spieler schlafen, springt die gemeinsame Uhr auf 07:00 Uhr. Die Schlafanzeige zeigt die Anzahl; Aufstehen oder Escape bricht das Warten ab. Die Offline-Uhr bleibt separat erhalten. Muenzen, Sparkonto, Kleider und Hausbesitz bleiben im jeweiligen Browser; Jobs und ihre Ziele werden individuell erledigt. Es gibt noch keine gemeinsamen Missionen, gemeinsamen Fahrzeugbesitz, Handel oder servergepruefte Wirtschaft. Es werden keine Konten oder Chat-Nachrichten angelegt. Die zufaellige Mauz-Kennung gilt fuer die aktuelle Verbindung.
 
 Serverquellcode: `multiplayer-worker.mjs`; reproduzierbare Deployment-Konfiguration: `server/wrangler.jsonc`. Fuer spaetere Serverupdates mit angemeldetem Cloudflare-Konto: `npx wrangler deploy --config server/wrangler.jsonc`. Bei einer anderen Serveradresse auch `multiplayer.js` und die `connect-src`-Freigabe in `index.html` aktualisieren. Das Vercel-Frontend weiter normal aus `dist/` deployen; der Worker wird nicht als statische Spieldatei ausgeliefert.
 
@@ -153,6 +153,23 @@ Mauz ist ein echtes, drehbares 3D-Modell mit Augen, Nase, Schnauze, Ohren, Pfote
 
 24 Katzen, Hasen, Baeren und Fuechse laufen auf Gehweg-Rundwegen durch die Stadt, halten Abstand zu Mauz und anderen Passanten und machen Pausen. Acht NPC-Autos fahren auf versetzten Fahrspuren, bremsen vor Hindernissen und warten auf Fahrzeuge mit Vorrang an Engstellen. Das ist regelbasierte Wegfuehrung und Hindernisvermeidung; noch keine freie Stadt-KI oder Verkehrsampel-Simulation. Im Online-Modus berechnet der gemeinsame Server die NPC-Positionen fuer alle Spieler.
 
-Prallt dein Auto mit **mehr als 70 km/h** gegen ein Hindernis, explodiert es mit Partikeln und Sound. Mauz bleibt unverletzt am letzten sicheren Ort; ein neues Auto gibt es kostenlos an Telefonzellen. Langsamere Kollisionen stoppen das Auto. Bei schnellen Treffern kippen getroffene Baeume und Strassenlaternen in Fahrtrichtung, blockieren nicht mehr und erscheinen nach **fuenf Spielsekunden** wieder. Gefallene Laternen leuchten nicht. Online werden diese Unfaelle an Mitspieler uebertragen; dort laeuft die Wiederherstellung auch bei offenem Menue weiter.
+Prallt dein Auto mit **mehr als 70 km/h** gegen ein festes Hindernis wie ein Haus, explodiert es mit Partikeln und Sound. Mauz bleibt unverletzt am letzten sicheren Ort; ein neues Auto gibt es kostenlos an Telefonzellen. Langsamere Kollisionen stoppen das Auto. Bei schnellen Treffern gegen Baeume und Strassenlaternen bleibt das Auto erhalten und stoppt, ohne Explosion. Die Objekte kippen in Fahrtrichtung, blockieren nicht mehr und erscheinen nach **fuenf Spielsekunden** wieder. Gefallene Laternen leuchten nicht. Online werden diese Unfaelle an Mitspieler uebertragen; dort laeuft die Wiederherstellung auch bei offenem Menue weiter.
 
 `npm run test:animals` prueft 3D-Ansichten, tierische Innenraeume und echte Fahrzeugkollisionen samt Wiederherstellung im Browser. Die Verkehrstests in `npm test` pruefen begehbare Routen, Fortschritt, Anhalten, die strikte 70-km/h-Grenze und sichere Fahrerpositionen.
+
+
+## Firefox: Online-Autos testen
+
+Die Zeichenflaeche ist auf rund 2,1 Millionen Pixel begrenzt, unabhaengig von Bildschirmaufloesung und Pixeldichte. Entfernte Tiere verwenden weniger Polygone; gemeinsame Eckpunkte werden nur einmal transformiert. Beim Verlassen eines Innenraums werden dessen WebGL-Ressourcen freigegeben.
+
+`npx playwright install firefox` installiert den Testbrowser. `npm run test:online-cars` prueft mit zwei Firefox-Profilen alle zehn Telefonzellen, alle drei Automodelle, Einsteigen, Fahren, Aussteigen und die Anzeige beim Mitspieler. Der Test benoetigt Internet und prueft auch eine hohe Pixeldichte. Optional `node scripts/test-online-cars.cjs --chromium` fuer Chromium.
+
+## Charakter, Mitfahren und Meer
+
+Vor Offline oder Online spielen einen Namen (bis 18 Zeichen) und Katze, Hase, Baer oder Fuchs waehlen. Die Auswahl wird im Browser gespeichert und online mit anderen geteilt.
+
+Online neben ein angehaltenes Auto eines anderen Spielers treten und F oder den Fahrzeugknopf druecken: Ein freier Beifahrerplatz steht bereit. Der Besitzer faehrt; der Gast faehrt mit und kann nach dem Anhalten wieder aussteigen. Verschwindet das Auto oder trennt sich der Besitzer, wird der Gast abgesetzt.
+
+Das Meer am Inselrand ist zu Fuss betretbar. Im Wasser wird die verbleibende Luft angezeigt. Nach zehn Sekunden wird die Figur an ihren sicheren Startpunkt zurueckgesetzt. Rechtzeitig an Land gehen fuellt die Luft wieder auf. Autos bleiben an Land.
+
+`npm run test:adventure` prueft Auswahl, Speicherung, Meer und Mitfahren mit zwei echten Online-Verbindungen. `npm test` prueft ausserdem die serverseitige Schlafabstimmung und Sitzplatzvergabe.

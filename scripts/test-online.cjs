@@ -28,9 +28,10 @@ const {createServer}=require('./browser.cjs');
     await a.evaluate(()=>window.__animalTest.visit(10,-5));await a.click('#interact');await a.click('[data-car="roadster"]');
     assert(await a.evaluate(()=>window.__animalTest.crashSetup('lamp',0)));await a.waitForTimeout(500);
     await a.evaluate(()=>window.__animalTest.crashSetup('lamp',100));await a.keyboard.down('w');
-    await a.waitForFunction(()=>!window.__animalTest.state().driving);await a.keyboard.up('w');
+    await a.waitForFunction(()=>window.__animalTest.state().fallen.length>0);await a.keyboard.up('w');
     await b.waitForFunction(()=>window.__animalTest.state().fallen.some(f=>f.kind==='lamp'));
     await b.waitForFunction(()=>window.__animalTest.state().fallen.length===0,null,{timeout:10000});
+    await a.evaluate(()=>window.__animalTest.park());
     for(const p of [a,b]){
       await p.evaluate(()=>{window.__animalTest.visit(-18,-18);document.querySelector('#interact').click();window.__animalTest.visit(0,1);});
     }
