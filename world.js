@@ -51,6 +51,12 @@ const Island = (() => {
     const building=buildings.find(b=>b.x===v.bx&&b.y===v.by);building.venueId=v.id;building.color=v.color;
     return {...v,public:true,x:building.x,y:building.y+building.d/2+2,building};
   });
+  buildings.find(b=>b.x===-10&&b.y===-8).jobId='delivery';
+  // Every remaining building can become a furnished home.
+  for(const [i,b] of buildings.entries())if(!b.venueId&&!b.homeId&&!b.jobId){
+    b.homeId='residence-'+i;
+    homes.push({id:b.homeId,name:(b.city?'Stadtwohnung ':'Inselhaus ')+(i+1),price:b.city?300+Math.round(b.h*15):240+Math.round(b.w*10),x:b.x,y:b.y+b.d/2+2,building:b});
+  }
   const depot={x:-10,y:-2,name:'Paketpost'};
   const deliveries=[
     {x:18,y:-18,name:'Stadt · Haus 18',reward:35},

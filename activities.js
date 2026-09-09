@@ -7,11 +7,11 @@ function createActivities(world,wallet){
     const remaining=active.points.filter((_,i)=>!done.has(i));
     return remaining.length?remaining.reduce((a,b)=>distance(a,player)<distance(b,player)?a:b):active;
   }
-  function start(id,player){
+  function start(id,player,venue=null){
     const spec=world.jobs.find(j=>j.id===id);
-    if(active||wallet.active||!spec||distance(spec,player)>2.6)return null;
+    if(active||wallet.active||!spec||(spec.venue?spec.venue!==venue:distance(spec,player)>2.6))return null;
     active=spec;done=new Set();progress=0;passenger=false;challenge=null;
-    return {type:'started',message:spec.name+' gestartet. '+(spec.kind==='taxi'?'Hole ein Auto an einer Telefonzelle und fahre zum Fahrgast.':'Folge den Markierungen. Am Ende zur Jobstation zurückkehren.')};
+    return {type:'started',message:(spec.venue?'Auftrag am Empfang: ':'')+spec.name+' gestartet. '+(spec.kind==='taxi'?'Hole ein Auto an einer Telefonzelle und fahre zum Fahrgast.':'Folge den Markierungen. Am Ende zur Jobstation zurückkehren.')};
   }
   function complete(){
     const reward=active.reward;wallet.addReward(reward);active=null;progress=0;passenger=false;challenge=null;
@@ -28,7 +28,7 @@ function createActivities(world,wallet){
       return complete();
     }
     if(driving)return {message:'Steige mit F aus, um hier zu arbeiten.'};
-    if(done.size===active.points.length)return complete();
+    if(done.size===active.points.length)return active.venue?{message:'Zurueck ins Gebaeude: Lohn am Empfang abholen.'}:complete();
     if(challenge){
       if(distance(player,active.points[challenge.index])>2.6){challenge=null;progress=0;return null;}
       const marker=(challenge.elapsed%1.6)/1.6;
@@ -51,5 +51,5 @@ function createActivities(world,wallet){
     if(progress>=active.seconds){if(active.timing){challenge={index:active.points.indexOf(t),elapsed:0,hits:0};progress=0;return {type:'ready',message:active.id==='fishing'?'Es beisst! Tippe im grünen Bereich, um den Fisch zu landen.':'Jetzt präzise arbeiten: zweimal im grünen Bereich tippen.'};}done.add(active.points.indexOf(t));progress=0;return {message:(active.doneText||(active.id==='garden'?'Beet gegossen':'Motor repariert'))+' ('+done.size+'/'+active.points.length+')'};}
     return null;
   }
-  return {start,target,interact,tick,get challenge(){return challenge;},get active(){return active;},get done(){return done;},get passenger(){return passenger;},get progress(){return progress;}};
+  return {startVenue(venue){const spec=world.jobs.find(j=>j.venue===venue);return spec?start(spec.id,null,venue):null;},finishVenue(venue){return active?.venue===venue&&done.size===active.points.length?complete():null;},start,target,interact,tick,get challenge(){return challenge;},get active(){return active;},get done(){return done;},get passenger(){return passenger;},get progress(){return progress;}};
 }

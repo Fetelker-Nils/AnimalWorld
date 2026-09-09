@@ -1,0 +1,10 @@
+{
+  "name": "animal-world-online",
+  "main": "../multiplayer-worker.mjs",
+  "compatibility_date": "2026-09-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {"enabled": true, "head_sampling_rate": 0.1},
+  "durable_objects": {"bindings": [{"name": "WORLD", "class_name": "World"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["World"]}]
+}

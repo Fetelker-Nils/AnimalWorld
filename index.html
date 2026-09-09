@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' wss://animal-world-online.animal-world-mauz.workers.dev; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Animal World</title>
 <link rel="stylesheet" href="style.css">
@@ -16,12 +16,14 @@
 <h1>animal<br><span>world.</span></h1>
 <p class="welcome">Eine kleine Welt wartet auf dich und Mauz.</p>
 <button id="play" class="primary" autofocus>Offline spielen <span aria-hidden="true">→</span></button>
-<p class="offline-note">Ganz ohne Internet. Einfach losspielen.</p>
+<button id="play-online" class="primary online-play">Online spielen <span aria-hidden="true">→</span></button>
+<p id="online-message" class="offline-note" role="status">Offline für dich. Online mit allen auf einer gemeinsamen Insel.</p>
 </div>
 <span class="start-version">ANIMAL WORLD · 0.1</span>
 <button id="menu-audio" class="menu-audio">Musik einschalten</button>
 </main>
 <div id="game-ui" hidden>
+<div id="online-status" class="online-status" hidden></div><button id="wave" class="wave-button" hidden>Winken</button>
 <button id="menu" class="menu-button" aria-label="Spielmenü öffnen" title="Menü (Esc)">☰</button>
 <button id="map-open" class="map-button" title="Inselkarte (M)">Karte · M</button>
 <div id="job-status" class="job-status"><strong id="job-title"></strong><small id="job-detail"></small></div>
@@ -68,6 +70,9 @@
 <script src="sound.js"></script>
 <script src="indoor-renderer.js"></script>
 <script src="day-cycle.js"></script>
+<section id="service-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="service-title" hidden>
+<div class="pause-card"><p class="eyebrow">STADTLEBEN</p><h2 id="service-title"></h2><p id="service-balance"></p><div id="service-options" class="service-options"></div><p id="service-message" role="status"></p><button id="service-close">Zurück ins Spiel</button></div></section>
+<script src="multiplayer.js"></script><script src="city-services.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

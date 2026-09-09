@@ -18,6 +18,14 @@
   let sleeping=null;
   const job=createDeliveryJob(storage,Island);
   const activities=createActivities(Island,job);
+  const city=createCityServices(Island,job,activities);
+  let onlineMode=false;
+  const network=createMultiplayer((status,count)=>{
+    const badge=document.querySelector('#online-status');badge.hidden=!onlineMode;
+    badge.textContent=status==='online'?'Online · '+count+' Mauz':status==='connecting'?'Verbinde ...':'Verbindung verloren – im Menü erneut verbinden';
+    document.querySelector('#wave').hidden=!onlineMode||status!=='online';
+    if(onlineMode&&status==='disconnected'){setMode('pause');notify('Verbindung verloren. Zurueck ins Hauptmenue und erneut Online spielen.');}
+  },minutes=>{if(onlineMode)dayCycle.set(minutes);});
   const vehicles=createVehicles(Island,walkable);
   let currentBooth=null,currentHome=null;
   let interior=null;
@@ -288,10 +296,19 @@
   }
   function ellipse(x,y,rx,ry,color){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();}
   function tree(t){const p=point(t.x,t.y);ctx.save();ctx.translate(p.x,p.y);ctx.scale(scale/p.depth/28*t.size,scale/p.depth/28*t.size);ellipse(8,7,30,11,'#3e652329');ctx.fillStyle='#987551';ctx.fillRect(-5,-58,10,59);polygon([{x:-3,y:-25},{x:-18,y:-45},{x:-13,y:-47},{x:3,y:-33}],'#987551');ellipse(0,-65,33,39,'#659047');ellipse(-18,-60,23,27,'#739c50');ellipse(17,-66,23,29,'#71974b');ellipse(-7,-82,25,27,'#87aa5a');ellipse(-13,-88,16,15,'#94b765');ctx.restore();}
-  function cat(){if(vehicles.driving||(!interior&&cameraDistance<1.5))return;const p=point(mauz.x,mauz.y);const bounce=celebration>0?-Math.abs(Math.sin(celebration*15))*7:mauz.moving?Math.sin(time*14)*1.7:Math.sin(time*2)*.7;const s=scale/p.depth/43;ellipse(p.x,p.y+4*s,17*s,7*s,'#35571c35');ctx.save();ctx.translate(p.x,point(mauz.x,mauz.y,Island.heightAt(mauz.x,mauz.y)+mauz.jump).y);ctx.scale(s,s);ctx.save();ctx.scale(mauz.face,1);ctx.strokeStyle='#b8763d';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,-14);ctx.bezierCurveTo(-33,-12,-32,-29,-25,-30);ctx.stroke();const stride=mauz.moving?Math.sin(time*14)*4:0;ellipse(-7,-3+stride,5,7,'#bb7e42');ellipse(7,-3-stride,5,7,'#d69b51');const outfit=Island.outfits.find(o=>o.id===job.outfitId);ellipse(0,-18+bounce,13,17,outfit?.color||'#e5aa60');if(outfit){ctx.fillStyle=outfit.trim;ctx.fillRect(-10,-14+bounce,20,3);}ctx.translate(0,bounce);polygon([{x:-16,y:-36},{x:-15,y:-58},{x:-2,y:-46}],'#d99a52');polygon([{x:4,y:-46},{x:17,y:-57},{x:18,y:-34}],'#e5aa60');polygon([{x:-12,y:-43},{x:-12,y:-52},{x:-6,y:-45}],'#e9b0a0');polygon([{x:8,y:-45},{x:14,y:-52},{x:14,y:-42}],'#edbaaa');ellipse(1,-36,19,16,'#edb66d');ctx.strokeStyle='#c88b46';ctx.lineWidth=3;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(i*6,-49);ctx.lineTo(i*5,-43);ctx.stroke();}if(outfit?.hat){ellipse(1,-51,19,5,outfit.hat);ellipse(1,-54,13,6,outfit.hat);ctx.fillStyle=outfit.trim;ctx.fillRect(-3,-58,7,4);}ctx.fillStyle='#6c947b';ctx.fillRect(-9,-22,19,4);
-    if(job.active){ctx.fillStyle='#b5824e';ctx.fillRect(-11,-23,22,19);ctx.fillStyle='#edcb88';ctx.fillRect(-2,-23,4,19);}
-ctx.restore();ctx.restore();}
+  function cat(actor=mauz){if(actor===mauz&&(vehicles.driving||(!interior&&cameraDistance<1.5)))return;const p=point(actor.x,actor.y);if(p.depth<.5)return;const bounce=celebration>0?-Math.abs(Math.sin(celebration*15))*7:actor.moving?Math.sin(time*14)*1.7:Math.sin(time*2)*.7;const s=scale/p.depth/43;ellipse(p.x,p.y+4*s,17*s,7*s,'#35571c35');ctx.save();ctx.translate(p.x,point(actor.x,actor.y,Island.heightAt(actor.x,actor.y)+actor.jump).y);ctx.scale(s,s);ctx.save();ctx.scale(actor.face||1,1);ctx.strokeStyle='#b8763d';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,-14);ctx.bezierCurveTo(-33,-12,-32,-29,-25,-30);ctx.stroke();const stride=actor.moving?Math.sin(time*14)*4:0;ellipse(-7,-3+stride,5,7,'#bb7e42');ellipse(7,-3-stride,5,7,'#d69b51');const outfit=Island.outfits.find(o=>o.id===(actor===mauz?job.outfitId:actor.outfit));ellipse(0,-18+bounce,13,17,outfit?.color||'#e5aa60');if(outfit){ctx.fillStyle=outfit.trim;ctx.fillRect(-10,-14+bounce,20,3);}ctx.translate(0,bounce);polygon([{x:-16,y:-36},{x:-15,y:-58},{x:-2,y:-46}],'#d99a52');polygon([{x:4,y:-46},{x:17,y:-57},{x:18,y:-34}],'#e5aa60');polygon([{x:-12,y:-43},{x:-12,y:-52},{x:-6,y:-45}],'#e9b0a0');polygon([{x:8,y:-45},{x:14,y:-52},{x:14,y:-42}],'#edbaaa');ellipse(1,-36,19,16,'#edb66d');ctx.strokeStyle='#c88b46';ctx.lineWidth=3;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(i*6,-49);ctx.lineTo(i*5,-43);ctx.stroke();}if(outfit?.hat){ellipse(1,-51,19,5,outfit.hat);ellipse(1,-54,13,6,outfit.hat);ctx.fillStyle=outfit.trim;ctx.fillRect(-3,-58,7,4);}ctx.fillStyle='#6c947b';ctx.fillRect(-9,-22,19,4);
+    if(actor===mauz&&job.active){ctx.fillStyle='#b5824e';ctx.fillRect(-11,-23,22,19);ctx.fillStyle='#edcb88';ctx.fillRect(-2,-23,4,19);}
+if(actor!==mauz&&Date.now()-actor.wave<2200){ctx.strokeStyle='#edb66d';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(10,-20);ctx.lineTo(23+Math.sin(time*15)*4,-39);ctx.stroke();}
+ctx.restore();ctx.restore();
+if(actor!==mauz){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillStyle='#fffdf1';ctx.fillText('Mauz '+actor.id.slice(0,4),p.x,p.y-75*s);}
+}
 
+  function peers(){return onlineMode?network.players.filter(p=>p.room===(interior?(interior.public?interior.id:'home:'+network.id):'world')).map(p=>({...p,x:p.renderX??p.x,y:p.renderY??p.y})):[];}
+  function remoteDrawing(p){
+    if(p.car&&!interior){const model=VehicleModels.find(m=>m.id===p.car);if(model){carDrawing({...p,model,speed:0});return;}}
+    cat(p);
+  }
+  function remoteVisible(p){return visible(p.x,p.y)&&outdoorHit({x:camera.x-Math.cos(camera.heading)*cameraDistance,y:camera.y-Math.sin(camera.heading)*cameraDistance,z:camera.z+cameraHeight},{x:p.x,y:p.y,z:Island.heightAt(p.x,p.y)+1.2})>=.999;}
   function groundRect(x,y,w,d,color,z=0){polygon([point(x-w/2,y-d/2,z),point(x+w/2,y-d/2,z),point(x+w/2,y+d/2,z),point(x-w/2,y+d/2,z)],color);}
   function groundOval(x,y,rx,ry,color){polygon(Array.from({length:80},(_,i)=>{const a=i*Math.PI/40;return point(x+Math.cos(a)*rx,y+Math.sin(a)*ry);}),color);}
   function box(x,y,w,d,h,color,top){
@@ -367,7 +384,7 @@ ctx.restore();ctx.restore();}
       part(side*w*.7-.18,side*w*.7+.18,-l-.02,-l,.62,.9,'#cd6254','#cd6254');
       part(side*w*.7-.18,side*w*.7+.18,l,l+.02,.62,.9,'#f5e2ac','#f5e2ac');
     }
-    if(vehicles.driving){part(-.5,-.14,rear-.02,rear-.01,1.28,1.63,'#e4ab64','#e4ab64');if(activities.passenger)part(.14,.5,rear-.02,rear-.01,1.28,1.63,'#d69ba7','#d69ba7');}
+    if(car!==vehicles.car||vehicles.driving){part(-.5,-.14,rear-.02,rear-.01,1.28,1.63,'#e4ab64','#e4ab64');if(car===vehicles.car&&activities.passenger)part(.14,.5,rear-.02,rear-.01,1.28,1.63,'#d69ba7','#d69ba7');}
     faces.sort((a,b)=>b.depth-a.depth).forEach(f=>polygon(f.points,f.color));
   }
   function boothDrawing(b){
@@ -379,12 +396,13 @@ ctx.restore();ctx.restore();}
   function activityObjects(){
     const objects=[];
     for(const station of Island.jobs){
-      if(visible(station.x,station.y))objects.push({depth:-point(station.x,station.y).depth,draw:()=>box(station.x,station.y,1,1,1.3,'#917db1','#c9bbda')});
+      if(station.venue&&activities.active!==station)continue;
+      if(!station.venue&&visible(station.x,station.y))objects.push({depth:-point(station.x,station.y).depth,draw:()=>box(station.x,station.y,1,1,1.3,'#917db1','#c9bbda')});
       if(station.kind==='hold')station.points.forEach((p,i)=>{
         if(!visible(p.x,p.y))return;
         const done=activities.active===station&&activities.done.has(i);
         objects.push({depth:-point(p.x,p.y).depth,draw:()=>{
-          if(station.id==='garden'){
+          if(station.id==='fire-rescue'){if(!done){const q=point(p.x,p.y,.8),r=scale/q.depth*.5;ellipse(q.x,q.y,r,r*(1.6+Math.sin(time*13)*.2),'#e97b46');ellipse(q.x,q.y+r*.2,r*.55,r,'#f5ce67');}}else if(station.id==='garden'){
             groundRect(p.x,p.y,3,2,done?'#638d57':'#b4a16d');
             for(const dx of [-.8,0,.8]){const q=point(p.x+dx,p.y,done?.8+Math.sin(time*3+dx)*.06:.4);ellipse(q.x,q.y,Math.max(2,scale/q.depth*.12),Math.max(2,scale/q.depth*.12),done?'#d9b9d8':'#e8cc82');}
           }else if(station.id==='fishing'){groundRect(p.x,p.y,1.5,2,'#ba9974');const fishing=activities.active===station&&(activities.progress>0||activities.challenge);const q=point(p.x,p.y,1.4+(fishing?Math.sin(time*9)*.2:0));ctx.strokeStyle='#86684b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(point(p.x,p.y).x,point(p.x,p.y).y);ctx.lineTo(q.x+12,q.y);ctx.stroke();if(fishing){const bob=point(p.x-1,p.y,.1+Math.abs(Math.sin(time*7))*.2);ctx.strokeStyle='#dbe9dc';ctx.beginPath();ctx.moveTo(q.x+12,q.y);ctx.lineTo(bob.x,bob.y);ctx.stroke();ellipse(bob.x,bob.y,4,3,'#e6ad61');}}else box(p.x,p.y,1.7,1.4,1,done?'#7aa480':station.id==='electric'?'#668aa3':'#83929c',done?'#b7cfac':'#b4bfc3');
@@ -399,6 +417,7 @@ ctx.restore();ctx.restore();}
   let indoorRenderer;
   function nearBed(){return !!interior&&!interior.public&&Math.abs(mauz.x+8)<3.3&&Math.abs(mauz.y+8)<3.5;}
   function sleepInBed(){
+    if(onlineMode){notify('In der gemeinsamen Welt laeuft die Nacht fuer alle weiter.');return false;}
     if(mode!=='playing'||!nearBed()||!job.ownedHomes.includes(interior.id))return false;
     if(!dayCycle.night){notify('Schlafen geht nachts von 20:00 bis 06:00 Uhr.');return false;}
     sleeping={elapsed:0,woke:false};setMode('sleeping');document.querySelector('#sleep-screen').hidden=false;return true;
@@ -422,7 +441,7 @@ ctx.restore();ctx.restore();}
     if(interior.public){floors.length=0;floors.push({x:0,y:0,w:24,d:24,color:interior.floor},{x:0,y:0,w:24,d:24,z:3.3,color:'#eee9dc'});}
     const boxes=[...indoorFurniture(),...indoorWalls().map(b=>({...b,h:3.3,color:'#e5dfce',top:'#f3eddc'}))];
     ctx.clearRect(0,0,width,height);ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,(cameraDistance-1.8)/1.2));cat();ctx.restore();
-    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:point(mauz.x,mauz.y).depth-.3});
+    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:point(mauz.x,mauz.y).depth-.3,extras:peers().filter(p=>point(p.x,p.y).depth>.5).map(p=>({depth:point(p.x,p.y).depth-.3,draw(){ctx.clearRect(0,0,width,height);remoteDrawing(p);}}))});
     ctx.clearRect(0,0,width,height);ctx.drawImage(indoorRenderer.surface,0,0,width,height);
     if(interior.public&&Math.hypot(mauz.x,mauz.y+3)<6)marker({x:0,y:-5},interior.id==='clothes'?'Kleiderkasse':'Empfang','#8a689b');
     if(Math.hypot(mauz.x,mauz.y-10)<4)marker({x:0,y:11},'Ausgang','#658e7e');
@@ -454,7 +473,7 @@ ctx.restore();ctx.restore();}
     for(const g of grassIndex.near(camera.x,camera.y,110)){if(!visible(g.x,g.y,20))continue;const p=point(g.x,g.y);if(g.color>.96){ellipse(p.x,p.y,2.4,1.4,'#f6f1c8');ellipse(p.x,p.y,0.9,.9,'#dfbd62');}else{ctx.strokeStyle=g.color>.5?'#81a65069':'#c6de965c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x-2,p.y-3);ctx.lineTo(p.x,p.y);ctx.lineTo(p.x+1+Math.sin(time+g.x)*.6,p.y-g.size);ctx.stroke();}}
     if(dayCycle.darkness>.05){ctx.save();ctx.globalAlpha=dayCycle.darkness*.28;for(const l of lampIndex.near(camera.x,camera.y,90))if(visible(l.x,l.y))groundOval(l.x,l.y,4,4,'#fff2ac');ctx.restore();}
     if(destination){const p=point(destination.x,destination.y);ctx.strokeStyle='#ffffffe0';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9,4.5,0,0,Math.PI*2);ctx.stroke();}
-    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>{box(l.x,l.y,.18,.18,4.6,'#59686c','#86958e');const q=point(l.x,l.y,4.8);if(q.depth>.5){const r=Math.max(2,Math.min(20,scale/q.depth*.3));ellipse(q.x,q.y,r,r*.7,dayCycle.darkness>.15?'#ffe9a3':'#c9d6cb');}}})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>{const q=point(p.x,p.y,p.z);if(q.depth>.5)ellipse(q.x,q.y,Math.min(7,scale/q.depth*.07),Math.min(7,scale/q.depth*.07),p.color);}})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>{const p=point(b.x,b.y),ballScale=scale/p.depth;ellipse(p.x,p.y,ballScale*.4,ballScale*.18,'#35571c25');ellipse(p.x,p.y-ballScale*.4,ballScale*.4,ballScale*.4,b.color);ellipse(p.x-ballScale*.12,p.y-ballScale*.53,ballScale*.1,ballScale*.1,'#ffffff9c');}})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>{const p=point(t.x,t.y);const s=scale/p.depth*t.size;ellipse(p.x+3,p.y+2,s*.5,s*.19,'#526f3233');polygon([{x:p.x-s*.5,y:p.y},{x:p.x-s*.3,y:p.y-s*.35},{x:p.x+s*.1,y:p.y-s*.43},{x:p.x+s*.45,y:p.y-s*.18},{x:p.x+s*.4,y:p.y+s*.05}],'#a6ac91');polygon([{x:p.x-s*.5,y:p.y},{x:p.x-s*.3,y:p.y-s*.35},{x:p.x+s*.1,y:p.y-s*.43},{x:p.x,y:p.y-s*.1}],'#c1c5ac');}})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
+    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>{box(l.x,l.y,.18,.18,4.6,'#59686c','#86958e');const q=point(l.x,l.y,4.8);if(q.depth>.5){const r=Math.max(2,Math.min(20,scale/q.depth*.3));ellipse(q.x,q.y,r,r*.7,dayCycle.darkness>.15?'#ffe9a3':'#c9d6cb');}}})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>{const q=point(p.x,p.y,p.z);if(q.depth>.5)ellipse(q.x,q.y,Math.min(7,scale/q.depth*.07),Math.min(7,scale/q.depth*.07),p.color);}})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>{const p=point(b.x,b.y),ballScale=scale/p.depth;ellipse(p.x,p.y,ballScale*.4,ballScale*.18,'#35571c25');ellipse(p.x,p.y-ballScale*.4,ballScale*.4,ballScale*.4,b.color);ellipse(p.x-ballScale*.12,p.y-ballScale*.53,ballScale*.1,ballScale*.1,'#ffffff9c');}})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>{const p=point(t.x,t.y);const s=scale/p.depth*t.size;ellipse(p.x+3,p.y+2,s*.5,s*.19,'#526f3233');polygon([{x:p.x-s*.5,y:p.y},{x:p.x-s*.3,y:p.y-s*.35},{x:p.x+s*.1,y:p.y-s*.43},{x:p.x+s*.45,y:p.y-s*.18},{x:p.x+s*.4,y:p.y+s*.05}],'#a6ac91');polygon([{x:p.x-s*.5,y:p.y},{x:p.x-s*.3,y:p.y-s*.35},{x:p.x+s*.1,y:p.y-s*.43},{x:p.x,y:p.y-s*.1}],'#c1c5ac');}})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.push(...peers().filter(remoteVisible).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>remoteDrawing(p)})));objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
     if(Island.heightAt(mauz.x,mauz.y)>0)cat();
     drawNight();
     const nav=navigationTarget();marker(nav,job.active?'Lieferziel':activities.active?'Jobziel':nav.name,'#dca257');
@@ -474,7 +493,7 @@ ctx.restore();ctx.restore();}
     }
   }
   function step(dt){
-    dayCycle.tick(dt);
+    if(!onlineMode)dayCycle.tick(dt);city.tick(dt);
     time+=dt;celebration=Math.max(0,celebration-dt);
     for(let i=motes.length-1;i>=0;i--){const p=motes[i];p.life-=dt;p.z+=p.vz*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vz-=3*dt;if(p.life<=0)motes.splice(i,1);}
     if(!interior&&activities.progress>0&&Math.random()<dt*22){const p=activities.target(mauz);motes.push({x:p.x,y:p.y,z:1,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,vz:2,life:.6,color:activities.active.id==='garden'?'#80cddd':'#efcf70'});}
@@ -492,14 +511,14 @@ ctx.restore();ctx.restore();}
     }
     const length=Math.hypot(vx,vy);mauz.moving=false;
     if(length){
-      const distance=Math.min((keys.has('shift')?8:4.5)*dt*(destination?1:Math.min(1,length)),destination?length:Infinity);
+      const distance=Math.min((keys.has('shift')?8:4.5)*city.speed*dt*(destination?1:Math.min(1,length)),destination?length:Infinity);
       const nx=mauz.x+vx/length*distance;
       const ny=mauz.y+vy/length*distance;
       if(walkable(nx,ny)){
         mauz.moving=Math.hypot(nx-mauz.x,ny-mauz.y)>.0001;mauz.x=nx;mauz.y=ny;
       }else destination=null;
     }
-    if(keys.has(' ')&&mauz.jump===0){mauz.vz=5;sound.effect('jump');}
+    if(keys.has(' ')&&mauz.jump===0){mauz.vz=city.jump;sound.effect('jump');}
     mauz.jump+=mauz.vz*dt;mauz.vz-=15*dt;
     if(mauz.jump<=0){mauz.jump=0;mauz.vz=0;}
     }
@@ -530,13 +549,13 @@ ctx.restore();ctx.restore();}
     if(job.active)candidates.push({target:job.target(),type:'delivery',label:vehicles.driving?'F · Zum Abgeben aussteigen':'E · Paket abgeben'});
     else if(activities.active){
       const a=activities.active,finished=activities.done.size===a.points.length;
-      let label=a.kind==='taxi'?(activities.passenger?'E · Fahrgast aussteigen lassen':'E · Fahrgast einsteigen lassen'):finished?'E · Lohn abholen':activities.challenge?'E - Jetzt treffen!':a.kind==='hold'?'E halten · '+a.action+' '+Math.round(activities.progress/a.seconds*100)+'%':'E · '+a.action;
+      let label=a.kind==='taxi'?(activities.passenger?'E · Fahrgast aussteigen lassen':'E · Fahrgast einsteigen lassen'):finished?(a.venue?'E - Zurueck zum Empfang':'E · Lohn abholen'):activities.challenge?'E - Jetzt treffen!':a.kind==='hold'?'E halten · '+a.action+' '+Math.round(activities.progress/a.seconds*100)+'%':'E · '+a.action;
       if(vehicles.driving&&a.kind!=='taxi')label='F · Zum Arbeiten aussteigen';
-      candidates.push({target:activities.target(mauz),type:'activity',label,range:a.kind==='taxi'?4:2.6});
+      if(!(finished&&a.venue))candidates.push({target:activities.target(mauz),type:'activity',label,range:a.kind==='taxi'?4:2.6});
     }else{
-      if(!vehicles.driving){candidates.push({target:Island.depot,type:'delivery',label:'E · Paketdienst ('+job.reward+' Münzen)'});for(const spec of Island.jobs)candidates.push({target:spec,type:'start',label:'E · '+spec.name+' ('+spec.reward+' Münzen)'});}
+      if(!vehicles.driving){candidates.push({target:Island.depot,type:'delivery',label:'E · Paketdienst ('+job.reward+' Münzen)'});for(const spec of Island.jobs.filter(j=>!j.venue))candidates.push({target:spec,type:'start',label:'E · '+spec.name+' ('+spec.reward+' Münzen)'});}
     }
-    return candidates.filter(a=>Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)<=(a.range||2.6)).sort((a,b)=>Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)-Math.hypot(b.target.x-mauz.x,b.target.y-mauz.y))[0];
+    return candidates.filter(a=>Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)<=(a.range||2.6)).sort((a,b)=>(Number(b.type==='delivery'&&job.active)-Number(a.type==='delivery'&&job.active))||Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)-Math.hypot(b.target.x-mauz.x,b.target.y-mauz.y))[0];
   }
   function updateJobUI(){
     document.querySelector('#mini-open').disabled=!!interior;
@@ -574,7 +593,7 @@ ctx.restore();ctx.restore();}
   }
   function interact(){
     if(mode!=='playing')return;
-    if(interior){if(contextAction()?.type==='service'){if(interior.id==='clothes')setMode('clothes');else notify(interior.message+(interior.id==='bank'?' Guthaben: '+job.coins+' Muenzen.':''));}else if(nearBed())sleepInBed();else leaveHome();return;}
+    if(interior){if(contextAction()?.type==='service'){if(interior.id==='clothes')setMode('clothes');else setMode('service');}else if(nearBed())sleepInBed();else leaveHome();return;}
     const action=contextAction();if(!action)return;
     if(action.type==='venue'){enterVenue(action.target);return;}
     if(action.type==='home'){currentHome=action.target;setMode('home');return;}
@@ -622,6 +641,7 @@ ctx.restore();ctx.restore();}
       const target=navigationTarget(),q=p(target.x,target.y),dx=q[0]-90,dy=q[1]-90,d=Math.hypot(dx,dy),ratio=d>77?77/d:1;
       c.fillStyle='#ffca64';c.strokeStyle='#82552c';c.lineWidth=1.5;c.beginPath();c.arc(90+dx*ratio,90+dy*ratio,5,0,Math.PI*2);c.fill();c.stroke();
     }
+    c.fillStyle='#6e59bd';for(const peer of peers()){c.beginPath();c.arc(...p(peer.x,peer.y),4,0,Math.PI*2);c.fill();}
     c.save();c.translate(...p(mauz.x,mauz.y));c.rotate(mauz.heading);c.fillStyle='#f7fcff';c.strokeStyle='#225e8a';c.lineWidth=2;c.beginPath();c.moveTo(8,0);c.lineTo(-5,-5);c.lineTo(-3,0);c.lineTo(-5,5);c.closePath();c.fill();c.stroke();c.restore();
     c.fillStyle='#f9fbef';c.fillRect(78,3,24,16);c.fillStyle='#42634c';c.font='bold 11px Segoe UI';c.textAlign='center';c.fillText('N',90,15);c.restore();
   }
@@ -670,6 +690,18 @@ ctx.restore();ctx.restore();}
     const success=job.setHome(currentHome.id);updateHomeUI();
     document.querySelector('#home-message').textContent=success?'Startpunkt gespeichert.':'Startpunkt konnte nicht gespeichert werden.';
   };
+  function updateServiceUI(){
+    if(!interior?.public)return;
+    document.querySelector('#service-title').textContent=interior.name;
+    document.querySelector('#service-balance').textContent=job.coins+' Muenzen'+(interior.id==='bank'?' | Sparkonto: '+job.bankBalance:'');
+    const list=document.querySelector('#service-options');list.replaceChildren();
+    for(const option of city.options(interior.id)){
+      const button=document.createElement('button');button.textContent=option.label;button.dataset.service=option.id;button.disabled=option.disabled;
+      button.onclick=()=>{if(mode!=='service'||!interior?.public||Math.hypot(mauz.x,mauz.y+3)>=2.5)return;
+        const message=city.use(interior.id,option.id);setMode('playing');notify(message);};list.append(button);
+    }
+  }
+  document.querySelector('#service-close').onclick=()=>{if(mode==='service')setMode('playing');};
   function atClothesCounter(){return interior?.id==='clothes'&&Math.hypot(mauz.x,mauz.y+3)<2.5;}
   function updateClothesUI(){
     const list=document.querySelector('#clothes-list');list.replaceChildren();
@@ -708,6 +740,7 @@ ctx.restore();ctx.restore();}
   const gameUI=document.querySelector('#game-ui');
   function setMode(next){
     if(next==='map'&&interior)return;
+    if(next==='playing'&&onlineMode&&network.status!=='online')next='pause';
     if(next!=='playing')dayCycle.save();
     mode=next;keys.clear();resetStick();destination=null;mauz.moving=false;
     startScreen.hidden=mode!=='start';pauseScreen.hidden=mode!=='pause';gameUI.hidden=mode!=='playing';
@@ -715,6 +748,8 @@ ctx.restore();ctx.restore();}
     document.querySelector('#garage-screen').hidden=mode!=='garage';
     document.querySelector('#home-screen').hidden=mode!=='home';
     document.querySelector('#clothes-screen').hidden=mode!=='clothes';
+    document.querySelector('#service-screen').hidden=mode!=='service';
+    if(mode==='service'){updateServiceUI();document.querySelector('#service-close').focus();}
     if(mode==='clothes'){updateClothesUI();document.querySelector('#clothes-message').textContent='';document.querySelector('#clothes-close').focus();}
     if(mode==='home'){updateHomeUI();document.querySelector('#home-close').focus();}
     if(mode!=='playing'){vehicles.stop();sound.quietEngine();}
@@ -734,15 +769,23 @@ ctx.restore();ctx.restore();}
   document.querySelector('#mini-open').onclick=()=>{if(!interior)setMode('map');};
   document.querySelector('#map-open').onclick=()=>setMode('map');
   document.querySelector('#map-close').onclick=()=>setMode('playing');
-  document.querySelector('#play').onclick=()=>setMode('playing');
+  document.querySelector('#play').onclick=()=>{onlineMode=false;network.stop();dayCycle.stopShared();setMode('playing');};
+  document.querySelector('#play-online').onclick=async()=>{
+    const button=document.querySelector('#play-online'),message=document.querySelector('#online-message');
+    if(button.disabled)return;button.disabled=true;document.querySelector('#play').disabled=true;message.textContent='Verbindung zur gemeinsamen Insel ...';onlineMode=true;dayCycle.startShared();
+    try{await network.connect();vehicles.reset();interior=null;moveToDoor(0,0,-Math.PI/2);setMode('playing');message.textContent='Alle Online-Spieler treffen sich auf derselben Insel.';}
+    catch(error){onlineMode=false;network.stop();dayCycle.stopShared();message.textContent=error.message;setMode('start');}
+    finally{button.disabled=false;document.querySelector('#play').disabled=false;}
+  };
+  document.querySelector('#wave').onclick=()=>{if(mode==='playing'&&network.status==='online'){network.wave();celebration=.9;}};
   document.querySelector('#menu').onclick=()=>setMode('pause');
   document.querySelector('#resume').onclick=()=>setMode('playing');
-  document.querySelector('#back').onclick=()=>setMode('start');
+  document.querySelector('#back').onclick=()=>{onlineMode=false;network.stop();dayCycle.stopShared();setMode('start');};
   window.addEventListener('keydown',e=>{
     const key=e.key.toLowerCase();
     if(mode==='sleeping'){e.preventDefault();return;}
     if(key==='m'&&!e.repeat&&(mode==='playing'||mode==='map')){e.preventDefault();setMode(mode==='map'?'playing':'map');return;}
-    if(mode==='clothes'&&key==='tab'){const buttons=[...document.querySelectorAll('#clothes-screen button')].filter(b=>!b.disabled);const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;}
+    if((mode==='clothes'||mode==='service')&&key==='tab'){const buttons=[...document.querySelectorAll(mode==='service'?'#service-screen button':'#clothes-screen button')].filter(b=>!b.disabled);const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;}
     if(mode==='garage'&&key==='tab'){
       const buttons=[...document.querySelectorAll('[data-car]'),document.querySelector('#garage-close')];
       const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;
@@ -811,7 +854,7 @@ ctx.restore();ctx.restore();}
   const unlockAudio=e=>{if(e.target?.id==='menu-audio'||e.target?.id==='mute-audio')return;if(!sound.running)sound.unlock().then(syncAudioUI);};
   window.addEventListener('pointerdown',unlockAudio);window.addEventListener('keydown',unlockAudio);
   syncAudioUI();
-  window.addEventListener('pagehide',()=>dayCycle.save());
+  window.addEventListener('pagehide',()=>{dayCycle.save();network.stop();});
   window.addEventListener('resize',resize);resize();setMode('start');
   // Available only in the isolated browser test context.
   if(location.hash==='#smoke-test')window.__animalTest={
@@ -821,7 +864,7 @@ ctx.restore();ctx.restore();}
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:job.ownedHomes,homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:job.ownedHomes,homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
-  function frame(now){const dt=Math.min((now-last)/1000,.04);last=now;if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)network.update({x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home'):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null});const dt=Math.min((now-last)/1000,.04);last=now;network.smooth(dt);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();

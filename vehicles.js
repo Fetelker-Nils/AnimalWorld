@@ -54,5 +54,5 @@ function createVehicles(world,walkable){
     player.x=car.x;player.y=car.y;player.heading=car.heading;player.moving=false;
   }
   function stop(){if(car)car.speed=0;}
-  return {spawn,toggle,step,stop,clearAt,get car(){return car;},get driving(){return driving;}};
+  return {reset(){car=null;driving=false;},spawn,toggle,step,stop,clearAt,get car(){return car;},get driving(){return driving;}};
 }

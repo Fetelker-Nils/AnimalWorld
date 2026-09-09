@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const assets = new Set(['index.html','style.css','game.js','world.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js']);
+const assets = new Set(['index.html','style.css','game.js','world.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js']);
 function createServer(directory = root) {
   return http.createServer(async (request, response) => {
     if (!['GET','HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }

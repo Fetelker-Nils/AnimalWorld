@@ -16,7 +16,7 @@ function createIndoorRenderer(){
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   const textured=gl.getUniformLocation(program,'textured');
-  return {surface,render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth}){
+  return {surface,render({width,height,scale,cx,cy,point,boxes,floors,sprite,catDepth,extras=[]}){
     if(surface.width!==sprite.width||surface.height!==sprite.height){surface.width=sprite.width;surface.height=sprite.height;}
     gl.viewport(0,0,surface.width,surface.height);gl.clearColor(.87,.86,.81,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.BLEND);gl.uniform1i(textured,0);
@@ -32,9 +32,12 @@ function createIndoorRenderer(){
     }
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(vertices),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,vertices.length/9);
     gl.uniform1i(textured,1);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    for(const layer of [{depth:catDepth},...extras]){
+    if(layer.draw)layer.draw();
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sprite);
-    const z=A+B/catDepth,overlay=[];
+    const z=A+B/layer.depth,overlay=[];
     for(const [x,y] of [[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]])overlay.push(x,y,z,1,1,1,1,(x+1)/2,(y+1)/2);
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(overlay),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,6);
+    }
   }};
 }

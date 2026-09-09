@@ -61,6 +61,7 @@ const root=path.resolve(__dirname,'..');
     if(test.state().coins!==0)throw Error('Reward before delivery');
     test.visit(18,-18);press('e');press('e');
     if(test.state().coins!==35||test.state().completed!==1||test.state().active)throw Error('Invalid delivery reward');
+    if(test.state().mode==='home')document.querySelector('#home-close').click();
     press('m');
     if(document.querySelector('#map-screen').hidden||test.state().mode!=='map')throw Error('Map did not open');
     return test.state();

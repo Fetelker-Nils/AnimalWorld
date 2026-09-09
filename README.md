@@ -2,13 +2,13 @@
 
 ## Im Browser spielen
 
-Doppelklick auf **Animal World starten.cmd** oder `npm start`. Das Spiel startet im Standardbrowser unter **http://127.0.0.1:4173**. Das Startfenster offen lassen; mit Strg+C wird der lokale Server beendet. Node.js muss installiert sein. Internet und Electron sind zum Spielen nicht erforderlich.
+Doppelklick auf **Animal World starten.cmd** oder `npm start`. Das Spiel startet im Standardbrowser unter **http://127.0.0.1:4173**. Das Startfenster offen lassen; mit Strg+C wird der lokale Server beendet. Node.js muss installiert sein. Offline spielen braucht kein Internet. Online spielen verbindet sich mit dem gemeinsamen Server. Electron ist nicht erforderlich.
 
 Spielstand und Ton-Einstellungen werden in diesem Browser gespeichert. Der bisherige Electron-Spielstand wird nicht automatisch in den Browser importiert. Verwende immer dieselbe Adresse und dasselbe Browserprofil.
 
 
 
-Ein vollständig lokales Sandbox-Spiel mit Mauz, niedrig geführter Folgekamera, kleiner Spieloberfläche, Jobs, Autos, Musik und kaufbaren Häusern.
+Ein Browser-Sandbox-Spiel mit Offline- und Online-Modus mit Mauz, niedrig geführter Folgekamera, kleiner Spieloberfläche, Jobs, Autos, Musik und kaufbaren Häusern.
 
 ## Neue Welt: mindestens fünfmal so gross
 
@@ -18,7 +18,7 @@ Die Karte (M) lässt sich mit dem Mausrad oder +/− zoomen und durch Ziehen ver
 
 Bäume und Gras sind räumlich aufgeteilt: Es werden nur nahe Bereiche geprüft bzw. dargestellt. Dadurch muss die grössere Welt nicht in jedem Bild vollständig durchsucht werden.
 
-## Neun Jobs
+## Zwoelf Jobs
 
 Mit E an einer Station beginnen. Immer nur ein Auftrag gleichzeitig. In der Nähe erscheint der passende Hinweis. Bei Haltearbeiten E gedrückt halten; Loslassen oder Weggehen setzt nur den aktuellen Schritt zurück. Zum Schluss zur Station zurückkehren, ausser bei Paket- und Taxilieferungen.
 
@@ -38,7 +38,7 @@ Gartenpflege, Reparaturen, Sammelarbeiten und die neuen Jobs werden zu Fuss erle
 
 ## Häuser kaufen
 
-Fünf Häuser stehen zum Verkauf. Vor der markierten Tür E drücken. Die Kaufansicht zeigt Preis und Guthaben. Erst der Knopf „Kaufen“ zieht die Spielmünzen ab.
+Alle Wohngebaeude stehen zum Verkauf, darunter die fuenf besonderen Haeuser unten und die Stadtwohnungen. Vor der markierten Tür E drücken. Die Kaufansicht zeigt Preis und Guthaben. Erst der Knopf „Kaufen“ zieht die Spielmünzen ab.
 
 | Haus | Preis |
 | --- | --- |
@@ -85,7 +85,7 @@ Münzen, Häuser, Zuhause und Audioeinstellungen werden gespeichert. Angefangene
 
 ## Auf Vercel veroeffentlichen
 
-Das Projekt ist eine statische Website ohne Backend. `vercel.json` setzt Framework auf **Other**, Build Command auf **npm run build** und Output Directory auf **dist**. Konfiguration gemaess [Vercel-Dokumentation](https://vercel.com/docs/project-configuration/vercel-json).
+Die Spieloberflaeche bleibt eine statische Website. Online spielen nutzt zusaetzlich den bereits bereitgestellten Cloudflare-Server. `vercel.json` setzt Framework auf **Other**, Build Command auf **npm run build** und Output Directory auf **dist**. Konfiguration gemaess [Vercel-Dokumentation](https://vercel.com/docs/project-configuration/vercel-json).
 
 Das Repository in Vercel importieren und **AnimalWorld** als Root Directory waehlen, falls das Repository noch andere Projekte enthaelt. Alternativ im Projektordner `npx vercel` fuer eine Vorschau oder `npx vercel --prod` fuer die Produktion ausfuehren und das gewuenschte Vercel-Projekt verknuepfen. Eine Anmeldung ist erforderlich. Fuer manuelle statische Hosts ausschliesslich den Inhalt von `dist/` veroeffentlichen.
 
@@ -118,3 +118,30 @@ Alle Gebaeude haben eine eigene Einrichtung und einen Empfang. Restaurant, Poliz
 Im **Kleidershop** (erstes Stadthaus links, Tuer bei -18 / -18) zur Kasse gehen. Dort gibt es sieben Outfits fuer 70 bis 220 Muenzen, darunter Shirts, Wald-Outfit, Polizei-Outfit, Feuerwehr-Outfit und Arztkittel. Preise stehen vor dem Kauf auf den Knopfen. Kaufen zieht den Betrag einmalig ab und zieht das Outfit sofort an. Bereits gekaufte Kleidung kann hier kostenlos gewechselt oder ausgezogen werden.
 
 Outfit, Kleidersammlung, Guthaben und Haeuser werden gemeinsam gespeichert. Ein fehlgeschlagener Kauf zieht keine Muenzen ab. Vorhandene Spielstaende bleiben kompatibel.
+
+
+## Online spielen
+
+Im Hauptmenue **Online spielen** druecken. Alle Teilnehmer landen ohne Raumcode auf derselben oeffentlichen Insel. Andere Mauz, ihre getragenen Kleider, gefahrenen Autos und Winkbewegungen werden live angezeigt; violette Punkte auf der Minikarte zeigen Mitspieler. Oeffentliche Innenraeume werden gemeinsam betreten. Private Wohnraeume bleiben pro Spieler getrennt.
+
+Der gemeinsame Server ist bereits unter `wss://animal-world-online.animal-world-mauz.workers.dev/play` bereitgestellt. Er verwendet eine globale Durable-Object-Instanz mit WebSocket-Hibernation. Maximal 128 gleichzeitige Verbindungen; dies ist eine Schutzgrenze, kein Lasttest-Ergebnis. Ungueltige oder zu grosse Nachrichten werden verworfen bzw. geschlossen; verwaiste Verbindungen nach spaetestens etwa 90 Sekunden entfernt. Ein Verbindungsabbruch pausiert das Spiel. Zum Wiederverbinden im Hauptmenue erneut Online spielen waehlen.
+
+Die Online-Uhr ist fuer alle gleich und laeuft auch bei geoeffneten Menues weiter. Einzelne Spieler koennen die Nacht nicht fuer alle ueberspringen. Die Offline-Uhr bleibt separat erhalten. Muenzen, Sparkonto, Kleider und Hausbesitz bleiben im jeweiligen Browser; Jobs und ihre Ziele werden individuell erledigt. Es gibt noch keine gemeinsamen Missionen, gemeinsamen Fahrzeugbesitz, Handel oder servergepruefte Wirtschaft. Es werden keine Konten oder Chat-Nachrichten angelegt. Die zufaellige Mauz-Kennung gilt fuer die aktuelle Verbindung.
+
+Serverquellcode: `multiplayer-worker.mjs`; reproduzierbare Deployment-Konfiguration: `server/wrangler.jsonc`. Fuer spaetere Serverupdates mit angemeldetem Cloudflare-Konto: `npx wrangler deploy --config server/wrangler.jsonc`. Bei einer anderen Serveradresse auch `multiplayer.js` und die `connect-src`-Freigabe in `index.html` aktualisieren. Das Vercel-Frontend weiter normal aus `dist/` deployen; der Worker wird nicht als statische Spieldatei ausgeliefert.
+
+## Jedes Gebaeude hat eine Funktion
+
+- Mauz Mode: sieben Outfits kaufen und umziehen.
+- Restaurant: Mahlzeit fuer 20 Muenzen, drei Minuten 30 Prozent schneller laufen.
+- Krankenhaus: kostenlose Physiotherapie, drei Minuten hoeher springen.
+- Bank: jeweils 100 Muenzen einzahlen oder abheben. Sparkonto und Portemonnaie werden atomar zusammen gespeichert; keine Zinsen.
+- Polizei: drei Hinweise untersuchen, pro Hinweis zwei Timing-Treffer; 230 Muenzen.
+- Feuerwehr: drei animierte Feuer jeweils vier Sekunden loeschen; 280 Muenzen.
+- Stadtmarkt: drei Lebensmitteleinkaeufe bis ins Suedviertel liefern; 210 Muenzen.
+- Postgebaeude: Paketdienst an der Station vor der Tuer.
+- Alle uebrigen Gebaeude: kaufbare Wohnungen oder Haeuser mit eingerichteten Zimmern und waehlbarem Startpunkt.
+
+Neue Stadtauftraege beginnen **am Empfang im Gebaeude**. Erst alle Aufgaben erledigen, dann zum Empfang zurueckkehren und den Lohn abholen. Restaurant- und Krankenhausboni laufen nur waehrend des Spielens und enden beim Neuladen.
+
+Zusaetzliche Tests: `node scripts/test-city.cjs` prueft Wirtschaft und alle drei Auftraege; `node scripts/test-city-ui.cjs` prueft die Angebote per Touch gegen den fertigen Build. `npm run test:online` verbindet zwei getrennte Browserprofile mit dem echten Server und prueft Positionen, Uhr, Winken, oeffentliche Innenraeume und Trennung. Der Online-Test benoetigt Internet.

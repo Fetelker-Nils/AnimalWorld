@@ -1,10 +1,13 @@
 function createDayCycle(storage){
   const key='animal-world-clock-v1';
+  let privateMinutes=null;
   let minutes=9*60,dirtySeconds=0;
   try { const saved=JSON.parse(storage.getItem(key));if(Number.isFinite(saved?.minutes)&&saved.minutes>=0)minutes=saved.minutes; } catch {}
   const hour=()=>minutes%1440/60;
-  const save=()=>{try{storage.setItem(key,JSON.stringify({minutes}));}catch{}};
+  const save=()=>{if(privateMinutes!==null)return;try{storage.setItem(key,JSON.stringify({minutes}));}catch{}};
   return {
+    startShared(){if(privateMinutes===null)privateMinutes=minutes;},
+    stopShared(){if(privateMinutes!==null){minutes=privateMinutes;privateMinutes=null;}},
     tick(dt){if(!Number.isFinite(dt)||dt<=0)return;minutes+=dt*1.2;dirtySeconds+=dt;if(dirtySeconds>=15){save();dirtySeconds=0;}},
     save,
     sleep(){if(!(hour()>=20||hour()<6))return false;minutes=(Math.floor(minutes/1440)+(hour()>=20?1:0))*1440+7*60;save();return true;},
