@@ -6,7 +6,7 @@ const VehicleModels=[
   {id:'helicopter',kind:'air',name:'Helikopter',color:'#d68161',top:'#edb39b',speed:36,acceleration:12,steer:1.5,width:4,length:7,slope:.5,description:'Senkrecht starten und landen: Q / R'},
   {id:'boat',kind:'boat',name:'Motorboot',color:'#e4e4d6',top:'#86bfc7',speed:30,acceleration:10,steer:1.4,width:2.8,length:5,slope:.5,description:'Ueber das Meer zur Perleninsel'}
 ];
-function createVehicles(world,walkable,onImpact=()=>{}){
+function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false){
   let car=null,driving=false;
   function clearAt(x,y,heading,model){
     if(world.inBounds&&!world.inBounds(x,y))return false;
@@ -41,6 +41,12 @@ function createVehicles(world,walkable,onImpact=()=>{}){
     }
     return false;
   }
+  function destroy(player,impact){
+    onImpact(impact);
+    const spots=[{x:car.x,y:car.y},...world.booths.flatMap(b=>[{x:b.x+2,y:b.y},{x:b.x-2,y:b.y}])].filter(p=>walkable(p.x,p.y));
+    spots.sort((a,b)=>Math.hypot(a.x-car.x,a.y-car.y)-Math.hypot(b.x-car.x,b.y-car.y));const safe=spots[0]||{x:0,y:0};
+    Object.assign(player,{x:safe.x,y:safe.y,jump:0,vz:0,moving:false});driving=false;car=null;
+  }
   function step(dt,throttle,turn,brake,player,lift=0){
     if(!car||!driving)return;
     const m=car.model;
@@ -52,9 +58,10 @@ function createVehicles(world,walkable,onImpact=()=>{}){
       let z=Math.max(0,Math.min(100,(car.z||0)+(lift>0&&!canLift?0:lift)*15*dt));
       // Airplanes descend gently if they lose airspeed; helicopters can hover.
       if(m.id==='plane'&&car.speed<12&&car.z>floor)z=Math.max(floor,z-3*dt);
-      const obstacle=(world.buildings||[]).some(b=>Math.abs(x-b.x)<b.w/2+m.width/2&&Math.abs(y-b.y)<b.d/2+m.length/2&&z<b.h+4);
+      const obstacle=airBlocked(x,y,z,m)||(world.buildings||[]).some(b=>Math.abs(x-b.x)<b.w/2+m.width/2&&Math.abs(y-b.y)<b.d/2+m.length/2&&z<b.h+4);
       const landing=z<=floor+.2;
-      if(!world.inBounds(x,y)||obstacle||z<floor||landing&&(world.inSea(x,y)||!clearAt(x,y,car.heading,m))){car.speed=0;}
+      if(!world.inBounds(x,y)){car.speed=0;}
+      else if(obstacle||z<floor||landing&&(world.inSea(x,y)||!clearAt(x,y,car.heading,m))){const speed=Math.max(Math.abs(car.speed),Math.abs(z-(car.z||0))/dt);if(speed>4){destroy(player,{x,y,z:car.z||0,heading:car.heading,speed,model:m,carX:car.x,carY:car.y});return;}car.speed=0;}
       else{car.x=x;car.y=y;car.z=landing?floor:z;}
       player.x=car.x;player.y=car.y;player.heading=car.heading;player.moving=false;return;
     }
@@ -72,7 +79,7 @@ function createVehicles(world,walkable,onImpact=()=>{}){
       if(!clearAt(x,y,car.heading,m)){
         const impact={x,y,heading:car.heading,speed:Math.abs(car.speed),model:m,carX:car.x,carY:car.y};
         car.speed=0;
-        if(m.kind==='boat')break;
+        if(m.kind==='boat'){if(impact.speed>4&&Math.hypot(x,y)<world.border-Math.max(m.width,m.length)){destroy(player,{...impact,z:0});return;}break;}
         if(impact.speed*3.6>70){
           if(onImpact(impact)?.keepCar){break;}
           // Return the driver to the last safe centre before removing the vehicle.

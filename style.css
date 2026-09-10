@@ -25,3 +25,5 @@
 .flight-controls{position:absolute;right:20px;bottom:210px;display:flex;gap:8px;pointer-events:auto}.flight-controls[hidden]{display:none}.touch .flight-controls button{touch-action:none;width:68px;height:68px;font-size:12px;font-weight:700;margin:0}
 
 @media(max-height:500px){.flight-controls{right:180px;bottom:22px}}
+
+#home-unit{display:block;max-width:100%;width:100%;padding:10px;margin:8px 0;border:1px solid #a7bca6;border-radius:10px;background:#f7faef;color:#345240}.home-card{max-height:90vh;overflow:auto}#home-layout{font-size:13px}

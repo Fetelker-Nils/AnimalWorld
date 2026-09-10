@@ -41,7 +41,7 @@ const {createServer}=require('./browser.cjs');
     await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>p.x===-2&&p.y===-1));
     await b.screenshot({path:'test-results/online-shop.png'});
     await a.click('#menu');await a.click('#back');
-    await b.waitForFunction(()=>window.__animalTest.state().peers.length===0);
+    await b.waitForFunction(id=>!window.__animalTest.state().peers.some(p=>p.id===id),as.networkId);
     await b.context().setOffline(true);
     // A failed connection must return to the menu and keep Offline usable.
     await b.click('#menu');await b.click('#back');await b.click('#play-online');

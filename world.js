@@ -69,6 +69,14 @@ const Island = (() => {
     b.homeId='residence-'+i;
     homes.push({id:b.homeId,name:(b.city?'Stadtwohnung ':'Inselhaus ')+(i+1),price:b.city?300+Math.round(b.h*15):240+Math.round(b.w*10),x:b.x,y:b.y+b.d/2+2,building:b});
   }
+  for(const home of [...homes]){
+    const b=home.building;home.buildingId=b.homeId;home.floor=0;home.unit=0;home.floors=b.city?Math.max(2,Math.min(6,Math.floor(b.h/4))):1;
+    home.type=b.city?'apartment':b.luxury?'villa':'house';
+    if(b.city){
+      const baseName='Wohnhaus '+b.homeId.replace('residence-','');home.name=baseName+' - EG, Wohnung A';
+      for(let floor=0;floor<home.floors;floor++)for(let unit=0;unit<2;unit++)if(floor||unit)homes.push({...home,id:home.id+'-f'+floor+'-u'+unit,floor,unit,name:baseName+' - '+(floor?floor+'. Etage':'EG')+', Wohnung '+(unit?'B':'A'),price:home.price+floor*90+unit*45});
+    }
+  }
   const depot={x:-10,y:-2,name:'Paketpost'};
   const deliveries=[
     {x:18,y:-18,name:'Stadt · Haus 18',reward:35},
@@ -136,3 +144,5 @@ const Island = (() => {
   const reserved=(x,y)=>airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
   return {inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
+
+globalThis.AnimalIsland=Island;

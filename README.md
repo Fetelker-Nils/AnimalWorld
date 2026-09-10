@@ -122,11 +122,11 @@ Outfit, Kleidersammlung, Guthaben und Haeuser werden gemeinsam gespeichert. Ein 
 
 ## Online spielen
 
-Im Hauptmenue **Online spielen** druecken. Alle Teilnehmer landen ohne Raumcode auf derselben oeffentlichen Insel. Andere Tiere mit ihren Namen, getragenen Kleidern, Autos und Winkbewegungen werden live angezeigt; violette Punkte auf der Minikarte zeigen Mitspieler. Oeffentliche Innenraeume werden gemeinsam betreten. Private Wohnraeume bleiben pro Spieler getrennt.
+Im Hauptmenue **Online spielen** druecken. Alle Teilnehmer landen ohne Raumcode auf derselben oeffentlichen Insel. Andere Tiere mit ihren Namen, getragenen Kleidern, Autos und Winkbewegungen werden live angezeigt; violette Punkte auf der Minikarte zeigen Mitspieler. Oeffentliche Innenraeume werden gemeinsam betreten. Wohnungen haben getrennte Innenraeume; Etagen-Treppenhaeuser sind gemeinsam begehbar.
 
 Der gemeinsame Server ist bereits unter `wss://animal-world-online.animal-world-mauz.workers.dev/play` bereitgestellt. Er verwendet eine globale Durable-Object-Instanz mit WebSocket-Hibernation. Maximal 128 gleichzeitige Verbindungen; dies ist eine Schutzgrenze, kein Lasttest-Ergebnis. Ungueltige oder zu grosse Nachrichten werden verworfen bzw. geschlossen; verwaiste Verbindungen nach spaetestens etwa 90 Sekunden entfernt. Ein Verbindungsabbruch pausiert das Spiel. Zum Wiederverbinden im Hauptmenue erneut Online spielen waehlen.
 
-Die Online-Uhr ist fuer alle gleich und laeuft auch bei geoeffneten Menues weiter. Nachts koennen alle Spieler in ihren eigenen Betten schlafen: Erst wenn alle verbundenen Spieler schlafen, springt die gemeinsame Uhr auf 07:00 Uhr. Die Schlafanzeige zeigt die Anzahl; Aufstehen oder Escape bricht das Warten ab. Die Offline-Uhr bleibt separat erhalten. Muenzen, Sparkonto, Kleider und Hausbesitz bleiben im jeweiligen Browser; Jobs und ihre Ziele werden individuell erledigt. Es gibt noch keine gemeinsamen Missionen, gemeinsamen Fahrzeugbesitz, Handel oder servergepruefte Wirtschaft. Es werden keine Konten oder Chat-Nachrichten angelegt. Die zufaellige Mauz-Kennung gilt fuer die aktuelle Verbindung.
+Die Online-Uhr ist fuer alle gleich und laeuft auch bei geoeffneten Menues weiter. Nachts koennen alle Spieler in ihren eigenen Betten schlafen: Erst wenn alle verbundenen Spieler schlafen, springt die gemeinsame Uhr auf 07:00 Uhr. Die Schlafanzeige zeigt die Anzahl; Aufstehen oder Escape bricht das Warten ab. Die Offline-Uhr bleibt separat erhalten. Muenzen, Sparkonto und Kleider bleiben im jeweiligen Browser; Online-Immobilienbesitz wird gemeinsam auf dem Server gespeichert; Jobs und ihre Ziele werden individuell erledigt. Es gibt noch keine gemeinsamen Missionen, gemeinsamen Fahrzeugbesitz, Handel oder servergepruefte Wirtschaft. Es werden keine Konten oder Chat-Nachrichten angelegt. Die zufaellige Mauz-Kennung gilt fuer die aktuelle Verbindung.
 
 Serverquellcode: `multiplayer-worker.mjs`; reproduzierbare Deployment-Konfiguration: `server/wrangler.jsonc`. Fuer spaetere Serverupdates mit angemeldetem Cloudflare-Konto: `npx wrangler deploy --config server/wrangler.jsonc`. Bei einer anderen Serveradresse auch `multiplayer.js` und die `connect-src`-Freigabe in `index.html` aktualisieren. Das Vercel-Frontend weiter normal aus `dist/` deployen; der Worker wird nicht als statische Spieldatei ausgeliefert.
 
@@ -184,10 +184,28 @@ Beim Umfallen wird das komplette Baum- oder Laternenmodell um seine Basis gedreh
 
 An den Flugplatz-Terminals auf der Hauptinsel (225 / 220) und der Perleninsel (918 / 145) stehen Propellerflugzeug und Helikopter bereit. Mit E das Fahrzeug waehlen, hingehen und F einsteigen. W/S: beschleunigen und verlangsamen; A/D: lenken; Q: steigen; R: sinken; Leertaste: bremsen. Auf Touch-Geraeten erscheinen Steigen/Sinken neben den bestehenden Fahrkontrollen. Das Flugzeug braucht zum Abheben mehr als 12 m/s; der Helikopter startet senkrecht und kann schweben. Maximalhoehe: 100 Meter. Zum Aussteigen anhalten und auf freiem Land landen.
 
-Motorboote erscheinen an den Bootsstegen im Osten der Hauptinsel (550 / 0) und auf der Perleninsel (655 / 0). Auf den Steg gehen, mit F einsteigen und Richtung andere Insel fahren. Boote bleiben auf dem Meer, stoppen an Land und schuetzen ihre Insassen vor dem Ertrinken. Zum Aussteigen langsam an einen Steg heranfahren und anhalten.
+Motorboote erscheinen an den Bootsstegen im Osten der Hauptinsel (550 / 0) und auf der Perleninsel (655 / 0). Auf den Steg gehen, mit F einsteigen und Richtung andere Insel fahren. Boote bleiben auf dem Meer und schuetzen ihre Insassen vor dem Ertrinken. Langsam anlegen: Bei einem schnellen Aufprall explodiert das Boot. Zum Aussteigen langsam an einen Steg heranfahren und anhalten.
 
 Die Perleninsel liegt oestlich bei 900 / 0. Ihre Flaeche betraegt ein Fuenftel der Hauptinsel. Dort stehen 20 kaufbare, begehbare Perlenvillen ab 2400 Muenzen; ausserdem gibt es Strassen, einen Flugplatz, Bootssteg und eine Fahrzeug-Telefonzelle. Hausbesitz wird wie bisher gespeichert.
 
 Die Weltgrenze liegt bei 1300 Metern Abstand vom Mittelpunkt der Hauptinsel. Ein violettes Gitter markiert sie in der Welt, eine gestrichelte Linie auf den Karten. Zu Fuss und mit Fahrzeugen kann sie nicht ueberschritten werden. Beide Inseln sind auf der Gesamtkarte sichtbar; zum Lesen kleiner Ortsnamen hineinzoomen.
 
 Die neuen Fahrzeuge und ihre Flughoehe werden online uebertragen. `npm run test:navigation` prueft Starten, Landen, Bootsfahrt, Anlegen, Villenkauf und die Synchronisierung aller drei Fahrzeuge mit einem zweiten Browser. `npm run test:touch` prueft auch die Flugtasten in beiden Bildschirmausrichtungen.
+
+## Individuelle Innenraeume und Online-Immobilien
+
+Wohnungen sind kleiner als Einfamilienhaeuser; Perlenvillen haben die groessten Innenraeume. Breite, Tiefe, gespiegelte Raumaufteilung, offener Wohnbereich, Wandfarben, Boden und Einrichtung richten sich nach der Immobilie. Wandsichtbarkeit, Kollisionen, Kamera, Bett und Ausgang verwenden denselben Grundriss.
+
+Stadtwohnhaeuser haben je nach Gebaeudehoehe zwei bis sechs Etagen mit jeweils zwei unabhaengigen Wohnungen. An der Haustuer lassen sich Etage und Wohnung ansehen oder das Treppenhaus betreten. Dort bei den Treppen E druecken, um die Etage zu wechseln; Wohnung A und B haben eigene Tueren. Mehrere Spieler koennen verschiedene Wohnungen im selben Haus besitzen.
+
+Online entscheidet eine gespeicherte Datenbank-Transaktion ueber den Kauf. Jede Immobilie hat genau einen Besitzer; ein gleichzeitig abgelehnter Kauf wird nicht berechnet. Eine bestaetigte Bestellung wird bei Wiederholung nicht nochmals verkauft oder berechnet. Vor dem Senden wird das Geld lokal reserviert; ausstehende Bestaetigungen werden nach dem Wiederverbinden abgeglichen. Besitzrechte bleiben auch nach einem Server-Neustart erhalten.
+
+Die Online-Besitzerkennung wird als zufaelliger geheimer Schluessel in diesem Browserprofil gespeichert. Name und Tier koennen weiter geaendert werden. Wer die Browserdaten loescht, verliert den Zugriff auf diese Kennung; es gibt noch keine Anmeldung oder Wiederherstellung ueber ein Konto. Alte lokale Hauskaeufe bleiben im Offline-Modus erhalten und werden nicht automatisch zu exklusiven Online-Kaeufen. Die Wirtschaft bleibt lokal; die serverseitige Exklusivitaet ist kein Schutz gegen manipulierte lokale Muenzen.
+
+## Kaboom und Kartenrouten
+
+Boote, Flugzeuge und Helikopter explodieren bei einem Zusammenstoss mit mehr als 4 m/s (etwa 14 km/h). Bei Fluggeraeten zaehlt auch die Sinkgeschwindigkeit beim Treffer auf ein Hindernis. Mauz erscheint sicher an Land wieder. Vorsichtiges Anlegen, normales Landen auf freier Flaeche und die Weltgrenze bleiben ohne Explosion. Autos behalten ihre bisherige 70-km/h-Regel; Baeume und Laternen fallen bei Autotreffern weiter ohne Autoexplosion um.
+
+Auf der grossen Karte per Rechtsklick ein Ziel setzen. Eine orange Linie zeigt einen berechneten Weg, bevorzugt ueber Strassen und um Hindernisse herum. Bei Inselwechseln fuehrt sie ueber die Bootsstege; dort muss selbst ein Boot genommen werden. Gebaeudeziele werden an ihre Tuer gelegt. Die Linie ist auch auf der Minikarte sichtbar. Der naechste Rechtsklick entfernt die Route. Es ist eine Weganzeige, kein Autopilot; fuer ein neues Ziel die alte Linie entfernen und erneut rechtsklicken.
+
+`npm run test:housing` prueft konkurrierende Kaeufe mit zwei Browsern gegen eine isolierte Instanz des Servercodes, Besitz nach Wiederverbinden, Etagen und Innenraeume. Es werden dabei keine echten Online-Immobilien belegt. `npm run test:routes` prueft Rechtsklick, Umweg und Entfernen im Browser. `npm test` umfasst zusaetzlich Transaktions-, Rueckerstattungs-, Grundriss- und Wegsuchetests.

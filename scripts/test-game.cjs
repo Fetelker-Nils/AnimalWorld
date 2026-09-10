@@ -9,7 +9,7 @@ const context=new Proxy({}, {get:(_,key)=>key==='measureText'?()=>({width:50}):k
 const nodes={};
 const sandbox={createIndoorRenderer:()=>({surface:{},render(){}}),Math,innerWidth:1280,innerHeight:850,devicePixelRatio:1,requestAnimationFrame(){},location:{hash:''},window:{localStorage:storage,addEventListener(){}},document:{querySelector(id){return nodes[id]||={hidden:true,focus(){},getContext:()=>context,addEventListener(){}};},querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
-for(const file of ['world.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
+for(const file of ['world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
 vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
 const {mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles}=sandbox.probe;
 // Regression: nearby walls remain visible even with an offscreen/behind-camera centre.
@@ -179,30 +179,33 @@ console.log('PASS: 5.4x world area, four new job routes/rewards, affordable purc
 
 // Enter through the actual house interaction and walk through all four doorways.
 for(const id of ['village','east']){
-  const h=Island.homes.find(h=>h.id===id);
+  const h=Island.homes.find(h=>h.id===id),l=sandbox.housingLayout(h);
+  const inside=(x,y)=>[x*l.sx*l.mirror,y*l.sy],walkInside=points=>walkRoute(points.map(([x,y])=>inside(x,y)));
   Object.assign(mauz,{x:h.x,y:h.y});setMode('playing');interact();
   assert(enterHome(),'Owned house entry');assert.equal(roomName(),'Flur');
   const balance=job.coins;
-  assert(!indoorWalkable(-12,0),'Outer wall collision');
-  assert(!indoorWalkable(-2,0),'Partition collision');
-  assert(!indoorWalkable(-9,8),'Sofa collision');
+  assert(!indoorWalkable(...inside(-12,0)),'Outer wall collision');
+  assert(!indoorWalkable(...inside(-2,0)),'Partition collision');
+  assert(!indoorWalkable(...inside(-9,8)),'Sofa collision');
   assert(leaveHome(),'Exit works at entrance');
   interact();assert(enterHome());
-  walkRoute([[0,6.5],[-4,6.5]]);assert.equal(roomName(),'Wohnzimmer');draw();
+  walkInside([[0,6.5],[-4,6.5]]);assert.equal(roomName(),'Wohnzimmer');draw();
   assert(!leaveHome(),'Cannot leave remotely');
-  walkRoute([[0,6.5],[4,6.5]]);assert.equal(roomName(),'Küche');draw();
-  walkRoute([[0,6.5],[0,-6.5],[4,-6.5]]);assert.equal(roomName(),'Badezimmer');draw();
-  walkRoute([[0,-6.5],[-4,-6.5]]);assert.equal(roomName(),'Schlafzimmer');draw();
-  walkRoute([[0,-6.5],[0,10]]);assert(leaveHome());
+  walkInside([[0,6.5],[4,6.5]]);assert.equal(roomName(),'Küche');draw();
+  walkInside([[0,6.5],[0,-6.5],[4,-6.5]]);assert.equal(roomName(),'Badezimmer');draw();
+  walkInside([[0,-6.5],[-4,-6.5]]);assert.equal(roomName(),'Schlafzimmer');draw();
+  walkInside([[0,-6.5],[0,10]]);assert(leaveHome());
   assert.equal(mauz.x,h.x);assert.equal(mauz.y,h.y);assert.equal(job.coins,balance);
 }
 const locked=Island.homes.find(h=>h.id==='villa');Object.assign(mauz,{x:locked.x,y:locked.y});interact();assert(!enterHome(),'Unowned house cannot be entered');
 console.log('PASS interiors: owned entry, locked entry, all four room routes, furniture/wall collisions, exit and unchanged wallet');
 
+Object.assign(mauz,{x:-12,y:65.5});setMode('playing');interact();assert(enterHome());
 assert(indoorCameraLimit(0,0,0)<1.8,'Camera stops before partition');
 assert(indoorCameraLimit(0,0,Math.PI/2)>4,'Clear hallway retains follow distance');
 assert(indoorCameraLimit(0,11, -Math.PI/2)<1,'Camera stays inside outer wall');
 
+Object.assign(mauz,{x:0,y:10});assert(leaveHome());
 assert.equal(segmentBox({x:0,y:0,z:2},{x:10,y:0,z:2},{x:5,y:0,w:2,d:2,h:4}),.4);
 assert.equal(segmentBox({x:0,y:0,z:5},{x:10,y:0,z:5},{x:5,y:0,w:2,d:2,h:4}),null);
 assert(outdoorCameraLimit(-18,-18,Math.PI/2,7,3)<2,'Outdoor camera stops before house wall');
