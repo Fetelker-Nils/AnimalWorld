@@ -105,7 +105,7 @@ export class World extends DurableObject {
     if(data.type!=='state'||now-p.last<80)return;
     if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||Math.hypot(data.x,data.y)>=1300||Math.abs(data.heading)>1e6||data.jump<0||data.jump>3)return;
     const home=typeof data.room==='string'&&data.room.startsWith('home:')?globalThis.AnimalIsland.homes.find(h=>'home:'+h.id===data.room):null;
-    const lobby=typeof data.room==='string'&&data.room.startsWith('lobby:')?globalThis.AnimalIsland.homes.find(h=>h.type==='apartment'&&data.room==='lobby:'+h.buildingId+':'+h.floor):null;
+    const lobby=typeof data.room==='string'&&data.room.startsWith('lobby:')?globalThis.AnimalIsland.homes.find(h=>h.type==='apartment'&&(data.room==='lobby:'+h.buildingId||data.room==='lobby:'+h.buildingId+':'+h.floor)):null;
     const room=rooms.has(data.room)?data.room:home&&this.properties.get('property:'+home.id)?.owner===p.ownerToken?data.room:lobby?data.room:null;
     const layout=home?globalThis.housingLayout(home):{w:24,d:24};
     if(!room||(room!=='world'&&(Math.abs(data.x)>layout.w/2||Math.abs(data.y)>layout.d/2)))return;
@@ -113,7 +113,9 @@ export class World extends DurableObject {
     if(v&&['compact','roadster','pickup','plane','helicopter','boat'].includes(v.model)&&[v.x,v.y,v.heading,v.speed].every(Number.isFinite)&&Math.hypot(v.x,v.y)<1300&&Math.abs(v.speed)<=65&&Number.isFinite(v.z??0)&&(v.z??0)>=0&&(v.z??0)<=100&&Math.abs(v.heading)<1e6){p.vehicle={model:v.model,x:v.x,y:v.y,heading:v.heading,speed:v.speed,z:v.z??0};}
     else if(v===null){p.vehicle=null;this.releaseRiders(p.id);}
     if(p.riding&&!this.vehicle(p.riding)){p.riding=null;this.send(ws,{type:'ride',owner:null});}
-    Object.assign(p,{x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
+    const elevation=lobby?data.elevation??0:0;
+    if(!Number.isFinite(elevation)||elevation<0||elevation>(lobby?.floors-1)*4)return;
+    Object.assign(p,{elevation,x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
     p.species=['cat','rabbit','bear','fox'].includes(data.species)?data.species:'cat';
     p.name=typeof data.name==='string'?data.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,18)||'Mauz':'Mauz';
     if(p.riding){const car=this.vehicle(p.riding);p.x=car.x;p.y=car.y;p.heading=car.heading;p.room='world';p.car=null;}

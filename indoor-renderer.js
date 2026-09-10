@@ -26,8 +26,8 @@ function createIndoorRenderer(){
       for(const i of [0,1,2,0,2,3]){const p=point(...coords[i]);vertices.push(2*scale/width*p.u+(2*cx/width-1)*p.depth,2*scale/height*p.v+(1-2*cy/height)*p.depth,A*p.depth+B,p.depth,...rgb,0,0);}
     }
     for(const b of floors){const x=b.x,y=b.y,w=b.w/2,d=b.d/2,z=b.z||0;quad([[x-w,y-d,z],[x+w,y-d,z],[x+w,y+d,z],[x-w,y+d,z]],b.color);}
-    for(const b of boxes){const x=b.x,y=b.y,w=b.w/2,d=b.d/2,h=b.h;const c=[[x-w,y-d],[x+w,y-d],[x+w,y+d],[x-w,y+d]];
-      for(let i=0;i<4;i++){const a=c[i],e=c[(i+1)%4];quad([[...a,0],[...e,0],[...e,h],[...a,h]],b.color,i%2?.9:.97);}
+    for(const b of boxes){const x=b.x,y=b.y,w=b.w/2,d=b.d/2,z=b.z||0,h=z+b.h;const c=[[x-w,y-d],[x+w,y-d],[x+w,y+d],[x-w,y+d]];
+      for(let i=0;i<4;i++){const a=c[i],e=c[(i+1)%4];quad([[...a,z],[...e,z],[...e,h],[...a,h]],b.color,i%2?.9:.97);}
       quad(c.map(p=>[...p,h]),b.top||b.color);
     }
     for(const f of mesh){const rgb=[1,3,5].map(i=>parseInt(f.color.slice(i,i+2),16)/255);for(let i=1;i<f.points.length-1;i++)for(const v of [f.points[0],f.points[i],f.points[i+1]]){const p=point(...v);vertices.push(2*scale/width*p.u+(2*cx/width-1)*p.depth,2*scale/height*p.v+(1-2*cy/height)*p.depth,A*p.depth+B,p.depth,...rgb,0,0);}}

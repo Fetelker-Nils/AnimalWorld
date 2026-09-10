@@ -26,16 +26,25 @@ const {createServer}=require('./browser.cjs');
   const states=await Promise.all([a.evaluate(()=>window.__animalTest.state()),b.evaluate(()=>window.__animalTest.state())]);assert.equal(states.filter(s=>s.ownedHomes.includes(home.id)).length,1,'Exactly one buyer');
   const owner=states[0].ownedHomes.includes(home.id)?a:b,other=owner===a?b:a;
   assert(await other.locator('#home-buy').isDisabled());assert.equal((await other.evaluate(()=>window.__animalTest.state())).coins,20000,'Losing buyer keeps coins');
-  await owner.click('#home-enter');await owner.waitForFunction(()=>window.__animalTest.state().depthRenderer);const layout=(await owner.evaluate(()=>window.__animalTest.state())).layout;assert(layout.w<18);await owner.screenshot({path:'test-results/apartment-interior.png'});
+  await owner.click('#home-enter');await owner.evaluate(()=>{window.__animalTest.visit(-8,4);document.querySelector('#interact').click();});await owner.click('#home-enter');await owner.waitForFunction(()=>window.__animalTest.state().depthRenderer);const layout=(await owner.evaluate(()=>window.__animalTest.state())).layout;assert(layout.w<18);await owner.screenshot({path:'test-results/apartment-interior.png'});
   await owner.evaluate(()=>{const e=window.__animalTest.state().layout.exit;window.__animalTest.visit(e.x,e.y);document.querySelector('#interact').click();});assert((await owner.evaluate(()=>window.__animalTest.state())).interior.startsWith('lobby:'));
-  await owner.evaluate(()=>{window.__animalTest.visit(-6,-4);document.querySelector('#interact').click();});assert((await owner.evaluate(()=>window.__animalTest.state())).interior.endsWith(':1'));
+  async function stairs(p,direction){await p.evaluate(direction=>{
+   const t=window.__animalTest; t.visit(0,.3);
+   for(let i=1;i<=96;i++){
+    const a=Math.PI/2+direction*i*Math.PI/48,x=3.3*Math.cos(a),y=-3+3.3*Math.sin(a),s=t.state();
+    t.visit(s.x,s.y,Math.atan2(y-s.y,x-s.x));window.dispatchEvent(new KeyboardEvent('keydown',{key:'w'}));
+    t.advance(Math.hypot(x-s.x,y-s.y)/4.5);window.dispatchEvent(new KeyboardEvent('keyup',{key:'w'}));
+   }
+  },direction);}
+  await stairs(owner,1);assert.equal((await owner.evaluate(()=>window.__animalTest.state())).floor,1);
+  await owner.waitForTimeout(250);const ownerId=(await owner.evaluate(()=>window.__animalTest.state())).networkId;await other.waitForFunction(id=>window.__animalTest.state().peers.some(p=>p.id===id&&Math.abs(p.elevation-4)<.1),ownerId);
   await owner.screenshot({path:'test-results/apartment-stairs.png'});
   await owner.evaluate(()=>{window.__animalTest.visit(8,4);document.querySelector('#interact').click();});assert((await owner.locator('#home-title').textContent()).includes('Wohnung B'));
-  await owner.click('#home-close');await owner.evaluate(()=>{window.__animalTest.visit(0,10);document.querySelector('#interact').click();});
+  await owner.click('#home-close');await stairs(owner,-1);await owner.evaluate(()=>{window.__animalTest.visit(0,10);document.querySelector('#interact').click();});
   await other.click('#home-close');const unit=c.AnimalIsland.homes.find(h=>h.buildingId===home.buildingId&&h.floor===1&&h.unit===1);await review(other,unit);await other.click('#home-buy');await other.waitForFunction(id=>window.__animalTest.state().ownedHomes.includes(id),unit.id);
   await owner.reload();await owner.click('#play-online');await owner.waitForFunction(id=>window.__animalTest.state().ownedHomes.includes(id),home.id);assert.equal((await owner.evaluate(()=>window.__animalTest.state())).coins,20000-home.price,'Reconnect preserves ownership without double debit');
   const villa=c.AnimalIsland.homes.find(h=>h.type==='villa');await review(owner,villa);await owner.click('#home-buy');await owner.waitForFunction(id=>window.__animalTest.state().ownedHomes.includes(id),villa.id);await owner.click('#home-enter');assert((await owner.evaluate(()=>window.__animalTest.state())).layout.w>30);await owner.waitForTimeout(200);assert((await owner.evaluate(()=>window.__animalTest.state())).cameraDistance>1.8,'Camera uses actual large-room bounds');await owner.screenshot({path:'test-results/villa-interior.png'});
-  await other.click('#home-enter');
+  await other.click('#home-enter');await stairs(other,1);await other.evaluate(()=>{window.__animalTest.visit(8,4);document.querySelector('#interact').click();});await other.click('#home-enter');
   for(const p of [owner,other]){await p.evaluate(()=>{const l=window.__animalTest.state().layout;window.__animalTest.visit(l.bed.x-Math.sign(l.bed.x)*2.8*l.w/24,l.bed.y);});await p.waitForTimeout(250);await p.keyboard.press('e');}
   await owner.waitForFunction(()=>!window.__animalTest.state().sleeping&&window.__animalTest.state().clock==='07:00');await other.waitForFunction(()=>!window.__animalTest.state().sleeping&&window.__animalTest.state().clock==='07:00');
   const restored=new c.World(ctx,{});await ctx.ready;assert(restored.properties.size>=3,'Ownership survives a fresh server instance');

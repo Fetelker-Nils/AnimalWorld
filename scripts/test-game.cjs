@@ -10,7 +10,7 @@ const nodes={};
 const sandbox={createIndoorRenderer:()=>({surface:{},render(){}}),Math,innerWidth:1280,innerHeight:850,devicePixelRatio:1,requestAnimationFrame(){},location:{hash:''},window:{localStorage:storage,addEventListener(){}},document:{querySelector(id){return nodes[id]||={hidden:true,focus(){},getContext:()=>context,addEventListener(){}};},querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
 for(const file of ['world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
-vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
+vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={openLobby,mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
 const {mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles}=sandbox.probe;
 // Regression: nearby walls remain visible even with an offscreen/behind-camera centre.
 const originalCamera={...camera};
@@ -234,3 +234,25 @@ dressed.addReward(10);assert.equal(sandbox.createDeliveryJob(storage,Island).out
 assert(!empty.purchaseOutfit('street').ok);assert(!failing.purchaseOutfit('street').ok);assert.equal(failing.coins,1000);assert.equal(failing.ownedOutfits.length,0);
 assert.equal(job.purchaseOutfit('invalid').ok,false);
 console.log('PASS public building routes, clothing purchase/equip, insufficient funds, duplicate protection, persistence and atomic failure');
+
+// Exercise the actual movement loop in both directions across all angle seams.
+const tower=Island.homes.find(h=>h.type==='apartment'&&h.floors>=4);
+sandbox.probe.openLobby(tower);
+function stairWalk(x,y){
+  let count=0;
+  while(Math.hypot(x-mauz.x,y-mauz.y)>.005){
+    assert(count++<300,'Stair path blocked');
+    mauz.heading=Math.atan2(y-mauz.y,x-mauz.x);keys.add('w');
+    const before=mauz.elevation;
+    step(Math.min(1/60,Math.hypot(x-mauz.x,y-mauz.y)/4.5));
+    assert(Math.abs(mauz.elevation-before)<.15,'Continuous height, no teleport');
+  }keys.clear();
+}
+stairWalk(0,.3);
+for(let i=1;i<=96*(tower.floors-1);i++){const a=Math.PI/2+i*Math.PI/48;stairWalk(3.3*Math.cos(a),-3+3.3*Math.sin(a));}
+assert(Math.abs(mauz.elevation-(tower.floors-1)*4)<.01);
+stairWalk(0,4);stairWalk(0,10);assert(!leaveHome(),'Upper floors cannot exit to the street');
+stairWalk(0,.3);
+for(let i=96*(tower.floors-1)-1;i>=0;i--){const a=Math.PI/2+i*Math.PI/48;stairWalk(3.3*Math.cos(a),-3+3.3*Math.sin(a));}
+assert(mauz.elevation<.01);stairWalk(0,10);assert(leaveHome());
+console.log('PASS real spiral stairs: every floor, continuous height, top-floor descent, ground-only exit');

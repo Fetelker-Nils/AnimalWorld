@@ -72,20 +72,19 @@
     {x:5,y:-3,w:2.4,d:1.1,h:1.2,color:'#a7bdb4'}, // basin
     {x:5,y:-3,w:1.7,d:.8,h:1.25,color:'#edf4ec'}
   ];
-  const venueLayouts=new Map(),homeLayouts=new Map();
+  const venueLayouts=new Map(),homeLayouts=new Map(),stairMeshes=new Map();
   function homePlan(home=interior){if(!home||home.public)return null;if(!homeLayouts.has(home.id))homeLayouts.set(home.id,housingLayout(home));return homeLayouts.get(home.id);}
   function exitPoint(){return homePlan()?.exit||{x:0,y:10};}
-  function atHomeEntrance(home){return interior?.lobby?interior.building.homeId===home.buildingId:!interior&&Math.hypot(mauz.x-home.x,mauz.y-home.y)<=2.6;}
-  function openLobby(home,floor=home.floor){
-    interior={id:'lobby:'+home.buildingId+':'+floor,public:true,lobby:true,floor,building:home.building,x:home.x,y:home.y,name:'Treppenhaus - '+(floor?floor+'. Etage':'Erdgeschoss'),color:'#c5b69f',floorColor:'#c8b798'};
-    moveToDoor(0,8.5,-Math.PI/2);setMode('playing');return true;
+  function atHomeEntrance(home){return interior?.lobby?interior.building.homeId===home.buildingId&&interior.floor===home.floor&&Math.abs((mauz.elevation||0)-home.floor*4)<.05:!interior&&Math.hypot(mauz.x-home.x,mauz.y-home.y)<=2.6;}
+  function openLobby(home,floor=0){
+    interior={id:'lobby:'+home.buildingId,public:true,lobby:true,floor,floors:home.floors,building:home.building,x:home.x,y:home.y,name:'Treppenhaus - '+(floor?floor+'. Etage':'Erdgeschoss'),color:'#c5b69f',floorColor:'#c8b798'};
+    moveToDoor(0,8.5,-Math.PI/2);mauz.elevation=floor*4;setMode('playing');return true;
   }
   function lobbyAction(){
     const floor=interior.floor,base=Island.homes.find(h=>h.buildingId===interior.building.homeId);
-    if(Math.hypot(mauz.x+6,mauz.y+4)<2.3&&floor<base.floors-1)return {type:'stairs',floor:floor+1,label:'E - Eine Etage hoch'};
-    if(Math.hypot(mauz.x-6,mauz.y+4)<2.3&&floor>0)return {type:'stairs',floor:floor-1,label:'E - Eine Etage runter'};
+    if(Math.abs((mauz.elevation||0)-floor*4)>.05)return null;
     for(const unit of [0,1])if(Math.hypot(mauz.x-(unit?8:-8),mauz.y-4)<2.3){const home=Island.homes.find(h=>h.buildingId===base.buildingId&&h.floor===floor&&h.unit===unit);return {type:'unit',target:home,label:'E - Wohnung '+(unit?'B':'A')+(ownsHome(home.id)?' (deine)':'')};}
-    return Math.hypot(mauz.x,mauz.y-10)<2?{type:'exit',label:'E - Nach draussen'}:null;
+    return floor===0&&Math.hypot(mauz.x,mauz.y-10)<2?{type:'exit',label:'E - Nach draussen'}:null;
   }
 
   function indoorWalls(){if(interior?.public)return insideWalls.slice(0,5);const l=homePlan();return insideWalls.filter((b,i)=>!l.open||i<5||b.y<0||b.w>b.d).map(l.transform);}
@@ -94,7 +93,7 @@
       const anchor=i<2?furnishings[0]:i>=8&&i<=10?furnishings[8]:i>=11&&i<=16?furnishings[11]:i===19?furnishings[18]:i===21?furnishings[20]:i===23?furnishings[22]:b;
       return {...b,x:(anchor.x*l.sx+(b.x-anchor.x)*fx)*l.mirror,y:anchor.y*l.sy+(b.y-anchor.y)*fy,w:b.w*fx,d:b.d*fy,color:[0,1,13].includes(i)?l.colors[2]:b.color};
     });}
-    if(interior.lobby){const items=[];for(const x of [-6,6])for(let i=0;i<6;i++)items.push({x,y:-6-i*.5,w:2.4,d:.55,h:.2+i*.22,color:'#a2a59b'});for(const x of [-11,11])items.push({x,y:4,w:.3,d:3,h:2.6,color:'#a78360'});return items;}
+    if(interior.lobby)return [];
     if(venueLayouts.has(interior.id))return venueLayouts.get(interior.id);
     const items=[],add=(x,y,w,d,h,color)=>items.push({x,y,w,d,h,color});
     add(0,-5,6,1.2,1.2,interior.color); // reception / checkout
@@ -127,22 +126,25 @@
     interior=venue;moveToDoor(0,8.5,-Math.PI/2);setMode('playing');return true;
   }
   function indoorWalkable(x,y){
+    if(interior?.lobby)return stairSurface(x,y,mauz.elevation||0,interior.floors)!==null;
     const l=homePlan();return Math.abs(x)<(l?l.w/2:12)-.5&&Math.abs(y)<(l?l.d/2:12)-.5&&![...indoorWalls(),...indoorFurniture()].some(b=>Math.abs(x-b.x)<b.w/2+.35&&Math.abs(y-b.y)<b.d/2+.35);
   }
   function roomName(){if(interior?.public)return interior.name;const l=homePlan(),x=mauz.x/(l.sx*l.mirror),y=mauz.y/l.sy;return Math.abs(x)<2?'Flur':x<0?(y>0?'Wohnzimmer':'Schlafzimmer'):(y>0?'Küche':'Badezimmer');}
   function enterHome(){
     if(mode!=='home'||!currentHome||!ownsHome(currentHome.id)||vehicles.driving||!atHomeEntrance(currentHome))return false;
+    if(currentHome.type==='apartment'&&!interior?.lobby)return openLobby(currentHome);
     interior=currentHome;
     const spawn=homePlan().spawn;moveToDoor(spawn.x,spawn.y,-Math.PI/2);
     setMode('playing');return true;
   }
   function moveToDoor(x,y,heading){
-    Object.assign(mauz,{x,y,heading,jump:0,vz:0,moving:false});
+    Object.assign(mauz,{x,y,heading,elevation:0,jump:0,vz:0,moving:false});
     Object.assign(camera,{x,y,z:0,heading});keys.clear();destination=null;
   }
   function leaveHome(){
     if(!interior||Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)>2)return false;
-    if(!interior.public&&interior.type==='apartment'){const home=interior;openLobby(home);moveToDoor(home.unit?8:-8,4,0);return true;}
+    if(!interior.public&&interior.type==='apartment'){const home=interior;openLobby(home,home.floor);moveToDoor(home.unit?8:-8,4,0);mauz.elevation=home.floor*4;return true;}
+    if(interior.lobby&&(mauz.elevation||0)>.05)return false;
     const home=interior;interior=null;indoorRenderer?.dispose?.();indoorRenderer=null;moveToDoor(home.x,home.y,Math.PI/2);updateJobUI();return true;
   }
   const mapView={x:0,y:0,zoom:1};
@@ -251,13 +253,13 @@
     const solids=[...indoorWalls(),...indoorFurniture().filter(b=>b.h>1.5)];
     for(let distance=.1;distance<=4.5;distance+=.05){
       const px=x-Math.cos(heading)*distance,py=y-Math.sin(heading)*distance;
-      if(Math.abs(px)>(l?l.w/2:12)-.3||Math.abs(py)>(l?l.d/2:12)-.3||solids.some(b=>Math.abs(px-b.x)<b.w/2+.25&&Math.abs(py-b.y)<b.d/2+.25))return Math.max(.1,distance-.05);
+      if((interior.lobby&&Math.hypot(px,py+3)<2.05)||Math.abs(px)>(l?l.w/2:12)-.3||Math.abs(py)>(l?l.d/2:12)-.3||solids.some(b=>Math.abs(px-b.x)<b.w/2+.25&&Math.abs(py-b.y)<b.d/2+.25))return Math.max(.1,distance-.05);
     }
-    return 4.5;
+    return interior.lobby?3.5:4.5;
   }
   function resolveIndoorCamera(){
     if(!interior)return;
-    camera.x=mauz.x;camera.y=mauz.y;camera.z=0;
+    camera.x=mauz.x;camera.y=mauz.y;camera.z=mauz.elevation||0;
     cameraDistance=indoorCameraLimit(mauz.x,mauz.y,camera.heading);
     cameraHeight=Math.min(2.4,1.4+cameraDistance*.22);
   }
@@ -342,7 +344,7 @@
     drawMesh(sceneryMesh(kind,f?{...item,heading:f.heading}:item,Island.heightAt(item.x,item.y)+(item.z||0),{tilt,detail:Math.hypot(item.x-mauz.x,item.y-mauz.y)<35,lit:kind==='lamp'&&!f&&dayCycle.darkness>.15}));
   }
   function tree(t){scenery('tree',t);}
-  function animalFaces(actor){return animalMesh(actor,Island.outfits.find(o=>o.id===(actor===mauz?job.outfitId:actor.outfit)),interior?0:Island.inSea(actor.x,actor.y)?-.6:Island.heightAt(actor.x,actor.y),time,actor===mauz?1:Math.hypot(actor.x-mauz.x,actor.y-mauz.y)>20?.5:.7);}
+  function animalFaces(actor){return animalMesh(actor,Island.outfits.find(o=>o.id===(actor===mauz?job.outfitId:actor.outfit)),interior?(actor.elevation||0):Island.inSea(actor.x,actor.y)?-.6:Island.heightAt(actor.x,actor.y),time,actor===mauz?1:Math.hypot(actor.x-mauz.x,actor.y-mauz.y)>20?.5:.7);}
   function drawMesh(faces){
     const cache=new Map();
     const projected=faces.map(f=>{const points=f.points.map(v=>{let p=cache.get(v);if(!p){p=point(...v);cache.set(v,p);}return p;});return {color:f.color,points,depth:points.reduce((n,p)=>n+p.depth,0)/points.length};});
@@ -521,13 +523,16 @@
     if(!interior.public){const l=homePlan();for(let i=0;i<floors.length;i++){floors[i]=l.transform(floors[i]);if(i===1)floors[i].z=l.height;if(i===0)floors[i].color=l.colors[1];}}
     if(interior.public){floors.length=0;floors.push({x:0,y:0,w:24,d:24,color:interior.lobby?interior.floorColor:interior.floor},{x:0,y:0,w:24,d:24,z:3.3,color:'#eee9dc'});}
     const boxes=[...indoorFurniture(),...indoorWalls().map(b=>({...b,h:homePlan()?.height||3.3,color:homePlan()?.colors[0]||'#e5dfce',top:'#f3eddc'}))];
+    if(interior.lobby&&!stairMeshes.has(interior.floors))stairMeshes.set(interior.floors,staircaseGeometry(interior.floors));
+    const stairs=interior.lobby?stairMeshes.get(interior.floors):null;
+    if(stairs){floors.length=0;floors.push({x:0,y:0,w:24,d:24,z:interior.floors*4-.3,color:'#eee9dc'});boxes.length=0;boxes.push(...stairs.boxes,...indoorWalls().map(b=>({...b,h:interior.floors*4,color:'#e5dfce'})));}
     const meshActors=[...peers(),...(cameraDistance>1.8?[mauz]:[]),...(interior.public&&!interior.lobby?[{x:0,y:-6.5,heading:Math.PI/2,species:interior.id==='hospital'?'rabbit':'bear',outfit:interior.id==='police'?'police':interior.id==='fire'?'fire':null}]:[])];
     ctx.clearRect(0,0,width,height);
-    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:1,mesh:meshActors.flatMap(animalFaces)});
+    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:1,mesh:[...(stairs?.mesh||[]),...meshActors.flatMap(animalFaces)]});
     ctx.clearRect(0,0,width,height);ctx.drawImage(indoorRenderer.surface,0,0,width,height);
     if(interior.public&&!interior.lobby&&Math.hypot(mauz.x,mauz.y+3)<6)marker({x:0,y:-5},interior.id==='clothes'?'Kleiderkasse':'Empfang','#8a689b');
-    if(Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<4)marker(exitPoint(),'Ausgang','#658e7e');
-    if(interior.lobby){marker({x:-6,y:-6},'Treppe hoch','#658e7e');marker({x:6,y:-6},'Treppe runter','#658e7e');for(const x of [-10,10])marker({x,y:4},x<0?'Wohnung A':'Wohnung B','#c69f67');}
+    if((!interior.lobby||interior.floor===0)&&Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<4)marker(exitPoint(),'Ausgang','#658e7e');
+
   }
   function draw(){
     renderedFrames++;
@@ -605,6 +610,7 @@
       const nx=mauz.x+vx/length*distance;
       const ny=mauz.y+vy/length*distance;
       if(walkable(nx,ny)){
+        if(interior?.lobby){mauz.elevation=stairSurface(nx,ny,mauz.elevation||0,interior.floors);interior.floor=Math.round(mauz.elevation/4);interior.name='Treppenhaus - '+(interior.floor?interior.floor+'. Etage':'Erdgeschoss');}
         mauz.moving=Math.hypot(nx-mauz.x,ny-mauz.y)>.0001;mauz.x=nx;mauz.y=ny;
       }else destination=null;
     }
@@ -663,7 +669,7 @@
     document.querySelector('#touch-jump').textContent=vehicles.driving?'Bremse':'Hüpfen';
 
     document.querySelector('#map-open').hidden=!!interior;
-    if(interior){jobTitle.textContent=roomName();jobDetail.textContent=interior.public?'Stadtgebaeude - '+job.coins+' Muenzen':interior.name;const action=contextAction();interactButton.hidden=!action;interactButton.textContent=(action?.label||'').replace(touchDevice?/^E - /:/^$/, '');vehicleButton.hidden=true;return;}
+    if(interior){jobTitle.textContent=roomName();jobDetail.textContent=interior.lobby?'Wendeltreppe: einfach hoch oder runter laufen':interior.public?'Stadtgebaeude - '+job.coins+' Muenzen':interior.name;const action=contextAction();interactButton.hidden=!action;interactButton.textContent=(action?.label||'').replace(touchDevice?/^E - /:/^$/, '');vehicleButton.hidden=true;return;}
     const target=navigationTarget(),distance=Math.hypot(target.x-mauz.x,target.y-mauz.y);
     const direction=Math.atan2(target.y-mauz.y,target.x-mauz.x)-camera.heading;
     const angle=Math.atan2(Math.sin(direction),Math.cos(direction));
@@ -689,7 +695,7 @@
   }
   function interact(){
     if(mode!=='playing')return;
-    if(interior?.lobby){const a=lobbyAction();if(a?.type==='stairs')openLobby(Island.homes.find(h=>h.buildingId===interior.building.homeId),a.floor);else if(a?.type==='unit'){currentHome=a.target;setMode('home');}else if(a?.type==='exit')leaveHome();return;}
+    if(interior?.lobby){const a=lobbyAction();if(a?.type==='unit'){currentHome=a.target;setMode('home');}else if(a?.type==='exit')leaveHome();return;}
     if(interior){if(contextAction()?.type==='service'){if(interior.id==='clothes')setMode('clothes');else setMode('service');}else if(nearBed())sleepInBed();else leaveHome();return;}
     const action=contextAction();if(!action)return;
     if(action.type==='venue'){enterVenue(action.target);return;}
@@ -757,7 +763,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
       c.fillStyle='#ebe6d6';for(const b of indoorWalls())c.fillRect(...p(b.x-b.w/2,b.y-b.d/2),Math.max(2,b.w*factor),Math.max(2,b.d*factor));
       c.fillStyle='#788f9c';if(interior.public){for(const b of indoorFurniture())c.fillRect(...p(b.x-b.w/2,b.y-b.d/2),b.w*factor,b.d*factor);}else{const l=homePlan(),bed=l.transform({x:-8,y:-8,w:3.7,d:5});c.fillRect(...p(bed.x-bed.w/2,bed.y-bed.d/2),bed.w*factor,bed.d*factor);}
       c.fillStyle='#4e996c';c.fillRect(...p(exitPoint().x-1,exitPoint().y),2*factor,1*factor);
-      c.font='9px Segoe UI';c.fillStyle='#58664f';c.fillText(interior.public?'Empfang':'Bett',...p(interior.public?-3:-10,-5));
+      c.font='9px Segoe UI';c.fillStyle='#58664f';c.fillText(interior.lobby?'Wendeltreppe':interior.public?'Empfang':'Bett',...p(interior.public?-3:-10,-5));
     }else{
       mapIslands(c,p,factor);
       const lake=Island.pond;c.fillStyle='#77b8cf';c.beginPath();c.ellipse(...p(lake.x,lake.y),lake.rx*factor,lake.ry*factor,0,0,Math.PI*2);c.fill();
@@ -1024,7 +1030,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
-  function frame(now){if(onlineMode)network.update({x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)network.update({elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();
