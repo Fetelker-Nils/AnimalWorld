@@ -23,6 +23,18 @@ function sceneryMesh(kind,item,ground=0,options={}){
       cuboid(.24,0,4.4,.65,.16,.16,'#59686c');cuboid(.48,0,4.35,.6,.46,.12,'#59686c');
       cuboid(.48,0,4.47,.42,.32,.4,options.lit?'#ffe9a3':'#b7ccc7');cuboid(.48,0,4.87,.65,.5,.13,'#59686c');
       for(const x of [.28,.68])for(const y of [-.16,.16])cuboid(x,y,4.47,.04,.04,.4,'#59686c');
+    }else if(kind==='bench'){
+      for(const x of [-.8,.8])cuboid(x,0,0,.15,.6,.55,'#536f69');
+      for(const y of [-.25,0,.25])cuboid(0,y,.55,2.2,.2,.12,'#bd9365');
+      cuboid(0,.35,.7,2.2,.12,.65,'#bd9365');
+    }else if(kind==='planter'){
+      cuboid(0,0,0,1.5,1,.55,'#b88767');cuboid(0,0,.55,1.35,.85,.04,'#705a43');
+      for(const x of [-.45,0,.45]){ball(x,0,.85,.35,.35,.38,'#71944d');ball(x,.05,1.1,.13,.13,.13,x?'#e8b174':'#ce8ca1',5);}
+    }else if(kind==='stall'){
+      cuboid(0,0,0,2.5,1.4,.9,'#bb9163');
+      for(const x of [-1.15,1.15])cuboid(x,0,.9,.09,.09,1.5,'#81674e');
+      for(let i=0;i<6;i++)cuboid(-1.05+i*.42,0,2.4,.42,1.9,.16,i%2?'#f0dfba':'#719993');
+      for(const x of [-.8,0,.8])for(const y of [-.3,.3])ball(x,y,1.02,.2,.18,.17,x?'#d99a52':'#92b559',5);
     }else if(kind==='stone')ball(0,0,.23,.5,.4,.35,'#a6ac91',5);
     else if(kind==='ball'||kind==='fruit')ball(0,0,.4,.4,.4,.4,item.color||'#cf7760');
     else if(kind==='flower'){

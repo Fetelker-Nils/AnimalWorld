@@ -5,6 +5,13 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
  assert(c.housingLayout(homes.find(h=>h.id==='east')).w>c.housingLayout(homes.find(h=>h.id==='village')).w,'Larger house has larger interior');
  assert(c.housingLayout(apartment).w*c.housingLayout(apartment).d<c.housingLayout(villa).w*c.housingLayout(villa).d);
  assert(homes.filter(h=>h.buildingId===apartment.buildingId).length===apartment.floors*2);assert.equal(new Set(homes.map(h=>h.id)).size,homes.length);
+ // The landing rail cannot be crossed from the side, even at floor height.
+ assert.equal(c.stairSurface(4.4,-3,4,4),null);
+ assert.equal(c.stairSurface(0,1.6,4,4),4,'Landing opening stays walkable');
+ assert.notEqual(c.stairSurface(1,-3,3,4),null,'Inner stair flight has no missing floor');
+ const geometry=c.staircaseGeometry(4);
+ assert(geometry.mesh.every(f=>f.points.every(p=>p.every(Number.isFinite))));
+ assert(geometry.boxes.some(b=>b.z===12&&b.color==='#547d80'),'Doors on the third floor');
  const db=new Map();let tail=Promise.resolve();const storage={async get(k){return db.get(k);},async put(k,v){db.set(k,v);},transaction(fn){const run=tail.then(()=>fn(storage));tail=run.catch(()=>{});return run;}};
  const buy=(owner,request,id=apartment.id)=>c.purchaseProperty(storage,homes,owner,{id,request,amount:homes.find(h=>h.id===id).price});
  const [a,b]=await Promise.all([buy('alice','aaaaaaaa-11111111'),buy('bob','bbbbbbbb-22222222')]);assert(a.ok);assert(!b.ok);assert.equal(db.get('property:'+apartment.id).owner,'alice');

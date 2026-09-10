@@ -184,6 +184,15 @@
   trees.forEach((t,i)=>t.damageId=i);Island.lamps.forEach((l,i)=>l.damageId=i);
   const damage=createSceneryDamage(trees,Island.lamps);
   const life=createCityLife(Island,VehicleModels.filter(m=>!m.kind));
+  const streetDetails=[];
+  for(const [i,b] of Island.buildings.entries()){
+    for(const side of [-1,1]){
+      const x=b.x+side*(b.w/2+2),y=b.y;
+      if(Island.blocked(x,y)||Island.onRoad(x,y,1)||Island.heightAt(x,y)>0||[...Island.homes,...Island.venues,...Island.booths,...Island.jobs,...Island.jobs.flatMap(j=>j.points),Island.depot,...Island.deliveries].some(t=>Math.hypot(t.x-x,t.y-y)<4))continue;
+      streetDetails.push({x,y,kind:i%4===0?'stall':i%3===0?'bench':'planter',size:1,heading:side*Math.PI/2});
+    }
+  }
+  const detailIndex=spatialIndex(streetDetails);
   const stones=Array.from({length:100},()=>({x:random()*460-230,y:random()*460-230,size:.6+random()*.7})).filter(t=>Math.hypot(t.x,t.y)<230&&!Island.blocked(t.x,t.y)&&!Island.reserved(t.x,t.y));
   const balls=[{x:3,y:-4,vx:0,vy:0,color:'#e5a45d'},{x:5,y:4,vx:0,vy:0,color:'#89bbc1'},{x:-4,y:3,vx:0,vy:0,color:'#df9291'}];
   function visible(x,y,margin=180){const p=point(x,y);return p.depth>1&&p.x>-margin&&p.x<width+margin&&p.y>-margin&&p.y<height+margin;}
@@ -213,7 +222,7 @@
     return treeIndex.near(x,y,radius+5).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(t.x-x,t.y-y)<radius+t.size&&z<Island.heightAt(t.x,t.y)+t.size*3.8)||lampIndex.near(x,y,radius+1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<radius+.2&&z<4.9);
   }
   function vehicleWalkable(x,y){if(Island.inSea(x,y))return false;return walkable(x,y)&&!life.cars.some(c=>{const dx=x-c.x,dy=y-c.y;return Math.abs(dx*Math.cos(c.heading)+dy*Math.sin(c.heading))<c.model.length/2+.2&&Math.abs(-dx*Math.sin(c.heading)+dy*Math.cos(c.heading))<c.model.width/2+.2;});}
-  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(!Island.inBounds(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
+  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(!Island.inBounds(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!detailIndex.near(x,y,3).some(p=>Math.hypot(p.x-x,p.y-y)<(p.kind==='stall'?1.6:1.1))&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
   function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,touchDevice?1.25:2,Math.sqrt(2073600/(width*height)));canvas.width=Math.max(1,Math.floor(width*dpr));canvas.height=Math.max(1,Math.floor(height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(width*.85,height*1.05);cx=width*.5;cy=height*.43;}
   // A perspective camera seven world units behind Mauz, three units high,
   // tilted down by only seven degrees.
@@ -253,7 +262,7 @@
     const solids=[...indoorWalls(),...indoorFurniture().filter(b=>b.h>1.5)];
     for(let distance=.1;distance<=4.5;distance+=.05){
       const px=x-Math.cos(heading)*distance,py=y-Math.sin(heading)*distance;
-      if((interior.lobby&&Math.hypot(px,py+3)<2.05)||Math.abs(px)>(l?l.w/2:12)-.3||Math.abs(py)>(l?l.d/2:12)-.3||solids.some(b=>Math.abs(px-b.x)<b.w/2+.25&&Math.abs(py-b.y)<b.d/2+.25))return Math.max(.1,distance-.05);
+      if((interior.lobby&&Math.hypot(px,py+3)<.65)||Math.abs(px)>(l?l.w/2:12)-.3||Math.abs(py)>(l?l.d/2:12)-.3||solids.some(b=>Math.abs(px-b.x)<b.w/2+.25&&Math.abs(py-b.y)<b.d/2+.25))return Math.max(.1,distance-.05);
     }
     return interior.lobby?3.5:4.5;
   }
@@ -525,10 +534,18 @@
     const boxes=[...indoorFurniture(),...indoorWalls().map(b=>({...b,h:homePlan()?.height||3.3,color:homePlan()?.colors[0]||'#e5dfce',top:'#f3eddc'}))];
     if(interior.lobby&&!stairMeshes.has(interior.floors))stairMeshes.set(interior.floors,staircaseGeometry(interior.floors));
     const stairs=interior.lobby?stairMeshes.get(interior.floors):null;
-    if(stairs){floors.length=0;floors.push({x:0,y:0,w:24,d:24,z:interior.floors*4-.3,color:'#eee9dc'});boxes.length=0;boxes.push(...stairs.boxes,...indoorWalls().map(b=>({...b,h:interior.floors*4,color:'#e5dfce'})));}
+    if(stairs){floors.length=0;floors.push({x:0,y:0,w:24,d:24,z:interior.floors*4-.3,color:'#eee9dc'});boxes.length=0;boxes.push(...stairs.boxes.filter(b=>(b.z||0)+b.h>=(mauz.elevation||0)-4&&(b.z||0)<=(mauz.elevation||0)+6),...indoorWalls().map(b=>({...b,h:interior.floors*4,color:'#e5dfce'})));}
+    if(!interior.public){const l=homePlan();
+      for(const x of [-10.8,10.8]){
+        const frame=l.transform({x,y:-5,w:.12,d:2.3,h:1.35,z:1.45,color:'#a27854'});boxes.push(frame,{...frame,x:frame.x-Math.sign(frame.x)*.08,d:frame.d*.8,h:1.1,z:1.56,color:'#94b9b4'});
+      }
+      for(const b of indoorWalls())boxes.push({...b,w:b.w+.035,d:b.d+.035,h:.12,z:0,color:'#bca082'});
+      for(const x of [-7,7]){const light=l.transform({x,y:2,w:1.1,d:1.1,h:.09,z:l.height-.12,color:'#f4ddb0'});boxes.push(light);}
+      const kitchen=l.transform({x:9,y:10.8,w:4.8,d:1.35,h:.055,z:1.21,color:'#eff0e3'});boxes.push(kitchen);
+    }
     const meshActors=[...peers(),...(cameraDistance>1.8?[mauz]:[]),...(interior.public&&!interior.lobby?[{x:0,y:-6.5,heading:Math.PI/2,species:interior.id==='hospital'?'rabbit':'bear',outfit:interior.id==='police'?'police':interior.id==='fire'?'fire':null}]:[])];
     ctx.clearRect(0,0,width,height);
-    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:1,mesh:[...(stairs?.mesh||[]),...meshActors.flatMap(animalFaces)]});
+    indoorRenderer.render({width,height,scale,cx,cy,point,boxes,floors,sprite:canvas,catDepth:1,mesh:[...(stairs?.mesh.filter(f=>f.points.some(p=>p[2]>=(mauz.elevation||0)-4&&p[2]<=(mauz.elevation||0)+6))||[]),...meshActors.flatMap(animalFaces)]});
     ctx.clearRect(0,0,width,height);ctx.drawImage(indoorRenderer.surface,0,0,width,height);
     if(interior.public&&!interior.lobby&&Math.hypot(mauz.x,mauz.y+3)<6)marker({x:0,y:-5},interior.id==='clothes'?'Kleiderkasse':'Empfang','#8a689b');
     if((!interior.lobby||interior.floor===0)&&Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<4)marker(exitPoint(),'Ausgang','#658e7e');
@@ -566,7 +583,7 @@
     for(const g of grassIndex.near(camera.x,camera.y,70)){if(visible(g.x,g.y,20))scenery(g.color>.96?'flower':'grass',{x:g.x,y:g.y,size:1});}
     if(dayCycle.darkness>.05){ctx.save();ctx.globalAlpha=dayCycle.darkness*.28;for(const l of lampIndex.near(camera.x,camera.y,90))if(!damage.get('lamp',l.damageId)&&visible(l.x,l.y))groundOval(l.x,l.y,4,4,'#fff2ac');ctx.restore();}
     if(destination){const p=point(destination.x,destination.y);ctx.strokeStyle='#ffffffe0';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9,4.5,0,0,Math.PI*2);ctx.stroke();}
-    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>scenery('lamp',l)})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>scenery('ball',{...p,size:p.big?.8:.15})})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>scenery('ball',b)})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>scenery('stone',t)})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.push(...life.walkers.filter(p=>Math.hypot(p.x-mauz.x,p.y-mauz.y)<75&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>cat(p)})),...life.cars.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>carDrawing(p)})));objects.push(...network.players.filter(p=>onlineMode&&p.vehicle&&visible(p.vehicle.x,p.vehicle.y)).map(p=>({depth:-point(p.vehicle.x,p.vehicle.y).depth,draw:()=>{const model=VehicleModels.find(m=>m.id===p.vehicle.model);if(model)carDrawing({...p.vehicle,model,owner:p.id,parked:!p.car});}})));objects.push(...peers().filter(remoteVisible).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>remoteDrawing(p)})));objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
+    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>scenery('lamp',l)})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>scenery('ball',{...p,size:p.big?.8:.15})})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>scenery('ball',b)})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>scenery('stone',t)})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.push(...detailIndex.near(camera.x,camera.y,90).filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>scenery(p.kind,p)})));objects.push(...life.walkers.filter(p=>Math.hypot(p.x-mauz.x,p.y-mauz.y)<75&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>cat(p)})),...life.cars.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>carDrawing(p)})));objects.push(...network.players.filter(p=>onlineMode&&p.vehicle&&visible(p.vehicle.x,p.vehicle.y)).map(p=>({depth:-point(p.vehicle.x,p.vehicle.y).depth,draw:()=>{const model=VehicleModels.find(m=>m.id===p.vehicle.model);if(model)carDrawing({...p.vehicle,model,owner:p.id,parked:!p.car});}})));objects.push(...peers().filter(remoteVisible).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>remoteDrawing(p)})));objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
     if(Island.heightAt(mauz.x,mauz.y)>0)cat();
     drawNight();
     const nav=navigationTarget();marker(nav,plannedRoute?'Routenziel':job.active?'Lieferziel':activities.active?'Jobziel':nav.name,'#dca257');
@@ -763,6 +780,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
       c.fillStyle='#ebe6d6';for(const b of indoorWalls())c.fillRect(...p(b.x-b.w/2,b.y-b.d/2),Math.max(2,b.w*factor),Math.max(2,b.d*factor));
       c.fillStyle='#788f9c';if(interior.public){for(const b of indoorFurniture())c.fillRect(...p(b.x-b.w/2,b.y-b.d/2),b.w*factor,b.d*factor);}else{const l=homePlan(),bed=l.transform({x:-8,y:-8,w:3.7,d:5});c.fillRect(...p(bed.x-bed.w/2,bed.y-bed.d/2),bed.w*factor,bed.d*factor);}
       c.fillStyle='#4e996c';c.fillRect(...p(exitPoint().x-1,exitPoint().y),2*factor,1*factor);
+      if(interior.lobby){c.strokeStyle='#b47f55';c.lineWidth=3;c.beginPath();c.arc(...p(0,-3),4.5*factor,0,Math.PI*2);c.stroke();c.fillStyle='#547b76';c.fillRect(...p(-.4,-3.4),.8*factor,.8*factor);}
       c.font='9px Segoe UI';c.fillStyle='#58664f';c.fillText(interior.lobby?'Wendeltreppe':interior.public?'Empfang':'Bett',...p(interior.public?-3:-10,-5));
     }else{
       mapIslands(c,p,factor);
@@ -819,7 +837,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     document.querySelector('#home-message').textContent=onlineMode&&job.pendingOnlineHome?'Kauf wird bestaetigt ...':!owned&&job.coins<currentHome.price?'Noch '+(currentHome.price-job.coins)+' Muenzen verdienen.':'';
   }
   document.querySelector('#home-unit').onchange=e=>{currentHome=Island.homes.find(h=>h.id===e.target.value);updateHomeUI();};
-  document.querySelector('#home-lobby').onclick=()=>{if(mode==='home'&&currentHome?.type==='apartment'&&atHomeEntrance(currentHome))openLobby(currentHome);};
+  document.querySelector('#home-lobby').onclick=()=>{if(mode==='home'&&currentHome?.type==='apartment'&&atHomeEntrance(currentHome)){if(interior?.lobby)setMode('playing');else openLobby(currentHome);}};
   document.querySelector('#home-buy').onclick=()=>{
     if(mode!=='home'||!currentHome||!atHomeEntrance(currentHome))return;
     if(onlineMode){
@@ -1032,5 +1050,6 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     audio:()=>sound.unlock(),
     state:()=>({elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
-  function frame(now){if(onlineMode)network.update({elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  let lastPaint=0;
+  function frame(now){if(onlineMode)network.update({elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();
