@@ -103,7 +103,7 @@ export class World extends DurableObject {
       p.crashed=now;p.impact={x:data.x,y:data.y,heading:data.heading,speed:data.speed,z:data.z??0,model:p.car,scenery:data.scenery===true,at:now};this.impacts=this.impacts.filter(i=>now-i.at<5000);this.impacts.push(p.impact);ws.serializeAttachment(p);this.broadcast({type:'crash',impact:p.impact},ws);return;
     }
     if(data.type!=='state'||now-p.last<80)return;
-    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||Math.hypot(data.x,data.y)>=1300||Math.abs(data.heading)>1e6||data.jump<0||data.jump>3)return;
+    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||Math.hypot(data.x,data.y)>=1300||Math.abs(data.heading)>1e6||data.jump<0||data.jump>6)return;
     const home=typeof data.room==='string'&&data.room.startsWith('home:')?globalThis.AnimalIsland.homes.find(h=>'home:'+h.id===data.room):null;
     const lobby=typeof data.room==='string'&&data.room.startsWith('lobby:')?globalThis.AnimalIsland.homes.find(h=>h.type==='apartment'&&(data.room==='lobby:'+h.buildingId||data.room==='lobby:'+h.buildingId+':'+h.floor)):null;
     const room=rooms.has(data.room)?data.room:home&&this.properties.get('property:'+home.id)?.owner===p.ownerToken?data.room:lobby?data.room:null;

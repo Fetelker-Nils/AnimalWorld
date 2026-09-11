@@ -10,7 +10,7 @@ const nodes={};
 const sandbox={createIndoorRenderer:()=>({surface:{},render(){}}),Math,innerWidth:1280,innerHeight:850,devicePixelRatio:1,requestAnimationFrame(){},location:{hash:''},window:{localStorage:storage,addEventListener(){}},document:{querySelector(id){return nodes[id]||={hidden:true,focus(){},getContext:()=>context,addEventListener(){}};},querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
 for(const file of ['world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),sandbox);
-vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={openLobby,mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
+vm.runInContext(fs.readFileSync(path.join(root,'game.js'),'utf8').replace('  function frame(now)','  globalThis.probe={verticalStep,jumpObjects,streetDetails,indoorFurniture,testInterior:home=>{interior=home;moveToDoor(0,0,0);},openLobby,mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles};\n  function frame(now)'),sandbox);
 const {mauz,camera,keys,step,walkable,point,groundAt,draw,buildingVisible,segmentBox,outdoorHit,outdoorCameraLimit,markerOccluded,indoorCameraLimit,indoorWalkable,nearBed,enterVenue,enterHome,leaveHome,interact,setMode,roomName,Island,job,activities,vehicles}=sandbox.probe;
 // Regression: nearby walls remain visible even with an offscreen/behind-camera centre.
 const originalCamera={...camera};
@@ -256,3 +256,18 @@ stairWalk(0,.3);
 for(let i=96*(tower.floors-1)-1;i>=0;i--){const a=Math.PI/2+i*Math.PI/48;stairWalk(3.3*Math.cos(a),-3+3.3*Math.sin(a));}
 assert(mauz.elevation<.01);stairWalk(0,10);assert(leaveHome());
 console.log('PASS real spiral stairs: every floor, continuous height, top-floor descent, ground-only exit');
+
+// Landing uses the same surfaces as horizontal collision, indoors and outdoors.
+const test=sandbox.probe;
+function settle(){keys.clear();for(let i=0;i<180;i++)test.verticalStep(1/120);}
+const planter=test.streetDetails.find(p=>p.kind==='planter');
+Object.assign(mauz,{x:planter.x-1.5,y:planter.y,jump:0,vz:0,heading:0});keys.add(' ');step(1/120);keys.delete(' ');keys.add('w');for(let i=0;i<120&&mauz.x<planter.x-.04;i++)step(1/120);keys.clear();assert(Math.abs(mauz.x-planter.x)<.08,'Reach planter using real jump and walking input');settle();assert.equal(mauz.jump,1.23,'Land on planter');
+assert(walkable(mauz.x,mauz.y),'Standing above planter is allowed');
+mauz.jump=0;assert(!walkable(mauz.x,mauz.y),'Cannot walk through planter from ground');
+mauz.jump=1.23;keys.add(' ');test.verticalStep(1/60);keys.clear();assert(mauz.jump>1.23,'Jump again from surface');settle();assert.equal(mauz.jump,1.23);
+mauz.x+=4;test.verticalStep(1/60);assert(mauz.jump<1.23,'Fall when leaving edge');settle();assert.equal(mauz.jump,0);
+const home=Island.homes.find(h=>h.id==='village');test.testInterior(home);
+const table=test.indoorFurniture()[2];Object.assign(mauz,{x:table.x,y:table.y,jump:1.2,vz:-1});settle();assert.equal(mauz.jump,table.h,'Land on coffee table');assert(indoorWalkable(mauz.x,mauz.y));
+keys.add(' ');for(let i=0;i<45;i++)test.verticalStep(1/120);keys.clear();assert(mauz.jump<=1.4+.00001,'Head respects ceiling');settle();assert.equal(mauz.jump,table.h);
+Object.assign(mauz,{x:0,y:0,jump:0,vz:0});keys.add(' ');test.verticalStep(1/120);keys.clear();let peak=0;for(let i=0;i<120;i++){test.verticalStep(1/120);peak=Math.max(peak,mauz.jump);}assert(peak>1.23,'Jump can reach planter height');
+console.log('PASS platform landing, standing, side collision, jumping again, falling off and indoor ceilings');

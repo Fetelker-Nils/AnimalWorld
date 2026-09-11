@@ -9,7 +9,8 @@ function createServer(directory = root) {
     if (!['GET','HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
     const pathname = new URL(request.url, 'http://localhost').pathname;
     if (pathname === '/animal-world-health') { response.writeHead(200, {'Content-Type':'text/plain'}); response.end('animal-world-browser-v1'); return; }
-    const file = pathname === '/' ? 'index.html' : pathname.slice(1);
+    if(['/spielinfo.html','/spielhilfe.html','/spielinfo','/spielhilfe','/hilfe/'].includes(pathname)){response.writeHead(308,{Location:'/hilfe'+new URL(request.url,'http://localhost').search});response.end();return;}
+    const file = pathname === '/' ? 'index.html' : pathname === '/hilfe' ? 'spielinfo.html' : pathname.slice(1);
     if (!assets.has(file)) { response.writeHead(404); response.end('Nicht gefunden'); return; }
     try {
       const body = await fs.readFile(path.join(directory, file));

@@ -127,7 +127,7 @@
   }
   function indoorWalkable(x,y){
     if(interior?.lobby)return stairSurface(x,y,mauz.elevation||0,interior.floors)!==null;
-    const l=homePlan();return Math.abs(x)<(l?l.w/2:12)-.5&&Math.abs(y)<(l?l.d/2:12)-.5&&![...indoorWalls(),...indoorFurniture()].some(b=>Math.abs(x-b.x)<b.w/2+.35&&Math.abs(y-b.y)<b.d/2+.35);
+    const l=homePlan();return Math.abs(x)<(l?l.w/2:12)-.5&&Math.abs(y)<(l?l.d/2:12)-.5&&![...indoorWalls(),...indoorFurniture().filter(b=>b.h>(mauz.jump||0)+.04)].some(b=>Math.abs(x-b.x)<b.w/2+.35&&Math.abs(y-b.y)<b.d/2+.35);
   }
   function roomName(){if(interior?.public)return interior.name;const l=homePlan(),x=mauz.x/(l.sx*l.mirror),y=mauz.y/l.sy;return Math.abs(x)<2?'Flur':x<0?(y>0?'Wohnzimmer':'Schlafzimmer'):(y>0?'Küche':'Badezimmer');}
   function enterHome(){
@@ -222,7 +222,26 @@
     return treeIndex.near(x,y,radius+5).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(t.x-x,t.y-y)<radius+t.size&&z<Island.heightAt(t.x,t.y)+t.size*3.8)||lampIndex.near(x,y,radius+1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<radius+.2&&z<4.9);
   }
   function vehicleWalkable(x,y){if(Island.inSea(x,y))return false;return walkable(x,y)&&!life.cars.some(c=>{const dx=x-c.x,dy=y-c.y;return Math.abs(dx*Math.cos(c.heading)+dy*Math.sin(c.heading))<c.model.length/2+.2&&Math.abs(-dx*Math.sin(c.heading)+dy*Math.cos(c.heading))<c.model.width/2+.2;});}
-  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(!Island.inBounds(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!detailIndex.near(x,y,3).some(p=>Math.hypot(p.x-x,p.y-y)<(p.kind==='stall'?1.6:1.1))&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
+  function jumpObjects(x,y){
+    if(interior)return interior.lobby?[]:indoorFurniture();
+    return detailIndex.near(x,y,3).flatMap(p=>{
+      const parts=p.kind==='bench'?[{x:0,y:0,w:2.2,d:.7,h:.67},{x:0,y:.35,w:2.2,d:.12,h:1.35}]:p.kind==='stall'?[{x:0,y:0,w:2.5,d:1.4,h:1.2},{x:0,y:0,w:2.5,d:1.9,h:2.56}]:[{x:0,y:0,w:1.5,d:1,h:1.23}];
+      const c=Math.cos(p.heading),sn=Math.sin(p.heading);
+      return parts.map(b=>({...b,x:p.x+b.x*c-b.y*sn,y:p.y+b.x*sn+b.y*c,w:Math.abs(c)*b.w+Math.abs(sn)*b.d,d:Math.abs(sn)*b.w+Math.abs(c)*b.d}));
+    });
+  }
+  function onObject(b,x,y){return Math.abs(x-b.x)<b.w/2+.2&&Math.abs(y-b.y)<b.d/2+.2;}
+  function jumpSupport(x,y,height){return jumpObjects(x,y).reduce((top,b)=>onObject(b,x,y)&&b.h<=height+.04?Math.max(top,b.h):top,0);}
+  function verticalStep(dt){
+    const support=jumpSupport(mauz.x,mauz.y,mauz.jump);
+    if(keys.has(' ')&&Math.abs(mauz.jump-support)<.015&&mauz.vz<=0&&(interior||!Island.inSea(mauz.x,mauz.y))){mauz.vz=city.jump+1.5;sound.effect('jump');}
+    const before=mauz.jump;
+    mauz.jump+=mauz.vz*dt-7.5*dt*dt;mauz.vz-=15*dt;
+    const ceiling=interior&&!interior.lobby?(homePlan()?.height||3.3)-1.9:6;
+    if(mauz.jump>ceiling){mauz.jump=ceiling;mauz.vz=Math.min(0,mauz.vz);}
+    if(mauz.vz<=0&&mauz.jump<=support){mauz.jump=support;mauz.vz=0;}
+  }
+  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(!Island.inBounds(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!jumpObjects(x,y).some(b=>onObject(b,x,y)&&b.h>(mauz.jump||0)+.04)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
   function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,touchDevice?1.25:2,Math.sqrt(2073600/(width*height)));canvas.width=Math.max(1,Math.floor(width*dpr));canvas.height=Math.max(1,Math.floor(height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(width*.85,height*1.05);cx=width*.5;cy=height*.43;}
   // A perspective camera seven world units behind Mauz, three units high,
   // tilted down by only seven degrees.
@@ -631,9 +650,7 @@
         mauz.moving=Math.hypot(nx-mauz.x,ny-mauz.y)>.0001;mauz.x=nx;mauz.y=ny;
       }else destination=null;
     }
-    if(keys.has(' ')&&mauz.jump===0&&!Island.inSea(mauz.x,mauz.y)){mauz.vz=city.jump;sound.effect('jump');}
-    mauz.jump+=mauz.vz*dt;mauz.vz-=15*dt;
-    if(mauz.jump<=0){mauz.jump=0;mauz.vz=0;}
+    verticalStep(dt);
     }
     if(!interior&&adventure.tick(dt,Island.inSea(mauz.x,mauz.y)&&!vehicles.driving&&!network.rideOwner)){const home=Island.homes.find(h=>h.id===(onlineMode?onlineHomeId:job.homeId)&&ownsHome(h.id));moveToDoor(home?.x||0,home?.y||0,-Math.PI/2);notify('Luft ausgegangen! Du bist sicher an Land wieder aufgewacht.');}
     if(interior){follow(dt);if(toastTime>0){toastTime-=dt;if(toastTime<=0)toast.hidden=true;}updateJobUI();return;}

@@ -3,11 +3,52 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "headers": [{
-    "source": "/(.*)",
-    "headers": [
-      { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
-      { "key": "X-Content-Type-Options", "value": "nosniff" }
-    ]
-  }]
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/spielinfo.html",
+      "destination": "/hilfe",
+      "permanent": true
+    },
+    {
+      "source": "/spielhilfe.html",
+      "destination": "/hilfe",
+      "permanent": true
+    },
+    {
+      "source": "/spielinfo",
+      "destination": "/hilfe",
+      "permanent": true
+    },
+    {
+      "source": "/spielhilfe",
+      "destination": "/hilfe",
+      "permanent": true
+    },
+    {
+      "source": "/hilfe/",
+      "destination": "/hilfe",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/hilfe",
+      "destination": "/spielinfo.html"
+    }
+  ]
 }
