@@ -5,8 +5,19 @@
 <meta name="google-site-verification" content="PjYWjOrI3jjXydJFl7IAU6wxDYamPc5nxRZnDWTNCps" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' wss://animal-world-online.animal-world-mauz.workers.dev; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Animal World</title>
+<title>Animal World – Kostenloses 3D-Tierspiel im Browser</title>
+<meta name="description" content="Entdecke Animal World: Spiele als Tier, erledige Jobs, fahre Fahrzeuge und kaufe dein Zuhause. Kostenlos im Browser – allein oder online mit anderen.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#426546">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Animal World">
+<meta property="og:title" content="Animal World – Dein 3D-Tierabenteuer">
+<meta property="og:description" content="Jobs, Fahrzeuge und dein eigenes Zuhause: Entdecke die Inselwelt kostenlos im Browser, allein oder gemeinsam online.">
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="style.css">
+<link rel="canonical" href="https://animal-world-mauz.vercel.app/">
+<meta property="og:url" content="https://animal-world-mauz.vercel.app/">
 </head>
 <body>
 <canvas id="world" aria-label="Mauz auf seiner Grasinsel"></canvas>
@@ -15,11 +26,13 @@
 <div class="emblem" aria-hidden="true">✿</div>
 <p class="eyebrow">DEIN KLEINES ABENTEUER</p>
 <h1>animal<br><span>world.</span></h1>
-<p class="welcome">Eine kleine Welt wartet auf dich und Mauz.</p>
+<p class="welcome">Dein kostenloses 3D-Tierabenteuer im Browser: Entdecke Inseln, erledige Jobs und finde dein eigenes Zuhause.</p>
 <div class="character-choice"><label for="character-name">Dein Name</label><input id="character-name" maxlength="18" value="Mauz" autocomplete="off"><label for="character-species">Dein Tier</label><select id="character-species"><option value="cat">Katze</option><option value="rabbit">Hase</option><option value="bear">Bär</option><option value="fox">Fuchs</option></select></div>
 <button id="play" class="primary" autofocus>Offline spielen <span aria-hidden="true">→</span></button>
 <button id="play-online" class="primary online-play">Online spielen <span aria-hidden="true">→</span></button>
 <p id="online-message" class="offline-note" role="status">Offline für dich. Online mit allen auf einer gemeinsamen Insel.</p>
+<p class="start-info"><a href="spielinfo.html">Spiel entdecken &amp; Steuerung lernen</a></p>
+<noscript><p>Zum Spielen brauchst du JavaScript. <a href="spielinfo.html">Hier erfährst du mehr über Animal World.</a></p></noscript>
 </div>
 <span class="start-version">ANIMAL WORLD · 0.1</span>
 <button id="menu-audio" class="menu-audio">Musik einschalten</button>

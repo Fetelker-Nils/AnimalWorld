@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const assets = new Set(['index.html','style.css','game.js','world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
+const assets = new Set(['index.html','spielinfo.html','info.css','robots.txt','sitemap.xml','style.css','game.js','world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
 function createServer(directory = root) {
   return http.createServer(async (request, response) => {
     if (!['GET','HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
@@ -13,7 +13,7 @@ function createServer(directory = root) {
     if (!assets.has(file)) { response.writeHead(404); response.end('Nicht gefunden'); return; }
     try {
       const body = await fs.readFile(path.join(directory, file));
-      const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+      const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.xml') ? 'application/xml' : file.endsWith('.txt') ? 'text/plain' : 'text/html';
       response.writeHead(200, {'Content-Type':type+'; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
       response.end(request.method === 'HEAD' ? undefined : body);
     } catch { response.writeHead(500); response.end('Spieldatei konnte nicht geladen werden.'); }

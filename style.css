@@ -27,3 +27,5 @@
 @media(max-height:500px){.flight-controls{right:180px;bottom:22px}}
 
 #home-unit{display:block;max-width:100%;width:100%;padding:10px;margin:8px 0;border:1px solid #a7bca6;border-radius:10px;background:#f7faef;color:#345240}.home-card{max-height:90vh;overflow:auto}#home-layout{font-size:13px}
+
+.start-info{font-size:13px;margin-top:14px}.start-info a{color:#385a40;text-underline-offset:3px}.start-card{flex-shrink:0}.start-screen{align-items:safe center}

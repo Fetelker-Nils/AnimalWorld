@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://animal-world-mauz.vercel.app/sitemap.xml
