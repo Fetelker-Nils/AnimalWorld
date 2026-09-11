@@ -29,3 +29,5 @@
 #home-unit{display:block;max-width:100%;width:100%;padding:10px;margin:8px 0;border:1px solid #a7bca6;border-radius:10px;background:#f7faef;color:#345240}.home-card{max-height:90vh;overflow:auto}#home-layout{font-size:13px}
 
 .start-info{font-size:13px;margin-top:14px}.start-info a{color:#385a40;text-underline-offset:3px}.start-card{flex-shrink:0}.start-screen{align-items:safe center}
+
+.site-logo{display:block;width:88px;height:88px;object-fit:cover;border-radius:20px;box-shadow:0 5px 18px #29453c26}@media(max-height:740px){.site-logo{width:56px;height:56px;border-radius:12px}}@media(max-height:500px){.site-logo{width:36px;height:36px;border-radius:8px}}
