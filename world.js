@@ -101,6 +101,17 @@ const Island = (() => {
   for(const y of [-271,-289,-307,-325,-343,-361])roads.push({x:0,y,w:98,d:6});
   for(const y of [-130,-65,0,65])roads.push({x:900,y,w:340,d:6});
   roads.push({x:710,y:35,w:6,d:70},{x:800,y:100,w:200,d:6},{x:550,y:8,w:30,d:6},{x:535,y:14,w:70,d:8},{x:655,y:8,w:20,d:6},{x:680,y:0,w:65,d:6},{x:900,y:130,w:6,d:60},{x:210,y:190,w:6,d:50});
+  // Continuous road from the existing harbour road to the airport forecourt.
+  roads.push({x:202.5,y:165,w:75,d:8},{x:235,y:193,w:8,d:64},{x:228,y:220,w:22,d:6},{x:0,y:-320,w:12,d:12});
+  const busRoute=[
+    {x:-1.8,y:-310,name:'Nordstadt'},{x:-1.8,y:-100,name:'Stadtzentrum'},
+    {x:-1.8,y:65,name:'Dorf'},{x:-1.8,y:150,name:'Hafenstrasse'},
+    {x:-1.8,y:166.8},{x:233.2,y:166.8},{x:233.2,y:218,name:'Flugplatz'},
+    {x:236.8,y:218},{x:236.8,y:163.2},{x:1.8,y:163.2},
+    {x:1.8,y:65,name:'Dorf'},{x:1.8,y:-100,name:'Stadtzentrum'},
+    {x:1.8,y:-320},{x:-1.8,y:-320}
+  ];
+  const busStops=busRoute.flatMap((p,i)=>{if(!p.name)return [];const prev=busRoute[(i+busRoute.length-1)%busRoute.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x);return [{id:'stop-'+i,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y}];});
   const booths=[
     {x:10,y:-5,sx:10,sy:1,name:'Startplatz'},
     {x:7,y:-106,sx:0,sy:-106,name:'Nordstadt'},
@@ -141,8 +152,8 @@ const Island = (() => {
       lamps.push({x,y});
     }
   }
-  const reserved=(x,y)=>airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  const reserved=(x,y)=>busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  return {busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;

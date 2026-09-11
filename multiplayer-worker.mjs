@@ -116,6 +116,7 @@ export class World extends DurableObject {
     const elevation=lobby?data.elevation??0:0;
     if(!Number.isFinite(elevation)||elevation<0||elevation>(lobby?.floors-1)*4)return;
     Object.assign(p,{elevation,x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
+    p.busId=this.life.buses.find(b=>b.id===data.busId&&Math.hypot(b.x-p.x,b.y-p.y)<7)?.id||null;
     p.species=['cat','rabbit','bear','fox'].includes(data.species)?data.species:'cat';
     p.name=typeof data.name==='string'?data.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,18)||'Mauz':'Mauz';
     if(p.riding){const car=this.vehicle(p.riding);p.x=car.x;p.y=car.y;p.heading=car.heading;p.room='world';p.car=null;}

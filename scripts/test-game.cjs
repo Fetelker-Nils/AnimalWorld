@@ -215,7 +215,7 @@ assert.equal(outdoorHit({x:0,y:0,z:100},{x:0,y:10,z:100}),1,'Unobstructed ray st
 console.log('PASS outdoor camera collision and opaque obstacle sightlines');
 
 assert(Math.hypot(taxi.points[1].x-taxi.points[0].x,taxi.points[1].y-taxi.points[0].y)>750,'Long cross-island taxi journey');
-const staticVehicles=sandbox.createVehicles(Island,walkable);
+const staticVehicles=sandbox.createVehicles(Island,(x,y)=>!Island.blocked(x,y));
 for(let y=-307;y<=460;y+=2)assert(staticVehicles.clearAt(0,y,Math.PI/2,vehicles.car.model),'Taxi main road blocked at '+y);
 
 // Every public building has an accessible door, counter and exit without buying a home.

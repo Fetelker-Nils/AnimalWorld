@@ -23,6 +23,10 @@ function sceneryMesh(kind,item,ground=0,options={}){
       cuboid(.24,0,4.4,.65,.16,.16,'#59686c');cuboid(.48,0,4.35,.6,.46,.12,'#59686c');
       cuboid(.48,0,4.47,.42,.32,.4,options.lit?'#ffe9a3':'#b7ccc7');cuboid(.48,0,4.87,.65,.5,.13,'#59686c');
       for(const x of [.28,.68])for(const y of [-.16,.16])cuboid(x,y,4.47,.04,.04,.4,'#59686c');
+    }else if(kind==='busstop'){
+      cuboid(0,0,0,.12,.12,3,'#547269');cuboid(0,0,2.6,.7,.18,.7,'#f0d477');
+      cuboid(-.17,-.11,2.75,.07,.04,.4,'#42755e');cuboid(.17,-.11,2.75,.07,.04,.4,'#42755e');cuboid(0,-.11,2.92,.35,.04,.07,'#42755e');
+      for(const x of [-1.5,1.5])cuboid(x,2,0,.12,.12,2.7,'#547269');cuboid(0,2,2.7,3.5,2,.14,'#b6cec5');cuboid(0,2,.5,2.8,.65,.15,'#ba9163');
     }else if(kind==='bench'){
       for(const x of [-.8,.8])cuboid(x,0,0,.15,.6,.55,'#536f69');
       for(const y of [-.25,0,.25])cuboid(0,y,.55,2.2,.2,.12,'#bd9365');

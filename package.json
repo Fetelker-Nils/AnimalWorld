@@ -8,7 +8,7 @@
     "dev": "node scripts/browser.cjs --no-open",
     "build": "node scripts/build.cjs",
     "preview": "node scripts/browser.cjs --preview",
-    "test": "node scripts/test-game.cjs && node scripts/test-audio.cjs && node scripts/test-day-cycle.cjs && node scripts/test-browser.cjs && node scripts/test-city.cjs && node scripts/test-traffic.cjs && node scripts/test-adventure.cjs && node scripts/test-shared-world.cjs && node scripts/test-navigation.cjs && node scripts/test-housing.cjs && node scripts/test-routes.cjs",
+    "test": "node scripts/test-game.cjs && node scripts/test-audio.cjs && node scripts/test-day-cycle.cjs && node scripts/test-browser.cjs && node scripts/test-city.cjs && node scripts/test-traffic.cjs && node scripts/test-adventure.cjs && node scripts/test-shared-world.cjs && node scripts/test-navigation.cjs && node scripts/test-housing.cjs && node scripts/test-routes.cjs && node scripts/test-bus.cjs",
     "test:ui": "npm run build && node scripts/test-ui.cjs",
     "test:browser": "node scripts/test-browser.cjs",
     "test:touch": "npm run build && node scripts/test-touch.cjs",
@@ -19,7 +19,9 @@
     "test:adventure": "npm run build && node scripts/test-adventure-ui.cjs && node scripts/test-sleep-ui.cjs",
     "test:navigation": "npm run build && node scripts/test-navigation-ui.cjs",
     "test:housing": "npm run build && node scripts/test-housing-ui.cjs",
-    "test:routes": "npm run build && node scripts/test-routes-ui.cjs"
+    "test:routes": "npm run build && node scripts/test-routes-ui.cjs",
+    "test:bus": "node scripts/test-bus.cjs",
+    "test:bus:ui": "npm run build && node scripts/test-bus-ui.cjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0"
