@@ -42,6 +42,8 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   assert(sound.announcementPlaying);sound.set('muted',true);assert(clips.every(s=>s.stopped));assert(!sound.announcementPlaying);
   assert(!sound.announce({line:'2',stop:'Stadtzentrum'}));
   sound.set('muted',false);sound.announce({line:'2',stop:'Stadtzentrum',next:true});await new Promise(r=>setImmediate(r));assert.equal(fetched.length,2,'Decoded clips are cached');sound.cancelAnnouncement();
+  sound.announce({line:'2',stop:'Stadtzentrum',terminal:true});await new Promise(r=>setImmediate(r));assert(fetched.includes('assets/sound/terminal-arrival.mp3'));sound.cancelAnnouncement();
+  sound.announce({line:'2',stop:'Stadtzentrum',next:true,terminal:true});await new Promise(r=>setImmediate(r));assert(fetched.includes('assets/sound/terminal-next.mp3'));sound.cancelAnnouncement();
   let resolveFetch;sandbox.fetch=()=>new Promise(resolve=>resolveFetch=resolve);
   const beforeCancel=context.sources.filter(s=>s.buffer?.decoded).length;
   sound.announce({line:'2',stop:'Nordstadt',next:true});sound.cancelAnnouncement();
@@ -60,5 +62,17 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   bus.wait=.9;sound.update('explore',riding);assert(context.oscillators.length>stopped,'Door closing warning');
   sound.update('explore',{...riding,listener:{x:100,y:0},busId:null});assert.equal(context.gains[4].gain.value,0,'Distant bus silent');
   sound.update('explore',{...riding,paused:true});assert.equal(context.gains[4].gain.value,0,'Paused bus silent');
+  const loops=context.sources.filter(s=>s.loop);assert.equal(loops.length,4,'Fixed reusable ambience loops');
+  context.currentTime+=10;
+  const outdoors={listener:{x:0,y:0},environment:{wind:1,sea:1,traffic:1,nature:0}};
+  sound.update('explore',outdoors);assert(sound.ambience.wind>0&&sound.ambience.sea>0&&sound.ambience.traffic>0);
+  sound.update('explore',{...outdoors,listener:null});assert.equal(sound.ambience.wind,0);assert.equal(sound.ambience.sea,0);assert.equal(sound.ambience.traffic,0,'Outdoor sound fades indoors');
+  sound.update('explore',{...outdoors,paused:true});assert.equal(sound.ambience.sea,0);
+  sound.set('effects',0);const beforeSilent=context.oscillators.length;sound.update('explore',{...outdoors,environment:{nature:1,night:true}});assert.equal(context.oscillators.length,beforeSilent);assert.equal(sound.ambience.wind,0);
+  sound.set('effects',.55);context.currentTime+=10;const beforeBirds=context.oscillators.length;sound.update('explore',{...outdoors,environment:{nature:1,night:false}});assert.equal(context.oscillators.length,beforeBirds+3,'Daytime birds');
+  context.currentTime+=10;const beforeNight=context.oscillators.length;sound.update('explore',{...outdoors,environment:{nature:1,night:true}});assert.equal(context.oscillators.length,beforeNight+3,'Night crickets');assert.equal(context.oscillators.at(-1).frequency.value,3800);
+  Object.assign(bus,{speed:13,wait:0,doors:0});sound.update('explore',riding);assert(sound.ambience.busRoad>0,'Rolling bus audible');
+  sound.update('explore',{...riding,listener:{x:500,y:500},busId:null});assert.equal(sound.ambience.busRoad,0,'Distant rolling bus silent');
+  for(let i=0;i<100;i++)sound.update('explore',outdoors);assert.equal(context.sources.filter(s=>s.loop).length,4,'Frames do not allocate additional loops');
   console.log('PASS: eleven musical themes, six effects, lazy audio activation, engine shutdown, mute and volume persistence');
 })().catch(error=>{console.error(error);process.exitCode=1;});

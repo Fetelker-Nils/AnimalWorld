@@ -3,6 +3,14 @@
   "rate": "-5%",
   "clips": [
     {
+      "file": "terminal-next.mp3",
+      "text": "Diese Fahrt endet an der nächsten Station."
+    },
+    {
+      "file": "terminal-arrival.mp3",
+      "text": "Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!"
+    },
+    {
       "file": "line-1.mp3",
       "text": "Linie eins."
     },

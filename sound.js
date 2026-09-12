@@ -3,7 +3,8 @@ function createSound(storage){
   let ctx,master,music,fx,engine,engineGain,busEngine,busGain,unlocked=false;
   let settings={muted:false,music:.3,effects:.55};
   try{const saved=JSON.parse(storage.getItem('animal-world-audio')||'null');if(saved){settings.muted=!!saved.muted;for(const key of ['music','effects'])if(Number.isFinite(saved[key]))settings[key]=Math.max(0,Math.min(1,saved[key]));}}catch{}
-  const busStates=new Map();
+  const busStates=new Map(),beds={};let busFilter,nextAmbient=0;
+  let ambience={wind:0,sea:0,traffic:0,busRoad:0};
   let theme='',nextNote=0,beat=0,nextStep=0,nextWork=0;
   const themes={
     menu:{bpm:92,root:60,notes:[0,4,7,12,9,7,4,2],wave:'triangle'},
@@ -46,14 +47,22 @@ function createSound(storage){
         music.connect(master);fx.connect(master);master.connect(limiter);limiter.connect(ctx.destination);
         engine=ctx.createOscillator();engine.type='triangle';engineGain=ctx.createGain();engineGain.gain.value=0;engine.connect(engineGain);engineGain.connect(fx);engine.start();
         busEngine=ctx.createOscillator();busEngine.type='sawtooth';busGain=ctx.createGain();busGain.gain.value=0;
-        const busFilter=ctx.createBiquadFilter();busFilter.type='lowpass';busFilter.frequency.value=180;
+        busFilter=ctx.createBiquadFilter();busFilter.type='lowpass';busFilter.frequency.value=180;
         busEngine.connect(busFilter);busFilter.connect(busGain);busGain.connect(fx);busEngine.start();
+        // Four reusable loops: no new buffers or engines for each frame or vehicle.
+        const buffer=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),samples=buffer.getChannelData(0);
+        for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+        for(const [name,frequency] of Object.entries({wind:420,sea:1100,traffic:250,busRoad:750})){
+          const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+          source.buffer=buffer;source.loop=true;filter.type='lowpass';filter.frequency.value=frequency;gain.gain.value=0;
+          source.connect(filter);filter.connect(gain);gain.connect(fx);source.start();beds[name]={source,filter,gain};
+        }
       }catch{return false;}
     }
     try{await ctx.resume();unlocked=ctx.state==='running';nextNote=ctx.currentTime;return unlocked;}catch{return false;}
   }
   function effect(type,volume=1){
-    if(!ctx||ctx.state!=='running'||settings.muted)return;
+    if(!ctx||ctx.state!=='running'||settings.muted||settings.effects===0)return;
     const t=ctx.currentTime;
     if(type==='bus-open'){noise(.55,.12*volume,1800);tone(190,t,.45,.035*volume,'triangle',fx,100);}
     else if(type==='bus-close'){tone(760,t,.1,.055*volume);tone(760,t+.18,.1,.055*volume);noise(.5,.1*volume,1300);tone(100,t+.45,.1,.05*volume);}
@@ -83,13 +92,32 @@ function createSound(storage){
     }
     for(const id of busStates.keys())if(!(state.buses||[]).some(b=>b.id===id))busStates.delete(id);
     busEngine.frequency.setTargetAtTime(38+speed*3,ctx.currentTime,.15);
-    busGain.gain.setTargetAtTime(loudest*(speed>.3?.065:.025),ctx.currentTime,.15);
+    busFilter.frequency.setTargetAtTime(220+speed*22,ctx.currentTime,.2);
+    const duck=announcementSources.length?.55:1;
+    busGain.gain.setTargetAtTime(loudest*(speed>.3?.17:.055)*duck,ctx.currentTime,.15);
+    ambience.busRoad=loudest*Math.min(1,speed/13)*.1*duck;
+    beds.busRoad.gain.gain.setTargetAtTime(ambience.busRoad,ctx.currentTime,.2);
+  }
+  function updateAmbience(state,now){
+    const env=state.environment||{},active=!!state.listener&&!state.paused&&!settings.muted&&settings.effects>0;
+    const shelter=state.busId?.length?.35:1,duck=announcementSources.length?.55:1;
+    ambience.wind=active?.045*(env.wind??0)*shelter*duck:0;
+    ambience.sea=active?.16*(env.sea??0)*(.7+.3*Math.sin(now*.65))*shelter*duck:0;
+    ambience.traffic=active?.09*(env.traffic??0)*shelter*duck:0;
+    for(const key of ['wind','sea','traffic'])beds[key].gain.gain.setTargetAtTime(ambience[key],now,.6);
+    if(!active||state.busId||now<nextAmbient)return;
+    nextAmbient=now+3+Math.random()*5;
+    if(env.nature>.2){
+      if(env.night){for(let i=0;i<3;i++)tone(3300,now+i*.14,.065,.018*env.nature,'sine',fx,3800);}
+      else{const base=1700+Math.random()*600;for(let i=0;i<3;i++)tone(base,now+i*.18,.12,.035*env.nature,'sine',fx,base*(i%2?1.15:1.5));}
+    }else if(env.sea>.4){tone(820,now,.45,.035,'sine',fx,1250);tone(1200,now+.5,.3,.025,'sine',fx,750);}
   }
   function update(scene,state){
     if(state.paused)cancelAnnouncement();
     if(!ctx||ctx.state!=='running')return;
     const now=ctx.currentTime;
     updateBuses(state);
+    updateAmbience(state,now);
     master.gain.setTargetAtTime(settings.muted?0:.6,now,.04);
     music.gain.setTargetAtTime(settings.music*(state.paused?.45:1),now,.08);fx.gain.setTargetAtTime(settings.effects,now,.05);
     engine.frequency.setTargetAtTime(48+Math.abs(state.speed||0)*4,now,.07);
@@ -106,8 +134,8 @@ function createSound(storage){
       }
       beat++;nextNote+=interval;
     }
-    if(settings.muted||state.paused)return;
-    if(state.moving&&!state.driving&&now>nextStep){noise(.045,.065,320);nextStep=now+(state.running?.2:.32);}
+    if(settings.muted||settings.effects===0||state.paused)return;
+    if(state.moving&&!state.driving&&now>nextStep){noise(state.environment?.water?.15:.045,state.environment?.water?.1:.065,state.environment?.water?1600:state.busId?700:state.environment?.paved?950:320);nextStep=now+(state.running?.2:.32);}
     if(state.working&&now>nextWork){
       if(scene==='garden'||scene==='fishing')noise(.22,.055,scene==='fishing'?650:2000);
       else if(scene==='electric')tone(280,now,.16,.045,'triangle');
@@ -128,11 +156,12 @@ function createSound(storage){
     }).then(bytes=>ctx.decodeAudioData(bytes)).catch(error=>{announcementCache.delete(url);throw error;}));
     return announcementCache.get(url);
   }
-  function announce({line,stop,next=false}){
+  function announce({line,stop,next=false,terminal=false}){
     if(!unlocked||settings.muted||settings.effects===0||!stop||!/^\d+$/.test(String(line)))return false;
     cancelAnnouncement();effect('phone');const token=announcementToken;
     const name=stop.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
     const urls=['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];
+    if(terminal)urls.push('assets/sound/terminal-'+(next?'next':'arrival')+'.mp3');
     Promise.all(urls.map(loadAnnouncement)).then(buffers=>{
       if(token!==announcementToken||settings.muted||settings.effects===0||ctx.state!=='running')return;
       let at=ctx.currentTime+.05;
@@ -146,5 +175,5 @@ function createSound(storage){
   }
   function set(key,value){if(key==='muted')settings.muted=!!value;else if(key==='music'||key==='effects')settings[key]=Math.max(0,Math.min(1,Number(value)||0));if(settings.muted||settings.effects===0)cancelAnnouncement();save();}
   function quietEngine(){if(ctx)engineGain.gain.setTargetAtTime(0,ctx.currentTime,.03);}
-  return {get announcementPlaying(){return announcementSources.length>0;},announce,cancelAnnouncement,unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
+  return {get ambience(){return {...ambience};},get announcementPlaying(){return announcementSources.length>0;},announce,cancelAnnouncement,unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
 }

@@ -14,6 +14,7 @@ const {createServer}=require('./browser.cjs');
  assert((await p.evaluate(()=>window.__animalTest.state())).commuters.some(p=>p.seated),'NPCs sit inside buses');
  assert((await p.evaluate(()=>window.__animalTest.state())).busRide,'Board through open door');await p.screenshot({path:'test-results/bus-interior.png'});await p.evaluate(()=>{const t=window.__animalTest,b=t.state().buses.find(b=>b.id===t.state().busRide.id);t.visit(b.x+Math.cos(b.heading),b.y+Math.sin(b.heading),b.heading);t.advance(.05);});
  await p.click('#interact');let seated=await p.evaluate(()=>window.__animalTest.state());assert(Number.isInteger(seated.busRide.seat),'Player sits on a free seat');assert(!seated.commuters.some(n=>n.busId===seated.busRide.id&&n.seat===seated.busRide.seat),'No occupied NPC seat');
+ await p.screenshot({path:'test-results/bus-seat-display.png'});
  const seat=seated.busRide.seat;await p.keyboard.down('w');await p.evaluate(()=>window.__animalTest.advance(1));await p.keyboard.up('w');assert.equal((await p.evaluate(()=>window.__animalTest.state())).busRide.seat,seat,'Movement does not walk through seats');
  await p.click('#interact');const standing=await p.evaluate(()=>window.__animalTest.state());assert.equal(standing.busRide.seat,null);assert(Math.abs(standing.busRide.s)<1e-8,'Stand up in aisle');
  assert.deepEqual(errors,[]);console.log('PASS bus exterior, walk-in boarding and interior camera in browser');

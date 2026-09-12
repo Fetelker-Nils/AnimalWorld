@@ -167,6 +167,9 @@ const Island = (() => {
     if(!platforms.has(key))platforms.set(key,{id:'stop-'+key,line:line.id,lines:[],colors:[],color:line.color,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y});
     const stop=platforms.get(key);if(!stop.lines.includes(line.id)){stop.lines.push(line.id);stop.colors.push(line.color);}p.stopId=stop.id;
   }
+  // Each route has explicit termini; circular routes finish a round at their origin.
+  const termini={'1':['Nordstadt','Flugplatz'],'2':['Obstgarten','Osthafen'],'3':['Perlenhafen'],'4':['Perlenhafen Sued','Perlenflugplatz'],'5':['Westwiesen'],'6':['Dorfkreuzung','Suedstrand'],'7':['Osthafen Bruecke','Perlenhafen Mitte']};
+  for(const line of busLines)for(const name of termini[line.id]||[]){const p=line.route.find(p=>p.name===name);if(p)p.terminal=true;}
   const busStops=[...platforms.values()];
 
 

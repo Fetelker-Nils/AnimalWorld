@@ -2,7 +2,9 @@ function createCityLife(world, models){
   models=models.filter(m=>!m.kind);
   const cars=[],walkers=[];
   const lines=world.busLines||((world.busRoute||[]).length?[{id:'1',color:'#e0b657',route:world.busRoute,starts:[0,6]}]:[]);
-  const buses=lines.flatMap(line=>line.starts.map((i,n)=>({id:line.id==='1'?'bus-'+n:'bus-'+line.id+'-'+n,x:line.route[i].x,y:line.route[i].y,heading:Math.atan2(line.route[i].y-line.route[(i+line.route.length-1)%line.route.length].y,line.route[i].x-line.route[(i+line.route.length-1)%line.route.length].x),target:(i+1)%line.route.length,speed:0,wait:14,doors:0,stop:line.route[i].name,stopId:line.route[i].stopId,line:line.id,color:line.color,departure:0,nextStop:line.route.slice(i+1).find(p=>p.name)?.name||line.route.find(p=>p.name).name})));
+  const buses=lines.flatMap(line=>line.starts.map((i,n)=>({id:line.id==='1'?'bus-'+n:'bus-'+line.id+'-'+n,x:line.route[i].x,y:line.route[i].y,heading:Math.atan2(line.route[i].y-line.route[(i+line.route.length-1)%line.route.length].y,line.route[i].x-line.route[(i+line.route.length-1)%line.route.length].x),target:(i+1)%line.route.length,speed:0,wait:14,doors:0,terminal:!!line.route[i].terminal,stop:line.route[i].name,stopId:line.route[i].stopId,line:line.id,color:line.color,departure:0,nextStop:line.route.slice(i+1).find(p=>p.name)?.name||line.route.find(p=>p.name).name})));
+  function nextTerminal(b){const route=lines.find(l=>l.id===b.line).route;return !!Array.from({length:route.length},(_,i)=>route[(b.target+i)%route.length]).find(p=>p.name)?.terminal;}
+  for(const b of buses)b.nextTerminal=nextTerminal(b);
   function aheadBlocked(vehicle,others,distance){return others.some(p=>{if(p===vehicle||p.id===vehicle.id||p.busId===vehicle.id)return false;const dx=p.x-vehicle.x,dy=p.y-vehicle.y,forward=dx*Math.cos(vehicle.heading)+dy*Math.sin(vehicle.heading),side=-dx*Math.sin(vehicle.heading)+dy*Math.cos(vehicle.heading);return forward>0&&forward<distance&&Math.abs(side)<(p.vehicle||p.model||p.line?2.65:1.6);});}
   function tickBuses(dt,hazards){
     for(const b of buses){
@@ -15,7 +17,7 @@ function createCityLife(world, models){
       const blocked=aheadBlocked(b,hazards,10.5+b.speed*.5);
       const desired=blocked?0:Math.min(13,Math.sqrt(4*d));b.speed=Math.max(0,Math.min(desired,b.speed+dt*2));
       const move=Math.min(d,b.speed*dt);if(d>.001){b.x+=dx/d*move;b.y+=dy/d*move;b.heading=heading;}
-      if(d<.07||move===d){b.x=t.x;b.y=t.y;b.target=(b.target+1)%routePoints.length;b.speed=0;if(t.name){b.wait=14;b.stop=t.name;b.stopId=t.stopId;b.departure++;}b.nextStop=Array.from({length:routePoints.length},(_,i)=>routePoints[(b.target+i)%routePoints.length]).find(p=>p.name).name;}
+      if(d<.07||move===d){b.x=t.x;b.y=t.y;b.target=(b.target+1)%routePoints.length;b.speed=0;if(t.name){b.wait=14;b.stop=t.name;b.stopId=t.stopId;b.terminal=!!t.terminal;b.departure++;}b.nextStop=Array.from({length:routePoints.length},(_,i)=>routePoints[(b.target+i)%routePoints.length]).find(p=>p.name).name;b.nextTerminal=nextTerminal(b);}
     }
   }
 
@@ -40,11 +42,11 @@ function createCityLife(world, models){
         const occupied=[...commuters.filter(p=>p.busId===b.id).map(p=>p.seat),...players.filter(p=>p.busId===b.id).map(p=>p.busSeat)],seat=[0,1,2,3].find(i=>!occupied.includes(i));
         if(seat===undefined)continue;
         const dx=npc.x-b.x,dy=npc.y-b.y;
-        Object.assign(npc,{busId:b.id,stage:'boarding',seat,f:dx*Math.cos(b.heading)+dy*Math.sin(b.heading),s:-dx*Math.sin(b.heading)+dy*Math.cos(b.heading),alightAt:b.departure+1+npc.phase%3,leg:0});
+        Object.assign(npc,{busId:b.id,stage:'boarding',seat,f:dx*Math.cos(b.heading)+dy*Math.sin(b.heading),s:-dx*Math.sin(b.heading)+dy*Math.cos(b.heading),alightAt:b.departure+1+npc.phase%3,boardedAt:b.departure,leg:0});
         npc.path=[{f:2.6,s:3.1},{f:2.6,s:0},{f:-1-Math.floor(seat/2)*2,s:0},{f:-1-Math.floor(seat/2)*2,s:seat%2?.95:-.95}];
       }
       const b=buses.find(b=>b.id===npc.busId);if(!b)continue;
-      if(npc.stage==='seated'&&b.departure>=npc.alightAt&&b.wait>0&&b.doors>.95&&!commuters.some(p=>p!==npc&&p.busId===b.id&&p.stage!=='seated')){
+      if(npc.stage==='seated'&&(b.departure>=npc.alightAt||b.terminal&&b.departure>npc.boardedAt)&&b.wait>0&&b.doors>.95&&!commuters.some(p=>p!==npc&&p.busId===b.id&&p.stage!=='seated')){
         npc.stage='exiting';npc.seated=false;npc.leg=0;npc.path=[{f:npc.f,s:0},{f:2.6,s:0},{f:2.6,s:3.1},{f:1,s:4}];
       }
       if(npc.stage==='boarding'||npc.stage==='exiting'){
