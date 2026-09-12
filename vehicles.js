@@ -6,7 +6,7 @@ const VehicleModels=[
   {id:'helicopter',kind:'air',name:'Helikopter',color:'#d68161',top:'#edb39b',speed:36,acceleration:12,steer:1.5,width:4,length:7,slope:.5,description:'Senkrecht starten und landen: Q / R'},
   {id:'boat',kind:'boat',name:'Motorboot',color:'#e4e4d6',top:'#86bfc7',speed:30,acceleration:10,steer:1.4,width:2.8,length:5,slope:.5,description:'Ueber das Meer zur Perleninsel'}
 ];
-function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false){
+function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false,trafficBlocked=()=>false){
   let car=null,driving=false;
   function clearAt(x,y,heading,model){
     if(world.inBounds&&!world.inBounds(x,y))return false;
@@ -76,6 +76,7 @@ function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false){
     const count=Math.max(1,Math.ceil(Math.abs(car.speed)*dt/.18));
     for(let i=0;i<count;i++){
       const x=car.x+Math.cos(car.heading)*car.speed*dt/count,y=car.y+Math.sin(car.heading)*car.speed*dt/count;
+      if(trafficBlocked(x,y,car.heading,m)){car.speed=0;break;}
       if(!clearAt(x,y,car.heading,m)){
         const impact={x,y,heading:car.heading,speed:Math.abs(car.speed),model:m,carX:car.x,carY:car.y};
         car.speed=0;

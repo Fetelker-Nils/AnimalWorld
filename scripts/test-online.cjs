@@ -23,6 +23,13 @@ const {createServer}=require('./browser.cjs');
     const trafficA=await a.evaluate(()=>window.__animalTest.state().traffic),trafficB=await b.evaluate(()=>window.__animalTest.state().traffic);
     assert.equal(trafficA.length,8);assert.equal(trafficB.length,8);
     assert(Math.hypot(trafficA[0].x-trafficB[0].x,trafficA[0].y-trafficB[0].y)<3,'Shared server traffic');
+    const initialBuses=await a.evaluate(()=>window.__animalTest.state().buses);
+    assert.equal(initialBuses.length,6,'Server creates the complete fleet');
+    await a.waitForFunction(start=>window.__animalTest.state().buses.some(bus=>Math.hypot(bus.x-start.find(s=>s.id===bus.id).x,bus.y-start.find(s=>s.id===bus.id).y)>8),initialBuses,{timeout:40000});
+    const fleetA=await a.evaluate(()=>window.__animalTest.state().buses),fleetB=await b.evaluate(()=>window.__animalTest.state().buses);
+    assert.equal(new Set(fleetA.map(bus=>bus.id)).size,6);
+    assert.equal(fleetB.length,6);
+    for(const bus of fleetA){const other=fleetB.find(p=>p.id===bus.id);assert(other&&Math.hypot(bus.x-other.x,bus.y-other.y)<5,'One moving, shared instance of '+bus.id);}
     await a.click('#wave');await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>Date.now()-p.wave<2500));
     await b.screenshot({path:'test-results/online-two-players.png'});
     await a.evaluate(()=>window.__animalTest.visit(10,-5));await a.click('#interact');await a.click('[data-car="roadster"]');

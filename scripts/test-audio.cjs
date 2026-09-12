@@ -34,5 +34,8 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   sound.set('music',.15);sound.set('effects',.25);
   const restored=sandbox.createSound(storage);assert(restored.settings.muted);assert.equal(restored.settings.music,.15);assert.equal(restored.settings.effects,.25);
   sound.set('muted',false);sound.update('taxi',{driving:true,speed:20});sound.quietEngine();assert.equal(context.gains[3].gain.value,0);
+  const spoken=[];let cancelled=0;sandbox.window.speechSynthesis={speak:u=>spoken.push(u),cancel(){cancelled++;},getVoices:()=>[{lang:'de-DE',localService:true}]};sandbox.window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+  assert(sound.announce('Naechste Station: Stadt.'));assert.equal(spoken[0].lang,'de-DE');assert.equal(spoken[0].volume,.25);
+  sound.set('muted',true);assert(!sound.announce('Unhoerbar'));assert.equal(spoken.length,1);assert(cancelled>0);
   console.log('PASS: eleven musical themes, six effects, lazy audio activation, engine shutdown, mute and volume persistence');
 })().catch(error=>{console.error(error);process.exitCode=1;});

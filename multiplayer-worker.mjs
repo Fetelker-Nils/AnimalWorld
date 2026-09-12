@@ -21,7 +21,7 @@ export default {
 export class World extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
-    this.life=globalThis.createCityLife({},[{id:'compact',width:2.1,length:3.8},{id:'roadster',width:2.2,length:4.3},{id:'pickup',width:2.5,length:4.8}]);this.lastWorld=Date.now();
+    this.life=globalThis.createCityLife(globalThis.AnimalIsland,[{id:'compact',width:2.1,length:3.8},{id:'roadster',width:2.2,length:4.3},{id:'pickup',width:2.5,length:4.8}]);this.lastWorld=Date.now();
     this.sessions = new Map(ctx.getWebSockets().map(ws => [ws,ws.deserializeAttachment()]));
     this.clockOffset=0;this.properties=new Map();ctx.blockConcurrencyWhile(async()=>{this.clockOffset=await ctx.storage.get('clockOffset')||0;this.properties=await ctx.storage.list({prefix:'property:'});});
     this.impacts=[...this.sessions.values()].map(p=>p.impact).filter(Boolean);

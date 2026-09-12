@@ -61,6 +61,7 @@ function createSound(storage){
     else tone(440,t,.08,.07,'sine',fx,580);
   }
   function update(scene,state){
+    if(state.paused)cancelAnnouncement();
     if(!ctx||ctx.state!=='running')return;
     const now=ctx.currentTime;
     master.gain.setTargetAtTime(settings.muted?0:.6,now,.04);
@@ -89,7 +90,16 @@ function createSound(storage){
     }
     if(state.braking&&Math.abs(state.speed)>3&&now>nextStep){noise(.09,.07,1500);nextStep=now+.35;}
   }
-  function set(key,value){if(key==='muted')settings.muted=!!value;else if(key==='music'||key==='effects')settings[key]=Math.max(0,Math.min(1,Number(value)||0));save();}
+  function cancelAnnouncement(){try{window.speechSynthesis?.cancel();}catch{}}
+  function announce(text){
+    if(!unlocked||settings.muted||settings.effects===0)return false;
+    effect('phone');
+    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
+    try{cancelAnnouncement();const speech=new window.SpeechSynthesisUtterance(text);speech.lang='de-DE';speech.rate=.95;speech.volume=settings.effects;
+    const voice=window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('de')&&v.localService);if(voice)speech.voice=voice;
+    window.speechSynthesis.speak(speech);return true;}catch{return false;}
+  }
+  function set(key,value){if(key==='muted')settings.muted=!!value;else if(key==='music'||key==='effects')settings[key]=Math.max(0,Math.min(1,Number(value)||0));if(settings.muted||settings.effects===0)cancelAnnouncement();save();}
   function quietEngine(){if(ctx)engineGain.gain.setTargetAtTime(0,ctx.currentTime,.03);}
-  return {unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
+  return {announce,cancelAnnouncement,unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
 }

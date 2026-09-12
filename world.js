@@ -111,7 +111,15 @@ const Island = (() => {
     {x:1.8,y:65,name:'Dorf'},{x:1.8,y:-100,name:'Stadtzentrum'},
     {x:1.8,y:-320},{x:-1.8,y:-320}
   ];
-  const busStops=busRoute.flatMap((p,i)=>{if(!p.name)return [];const prev=busRoute[(i+busRoute.length-1)%busRoute.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x);return [{id:'stop-'+i,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y}];});
+  roads.push({x:730,y:50,w:8,d:110},{x:1090,y:32,w:8,d:78},{x:910,y:0,w:370,d:8},{x:910,y:65,w:370,d:8},{x:915,y:100,w:40,d:8},{x:930,y:125,w:8,d:58});
+  const busLines=[
+    {id:'1',name:'Stadt - Flugplatz',color:'#e0b657',route:busRoute,starts:[0,6]},
+    {id:'2',name:'Obstgarten - Hafen',color:'#77a7bf',starts:[0,5],route:[{x:-330,y:15.8,name:'Obstgarten'},{x:-150,y:15.8,name:'Farm'},{x:160,y:15.8,name:'Werkstatt'},{x:520,y:15.8,name:'Osthafen'},{x:535,y:15.8},{x:535,y:12.2,name:'Osthafen'},{x:160,y:12.2,name:'Werkstatt'},{x:-150,y:12.2,name:'Farm'},{x:-330,y:12.2,name:'Obstgarten'},{x:-370,y:12.2},{x:-370,y:15.8}]},
+    {id:'3',name:'Perleninsel Rundfahrt',color:'#ba91bb',starts:[0],route:[{x:728.2,y:10,name:'Perlenhafen'},{x:728.2,y:66.8},{x:900,y:66.8,name:'Villenpromenade'},{x:1091.8,y:66.8},{x:1091.8,y:25,name:'Ostpromenade'},{x:1091.8,y:-1.8},{x:900,y:-1.8,name:'Villengarten'},{x:728.2,y:-1.8}]},
+    {id:'4',name:'Perleninsel Flughafenbus',color:'#79aa82',starts:[0],route:[{x:728.2,y:80,name:'Perlenhafen Sued'},{x:728.2,y:101.8},{x:928.2,y:101.8},{x:928.2,y:145,name:'Perlenflugplatz'},{x:931.8,y:145},{x:931.8,y:98.2},{x:731.8,y:98.2},{x:731.8,y:80,name:'Perlenhafen Sued'},{x:731.8,y:70},{x:728.2,y:70}]}
+  ];
+  const busStops=busLines.flatMap(line=>line.route.flatMap((p,i)=>{if(!p.name)return [];const prev=line.route[(i+line.route.length-1)%line.route.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x);return [{id:'stop-'+line.id+'-'+i,line:line.id,color:line.color,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y}];}));
+
   const booths=[
     {x:10,y:-5,sx:10,sy:1,name:'Startplatz'},
     {x:7,y:-106,sx:0,sy:-106,name:'Nordstadt'},
@@ -153,7 +161,7 @@ const Island = (() => {
     }
   }
   const reserved=(x,y)=>busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  return {busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;
