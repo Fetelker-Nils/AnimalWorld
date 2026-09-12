@@ -4,6 +4,8 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const assets = new Set(['assets/animal-world-logo.png','index.html','spielinfo.html','info.css','robots.txt','sitemap.xml','style.css','analytics.js','game.js','world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
+for(const clip of require('../assets/sound/manifest.json').clips)assets.add('assets/sound/'+clip.file);
+assets.add('assets/sound/manifest.json');
 function createServer(directory = root) {
   return http.createServer(async (request, response) => {
     if (!['GET','HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
@@ -14,8 +16,8 @@ function createServer(directory = root) {
     if (!assets.has(file)) { response.writeHead(404); response.end('Nicht gefunden'); return; }
     try {
       const body = await fs.readFile(path.join(directory, file));
-      const type = file.endsWith('.png') ? 'image/png' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.xml') ? 'application/xml' : file.endsWith('.txt') ? 'text/plain' : 'text/html';
-      response.writeHead(200, {'Content-Type':type+(type.startsWith('image/')?'':'; charset=utf-8'),'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
+      const type = file.endsWith('.mp3') ? 'audio/mpeg' : file.endsWith('.json') ? 'application/json' : file.endsWith('.png') ? 'image/png' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.xml') ? 'application/xml' : file.endsWith('.txt') ? 'text/plain' : 'text/html';
+      response.writeHead(200, {'Content-Type':type+((type.startsWith('image/')||type.startsWith('audio/'))?'':'; charset=utf-8'),'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
       response.end(request.method === 'HEAD' ? undefined : body);
     } catch { response.writeHead(500); response.end('Spieldatei konnte nicht geladen werden.'); }
   });

@@ -10,5 +10,11 @@ const {createServer}=require('./browser.cjs');
    await p.screenshot({path:'test-results/bus-angle-'+Math.round(angle*4/Math.PI)+'.png'});
  }
  await p.evaluate(()=>{const t=window.__animalTest,b=t.state().buses[0],c=Math.cos(b.heading),s=Math.sin(b.heading);t.visit(b.x+c*2.6-s*2.5,b.y+s*2.6+c*2.5,b.heading-Math.PI/2);window.dispatchEvent(new KeyboardEvent('keydown',{key:'w'}));t.advance(.4);window.dispatchEvent(new KeyboardEvent('keyup',{key:'w'}));});
- assert((await p.evaluate(()=>window.__animalTest.state())).busRide,'Board through open door');await p.screenshot({path:'test-results/bus-interior.png'});assert.deepEqual(errors,[]);console.log('PASS bus exterior, walk-in boarding and interior camera in browser');
+ await p.evaluate(()=>window.__animalTest.advance(8));
+ assert((await p.evaluate(()=>window.__animalTest.state())).commuters.some(p=>p.seated),'NPCs sit inside buses');
+ assert((await p.evaluate(()=>window.__animalTest.state())).busRide,'Board through open door');await p.screenshot({path:'test-results/bus-interior.png'});await p.evaluate(()=>{const t=window.__animalTest,b=t.state().buses.find(b=>b.id===t.state().busRide.id);t.visit(b.x+Math.cos(b.heading),b.y+Math.sin(b.heading),b.heading);t.advance(.05);});
+ await p.click('#interact');let seated=await p.evaluate(()=>window.__animalTest.state());assert(Number.isInteger(seated.busRide.seat),'Player sits on a free seat');assert(!seated.commuters.some(n=>n.busId===seated.busRide.id&&n.seat===seated.busRide.seat),'No occupied NPC seat');
+ const seat=seated.busRide.seat;await p.keyboard.down('w');await p.evaluate(()=>window.__animalTest.advance(1));await p.keyboard.up('w');assert.equal((await p.evaluate(()=>window.__animalTest.state())).busRide.seat,seat,'Movement does not walk through seats');
+ await p.click('#interact');const standing=await p.evaluate(()=>window.__animalTest.state());assert.equal(standing.busRide.seat,null);assert(Math.abs(standing.busRide.s)<1e-8,'Stand up in aisle');
+ assert.deepEqual(errors,[]);console.log('PASS bus exterior, walk-in boarding and interior camera in browser');
  }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

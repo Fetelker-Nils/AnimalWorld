@@ -1,0 +1,250 @@
+{
+  "voice": "de-DE-KatjaNeural",
+  "rate": "-5%",
+  "clips": [
+    {
+      "file": "line-1.mp3",
+      "text": "Linie eins."
+    },
+    {
+      "file": "line-2.mp3",
+      "text": "Linie zwei."
+    },
+    {
+      "file": "line-3.mp3",
+      "text": "Linie drei."
+    },
+    {
+      "file": "line-4.mp3",
+      "text": "Linie vier."
+    },
+    {
+      "file": "line-5.mp3",
+      "text": "Linie fünf."
+    },
+    {
+      "file": "line-6.mp3",
+      "text": "Linie sechs."
+    },
+    {
+      "file": "line-7.mp3",
+      "text": "Linie sieben."
+    },
+    {
+      "file": "station-nordstadt.mp3",
+      "text": "Station: Nordstadt."
+    },
+    {
+      "file": "next-nordstadt.mp3",
+      "text": "Nächste Station: Nordstadt."
+    },
+    {
+      "file": "station-stadtzentrum.mp3",
+      "text": "Station: Stadtzentrum."
+    },
+    {
+      "file": "next-stadtzentrum.mp3",
+      "text": "Nächste Station: Stadtzentrum."
+    },
+    {
+      "file": "station-dorfkreuzung.mp3",
+      "text": "Station: Dorfkreuzung."
+    },
+    {
+      "file": "next-dorfkreuzung.mp3",
+      "text": "Nächste Station: Dorfkreuzung."
+    },
+    {
+      "file": "station-dorf.mp3",
+      "text": "Station: Dorf."
+    },
+    {
+      "file": "next-dorf.mp3",
+      "text": "Nächste Station: Dorf."
+    },
+    {
+      "file": "station-hafenstrasse.mp3",
+      "text": "Station: Hafenstraße."
+    },
+    {
+      "file": "next-hafenstrasse.mp3",
+      "text": "Nächste Station: Hafenstraße."
+    },
+    {
+      "file": "station-hafen-ost.mp3",
+      "text": "Station: Hafen Ost."
+    },
+    {
+      "file": "next-hafen-ost.mp3",
+      "text": "Nächste Station: Hafen Ost."
+    },
+    {
+      "file": "station-flugplatz.mp3",
+      "text": "Station: Flugplatz."
+    },
+    {
+      "file": "next-flugplatz.mp3",
+      "text": "Nächste Station: Flugplatz."
+    },
+    {
+      "file": "station-obstgarten.mp3",
+      "text": "Station: Obstgarten."
+    },
+    {
+      "file": "next-obstgarten.mp3",
+      "text": "Nächste Station: Obstgarten."
+    },
+    {
+      "file": "station-farm.mp3",
+      "text": "Station: Farm."
+    },
+    {
+      "file": "next-farm.mp3",
+      "text": "Nächste Station: Farm."
+    },
+    {
+      "file": "station-werkstatt.mp3",
+      "text": "Station: Werkstatt."
+    },
+    {
+      "file": "next-werkstatt.mp3",
+      "text": "Nächste Station: Werkstatt."
+    },
+    {
+      "file": "station-osthafen.mp3",
+      "text": "Station: Osthafen."
+    },
+    {
+      "file": "next-osthafen.mp3",
+      "text": "Nächste Station: Osthafen."
+    },
+    {
+      "file": "station-stadteingang.mp3",
+      "text": "Station: Stadteingang."
+    },
+    {
+      "file": "next-stadteingang.mp3",
+      "text": "Nächste Station: Stadteingang."
+    },
+    {
+      "file": "station-perlenhafen.mp3",
+      "text": "Station: Perlenhafen."
+    },
+    {
+      "file": "next-perlenhafen.mp3",
+      "text": "Nächste Station: Perlenhafen."
+    },
+    {
+      "file": "station-perlenhafen-mitte.mp3",
+      "text": "Station: Perlenhafen Mitte."
+    },
+    {
+      "file": "next-perlenhafen-mitte.mp3",
+      "text": "Nächste Station: Perlenhafen Mitte."
+    },
+    {
+      "file": "station-villenpromenade.mp3",
+      "text": "Station: Villenpromenade."
+    },
+    {
+      "file": "next-villenpromenade.mp3",
+      "text": "Nächste Station: Villenpromenade."
+    },
+    {
+      "file": "station-ostpromenade.mp3",
+      "text": "Station: Ostpromenade."
+    },
+    {
+      "file": "next-ostpromenade.mp3",
+      "text": "Nächste Station: Ostpromenade."
+    },
+    {
+      "file": "station-villengarten.mp3",
+      "text": "Station: Villengarten."
+    },
+    {
+      "file": "next-villengarten.mp3",
+      "text": "Nächste Station: Villengarten."
+    },
+    {
+      "file": "station-perlenhafen-sued.mp3",
+      "text": "Station: Perlenhafen Süd."
+    },
+    {
+      "file": "next-perlenhafen-sued.mp3",
+      "text": "Nächste Station: Perlenhafen Süd."
+    },
+    {
+      "file": "station-perlenflugplatz.mp3",
+      "text": "Station: Perlenflugplatz."
+    },
+    {
+      "file": "next-perlenflugplatz.mp3",
+      "text": "Nächste Station: Perlenflugplatz."
+    },
+    {
+      "file": "station-westwiesen.mp3",
+      "text": "Station: Westwiesen."
+    },
+    {
+      "file": "next-westwiesen.mp3",
+      "text": "Nächste Station: Westwiesen."
+    },
+    {
+      "file": "station-hafen-west.mp3",
+      "text": "Station: Hafen West."
+    },
+    {
+      "file": "next-hafen-west.mp3",
+      "text": "Nächste Station: Hafen West."
+    },
+    {
+      "file": "station-ostwiesen.mp3",
+      "text": "Station: Ostwiesen."
+    },
+    {
+      "file": "next-ostwiesen.mp3",
+      "text": "Nächste Station: Ostwiesen."
+    },
+    {
+      "file": "station-hafen-sued.mp3",
+      "text": "Station: Hafen Süd."
+    },
+    {
+      "file": "next-hafen-sued.mp3",
+      "text": "Nächste Station: Hafen Süd."
+    },
+    {
+      "file": "station-suedviertel.mp3",
+      "text": "Station: Südviertel."
+    },
+    {
+      "file": "next-suedviertel.mp3",
+      "text": "Nächste Station: Südviertel."
+    },
+    {
+      "file": "station-suedstrand.mp3",
+      "text": "Station: Südstrand."
+    },
+    {
+      "file": "next-suedstrand.mp3",
+      "text": "Nächste Station: Südstrand."
+    },
+    {
+      "file": "station-osthafen-bruecke.mp3",
+      "text": "Station: Osthafen Brücke."
+    },
+    {
+      "file": "next-osthafen-bruecke.mp3",
+      "text": "Nächste Station: Osthafen Brücke."
+    },
+    {
+      "file": "station-perlenhafen-bruecke.mp3",
+      "text": "Station: Perlenhafen Brücke."
+    },
+    {
+      "file": "next-perlenhafen-bruecke.mp3",
+      "text": "Nächste Station: Perlenhafen Brücke."
+    }
+  ]
+}

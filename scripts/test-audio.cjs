@@ -4,13 +4,14 @@ const param=()=>({value:0,setValueAtTime(v){this.value=v;},linearRampToValueAtTi
 const node=extra=>({connect(){},disconnect(){},...extra});
 let context;
 class Audio {
-  constructor(){context=this;this.currentTime=0;this.sampleRate=8000;this.state='suspended';this.destination={};this.oscillators=[];this.gains=[];}
+  constructor(){context=this;this.currentTime=0;this.sampleRate=8000;this.state='suspended';this.destination={};this.oscillators=[];this.gains=[];this.sources=[];}
   async resume(){this.state='running';}
   createGain(){const g=node({gain:param()});this.gains.push(g);return g;}
   createDynamicsCompressor(){return node({threshold:param(),ratio:param()});}
   createOscillator(){const n=node({frequency:param(),type:'sine',start(){},stop(){}});this.oscillators.push(n);return n;}
   createBuffer(_channels,length){return {getChannelData:()=>new Float32Array(length)};}
-  createBufferSource(){return node({start(){}});}
+  async decodeAudioData(){return {duration:1,decoded:true};}
+  createBufferSource(){const n=node({start(at){this.at=at;},stop(){this.stopped=true;}});this.sources.push(n);return n;}
   createBiquadFilter(){return node({frequency:param()});}
 }
 const sandbox={window:{AudioContext:Audio},Math,Number,JSON};vm.createContext(sandbox);
@@ -34,9 +35,18 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   sound.set('music',.15);sound.set('effects',.25);
   const restored=sandbox.createSound(storage);assert(restored.settings.muted);assert.equal(restored.settings.music,.15);assert.equal(restored.settings.effects,.25);
   sound.set('muted',false);sound.update('taxi',{driving:true,speed:20});sound.quietEngine();assert.equal(context.gains[3].gain.value,0);
-  const spoken=[];let cancelled=0;sandbox.window.speechSynthesis={speak:u=>spoken.push(u),cancel(){cancelled++;},getVoices:()=>[{lang:'de-DE',localService:true}]};sandbox.window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
-  assert(sound.announce('Naechste Station: Stadt.'));assert.equal(spoken[0].lang,'de-DE');assert.equal(spoken[0].volume,.25);
-  sound.set('muted',true);assert(!sound.announce('Unhoerbar'));assert.equal(spoken.length,1);assert(cancelled>0);
+  const fetched=[];sandbox.fetch=async url=>{fetched.push(url);return {ok:true,arrayBuffer:async()=>new ArrayBuffer(8)};};
+  assert(sound.announce({line:'2',stop:'Stadtzentrum',next:true}));await new Promise(r=>setImmediate(r));
+  assert.deepEqual(fetched,['assets/sound/line-2.mp3','assets/sound/next-stadtzentrum.mp3']);
+  const clips=context.sources.filter(s=>s.buffer?.decoded);assert.equal(clips.length,2);assert(clips[1].at>clips[0].at,'Line and station play in order');
+  assert(sound.announcementPlaying);sound.set('muted',true);assert(clips.every(s=>s.stopped));assert(!sound.announcementPlaying);
+  assert(!sound.announce({line:'2',stop:'Stadtzentrum'}));
+  sound.set('muted',false);sound.announce({line:'2',stop:'Stadtzentrum',next:true});await new Promise(r=>setImmediate(r));assert.equal(fetched.length,2,'Decoded clips are cached');sound.cancelAnnouncement();
+  let resolveFetch;sandbox.fetch=()=>new Promise(resolve=>resolveFetch=resolve);
+  const beforeCancel=context.sources.filter(s=>s.buffer?.decoded).length;
+  sound.announce({line:'2',stop:'Nordstadt',next:true});sound.cancelAnnouncement();
+  resolveFetch({ok:true,arrayBuffer:async()=>new ArrayBuffer(8)});await new Promise(r=>setImmediate(r));
+  assert.equal(context.sources.filter(s=>s.buffer?.decoded).length,beforeCancel,'Cancelled downloads cannot start stale announcements');
   sound.set('muted',false);sound.set('music',0);
   const bus={id:'test-bus',x:0,y:0,speed:8,wait:0,doors:0};
   const riding={buses:[bus],listener:{x:0,y:0},busId:bus.id};

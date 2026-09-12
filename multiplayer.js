@@ -26,6 +26,7 @@ function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}, on
           }report('online');}
         else if(data.type==='leave'){players.delete(data.id);report('online');}
         else if(data.type==='properties'){sold=data.sold||[];mine=data.mine||[];onSession(data);}
+        else if(data.type==='bus-seat')onSession(data);
         else if(data.type==='purchase-result')onSession(data);
         else if(data.type==='clock')onClock(data.minutes);
         else if(data.type==='world')onWorld(data.state);
@@ -37,5 +38,5 @@ function createMultiplayer(onStatus, onClock, onWorld=()=>{}, onCrash=()=>{}, on
     });
   }
   function send(data){if(socket?.readyState===1)socket.send(JSON.stringify(data));}
-  return {get sold(){return sold;},get mine(){return mine;},buyProperty(request){send({type:'buy-property',...request});},sleep(sleeping){send({type:'sleep',sleeping});},ride(owner){send({type:'ride',owner});},get rideOwner(){return rideOwner;},crash(impact){send({type:'crash',x:impact.x,y:impact.y,heading:impact.heading,speed:impact.speed,z:impact.z||0,model:impact.model.id,scenery:impact.scenery===true});},connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
+  return {busSeat(busId,seat){send({type:'bus-seat',busId,seat});},get sold(){return sold;},get mine(){return mine;},buyProperty(request){send({type:'buy-property',...request});},sleep(sleeping){send({type:'sleep',sleeping});},ride(owner){send({type:'ride',owner});},get rideOwner(){return rideOwner;},crash(impact){send({type:'crash',x:impact.x,y:impact.y,heading:impact.heading,speed:impact.speed,z:impact.z||0,model:impact.model.id,scenery:impact.scenery===true});},connect,stop,smooth(dt){const t=1-Math.exp(-20*dt);for(const p of players.values()){p.renderX=(p.renderX??p.x)+(p.x-(p.renderX??p.x))*t;p.renderY=(p.renderY??p.y)+(p.y-(p.renderY??p.y))*t;}},update(state){lastState=state;},wave(){wave=true;},get players(){return [...players.values()];},get status(){return status;},get id(){return id;}};
 }

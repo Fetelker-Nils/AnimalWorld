@@ -71,6 +71,19 @@ export class World extends DurableObject {
     let data;try{data=JSON.parse(message);}catch{return;}
     const p=this.sessions.get(ws),now=Date.now();
     if(!p||!data)return;
+    if(data.type==='bus-seat'){
+      const b=this.life.buses.find(b=>b.id===p.busId&&b.id===data.busId);
+      if(!b||p.room!=='world'||p.car||p.riding)return;
+      const seat=data.seat,point=i=>({f:-1-Math.floor(i/2)*2+(i>=4?6:0),s:i%2?.95:-.95});
+      if(seat!==null){
+        if(!Number.isInteger(seat)||seat<0||seat>5)return;
+        const q=point(seat),dx=p.x-b.x,dy=p.y-b.y;
+        const occupied=this.life.commuters.some(n=>n.busId===b.id&&n.seat===seat)||[...this.sessions.values()].some(n=>n!==p&&n.busId===b.id&&n.busSeat===seat);
+        if(occupied||Math.hypot((p.busF??(dx*Math.cos(b.heading)+dy*Math.sin(b.heading)))-q.f,(p.busS??(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading)))-q.s)>2.2){this.send(ws,{type:'bus-seat',busId:b.id,seat:p.busSeat??null,reason:'Dieser Sitz ist nicht frei oder zu weit weg.'});return;}
+      }
+      p.busSeat=seat;p.seated=Number.isInteger(seat);p.moving=false;
+      ws.serializeAttachment(p);this.send(ws,{type:'bus-seat',busId:b.id,seat});this.broadcast({type:'player',player:this.public(p)},ws);return;
+    }
     if(data.type==='identity'){
       if(p.ownerToken||typeof data.token!=='string'||!/^[a-zA-Z0-9-]{32,80}$/.test(data.token))return;
       p.ownerToken=data.token;ws.serializeAttachment(p);this.propertyState(ws);return;
@@ -117,6 +130,9 @@ export class World extends DurableObject {
     if(!Number.isFinite(elevation)||elevation<0||elevation>(lobby?.floors-1)*4)return;
     Object.assign(p,{elevation,x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
     p.busId=this.life.buses.find(b=>b.id===data.busId&&Math.hypot(b.x-p.x,b.y-p.y)<7)?.id||null;
+    p.busF=p.busId&&Number.isFinite(data.busF)&&Math.abs(data.busF)<4.7?data.busF:null;
+    p.busS=p.busId&&Number.isFinite(data.busS)&&Math.abs(data.busS)<2.6?data.busS:null;
+    if(!p.busId||p.room!=='world'||p.car||p.riding){p.busSeat=null;p.seated=false;}
     p.species=['cat','rabbit','bear','fox'].includes(data.species)?data.species:'cat';
     p.name=typeof data.name==='string'?data.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,18)||'Mauz':'Mauz';
     if(p.riding){const car=this.vehicle(p.riding);p.x=car.x;p.y=car.y;p.heading=car.heading;p.room='world';p.car=null;}

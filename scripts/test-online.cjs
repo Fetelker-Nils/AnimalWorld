@@ -30,6 +30,19 @@ const {createServer}=require('./browser.cjs');
     assert.equal(new Set(fleetA.map(bus=>bus.id)).size,9);
     assert.equal(fleetB.length,9);
     for(const bus of fleetA){const other=fleetB.find(p=>p.id===bus.id);assert(other&&Math.hypot(bus.x-other.x,bus.y-other.y)<5,'One moving, shared instance of '+bus.id);}
+    const passengersA=await a.evaluate(()=>window.__animalTest.state().commuters),passengersB=await b.evaluate(()=>window.__animalTest.state().commuters);
+    assert.equal(passengersA.length,9);assert.equal(passengersB.length,9);assert(passengersA.some(p=>p.busId),'Online NPC passengers board buses');
+    for(const p of passengersA){const other=passengersB.find(q=>q.id===p.id);assert(other&&Math.hypot(p.x-other.x,p.y-other.y)<8,'Shared NPC passenger');}
+    const seatingBus=await a.evaluate(()=>window.__animalTest.state().buses[0].id);
+    for(const page of [a,b]){
+      await page.evaluate(id=>window.__animalTest.boardBus(id),seatingBus);
+      await page.waitForTimeout(250);await page.click('#interact');
+      await page.waitForFunction(()=>Number.isInteger(window.__animalTest.state().busRide?.seat)).catch(async e=>{console.log(await page.evaluate(()=>({ride:window.__animalTest.state().busRide,toast:document.querySelector('#toast').textContent,action:document.querySelector('#interact').textContent,peers:window.__animalTest.state().peers.map(p=>({id:p.id,busId:p.busId,busSeat:p.busSeat}))})));throw e;});
+    }
+    const seatA=await a.evaluate(()=>window.__animalTest.state().busRide),seatB=await b.evaluate(()=>window.__animalTest.state().busRide);
+    if(seatA.id===seatB.id)assert.notEqual(seatA.seat,seatB.seat,'Online players use different seats');
+    await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>Number.isInteger(p.busSeat)));
+    for(const page of [a,b]){await page.click('#interact');await page.waitForFunction(()=>window.__animalTest.state().busRide?.seat===null);await page.evaluate(()=>window.__animalTest.boardBus(null));}
     await a.click('#wave');await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>Date.now()-p.wave<2500));
     await b.screenshot({path:'test-results/online-two-players.png'});
     await a.evaluate(()=>window.__animalTest.visit(10,-5));await a.click('#interact');await a.click('[data-car="roadster"]');

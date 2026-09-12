@@ -27,9 +27,45 @@ function createCityLife(world, models){
     const path=route(blocks[i],-1.3);cars.push({id:'traffic-'+i,path,distance:8+i*7,model:models[i%models.length],speed:0,wait:0,...at(path,8+i*7)});
     for(let n=0;n<3;n++){const path=route(blocks[i],3.15),distance=5+n*13;walkers.push({id:'citizen-'+i+'-'+n,path,distance,species:['cat','rabbit','bear','fox'][(i+n)%4],phase:i+n,wait:0,moving:false,...at(path,distance)});}
   }
+  const busPoint=(b,f,s)=>({x:b.x+Math.cos(b.heading)*f-Math.sin(b.heading)*s,y:b.y+Math.sin(b.heading)*f+Math.cos(b.heading)*s});
+  const commuters=buses.map((b,i)=>({id:'citizen-passenger-'+i,species:['cat','rabbit','fox','bear'][i%4],phase:i,heading:b.heading,
+    ...busPoint(b,-1,4),z:0,stopId:b.stopId,busId:null,stage:'waiting',cooldown:i%3*2,moving:false,seated:false,trips:0}));
+  function tickCommuters(dt,players=[]){
+    for(const npc of commuters){
+      npc.moving=false;
+      if(npc.stage==='waiting'){
+        npc.cooldown=Math.max(0,npc.cooldown-dt);if(npc.cooldown>0)continue;
+        const b=buses.find(b=>b.stopId===npc.stopId&&Math.hypot(b.x-npc.x,b.y-npc.y)<8&&b.wait>7&&b.doors>.95&&commuters.filter(p=>p.busId===b.id).length<4&&!commuters.some(p=>p.busId===b.id&&(p.stage!=='seated'||p.alightAt<=b.departure)));
+        if(!b)continue;
+        const occupied=[...commuters.filter(p=>p.busId===b.id).map(p=>p.seat),...players.filter(p=>p.busId===b.id).map(p=>p.busSeat)],seat=[0,1,2,3].find(i=>!occupied.includes(i));
+        if(seat===undefined)continue;
+        const dx=npc.x-b.x,dy=npc.y-b.y;
+        Object.assign(npc,{busId:b.id,stage:'boarding',seat,f:dx*Math.cos(b.heading)+dy*Math.sin(b.heading),s:-dx*Math.sin(b.heading)+dy*Math.cos(b.heading),alightAt:b.departure+1+npc.phase%3,leg:0});
+        npc.path=[{f:2.6,s:3.1},{f:2.6,s:0},{f:-1-Math.floor(seat/2)*2,s:0},{f:-1-Math.floor(seat/2)*2,s:seat%2?.95:-.95}];
+      }
+      const b=buses.find(b=>b.id===npc.busId);if(!b)continue;
+      if(npc.stage==='seated'&&b.departure>=npc.alightAt&&b.wait>0&&b.doors>.95&&!commuters.some(p=>p!==npc&&p.busId===b.id&&p.stage!=='seated')){
+        npc.stage='exiting';npc.seated=false;npc.leg=0;npc.path=[{f:npc.f,s:0},{f:2.6,s:0},{f:2.6,s:3.1},{f:1,s:4}];
+      }
+      if(npc.stage==='boarding'||npc.stage==='exiting'){
+        const target=npc.path[npc.leg],df=target.f-npc.f,ds=target.s-npc.s,d=Math.hypot(df,ds),move=Math.min(d,dt*1.6);
+        if(d>.001){npc.f+=df/d*move;npc.s+=ds/d*move;npc.heading=b.heading+Math.atan2(ds,df);npc.moving=true;}
+        npc.z=.45*Math.max(0,Math.min(1,(2.6-npc.s)/1.1));
+        if(d<=move+.001){npc.leg++;if(npc.leg===npc.path.length){
+          if(npc.stage==='boarding'){npc.stage='seated';npc.seated=true;npc.z=.45;}
+          else{npc.stage='waiting';npc.busId=null;npc.stopId=b.stopId;npc.cooldown=18+npc.phase%5*7;npc.trips++;npc.z=0;}
+          delete npc.path;npc.moving=false;
+        }}
+      }
+      if(npc.seated)npc.heading=b.heading;
+      Object.assign(npc,busPoint(b,npc.f,npc.s));
+    }
+  }
   function tick(dt,player,playerCar,onlinePlayers=[]){
     const hazards=[...onlinePlayers.flatMap(p=>[{...p,r:p.car?3:1},...(['compact','roadster','pickup'].includes(p.vehicle?.model)?[{...p.vehicle,id:'vehicle-'+p.id,vehicle:true,r:3}]:[])]),...(player?[{...player,r:1}]:[]),...(playerCar?[{...playerCar,r:3}]:[])];
+    for(const b of buses)if(commuters.some(p=>p.busId===b.id&&(p.stage==='boarding'||p.stage==='exiting')))b.wait=Math.max(b.wait,2.5);
     tickBuses(dt,[...hazards,...buses,...cars]);
+    tickCommuters(dt,[...onlinePlayers,...(player?[player]:[])]);
     for(const car of cars){
       const ahead={x:car.x+Math.cos(car.heading)*5,y:car.y+Math.sin(car.heading)*5};
       const blocked=aheadBlocked(car,buses,8)||hazards.some(o=>Math.hypot(ahead.x-o.x,ahead.y-o.y)<o.r+1.5)||cars.some(o=>{
@@ -48,7 +84,7 @@ function createCityLife(world, models){
       if(npc.moving){const old=Math.floor(npc.distance/25);npc.distance+=dt*1.25;Object.assign(npc,at(npc.path,npc.distance));if(Math.floor(npc.distance/25)!==old)npc.wait=1.5+(npc.phase%3);}
     }
   }
-  return {cars,walkers,buses,tick,snapshot(){return {buses:buses.map(b=>({...b})),cars:cars.map(({path,model,...p})=>({...p,model:model.id})),walkers:walkers.map(({path,...p})=>p)};},accept(state){if(Array.isArray(state.buses)){const incoming=new Map(state.buses.map(p=>[p.id,p]));for(let i=buses.length-1;i>=0;i--)if(!incoming.has(buses[i].id))buses.splice(i,1);for(const [id,p] of incoming){let b=buses.find(b=>b.id===id);if(!b&&lines.some(l=>l.id===p.line)){b={};buses.push(b);}if(b)Object.assign(b,p);}}for(const p of state.cars||[]){const car=cars.find(c=>c.id===p.id);if(car)Object.assign(car,{...p,model:models.find(m=>m.id===p.model)||car.model});}for(const p of state.walkers||[]){const npc=walkers.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}}};
+  return {cars,walkers,buses,commuters,tick,snapshot(){return {commuters:commuters.map(p=>({...p,path:p.path?.map(q=>({...q}))})),buses:buses.map(b=>({...b})),cars:cars.map(({path,model,...p})=>({...p,model:model.id})),walkers:walkers.map(({path,...p})=>p)};},accept(state){for(const p of state.commuters||[]){const npc=commuters.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}if(Array.isArray(state.buses)){const incoming=new Map(state.buses.map(p=>[p.id,p]));for(let i=buses.length-1;i>=0;i--)if(!incoming.has(buses[i].id))buses.splice(i,1);for(const [id,p] of incoming){let b=buses.find(b=>b.id===id);if(!b&&lines.some(l=>l.id===p.line)){b={};buses.push(b);}if(b)Object.assign(b,p);}}for(const p of state.cars||[]){const car=cars.find(c=>c.id===p.id);if(car)Object.assign(car,{...p,model:models.find(m=>m.id===p.model)||car.model});}for(const p of state.walkers||[]){const npc=walkers.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}}};
 }
 
 globalThis.createCityLife=createCityLife;

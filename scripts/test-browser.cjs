@@ -13,6 +13,7 @@ const {createServer}=require('./browser.cjs');
       const r=await fetch(origin+'/'+file,{headers:{'User-Agent':'Googlebot'}});assert.equal(r.status,200);assert(r.headers.get('content-type').startsWith(type));
       const body=await r.text();assert(!body.includes('noindex'));if(file==='robots.txt'){assert(body.includes('Allow: /'));assert(body.includes('https://animal-world-mauz.vercel.app/sitemap.xml'));}
     }
+    for(const clip of require('../assets/sound/manifest.json').clips){const r=await fetch(origin+'/assets/sound/'+clip.file);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'audio/mpeg');assert((await r.arrayBuffer()).byteLength>1024);}
     const redirect=await fetch(origin+'/spielinfo.html',{redirect:'manual'});assert.equal(redirect.status,308);assert.equal(redirect.headers.get('location'),'/hilfe');
     assert(html.includes('rel="canonical"'));assert(html.includes('name="description"'));assert(html.includes('href="/hilfe"'));
     for(const name of ['package.json','main.cjs','scripts/browser.cjs','node_modules/electron/package.json'])assert.equal((await fetch(origin+'/'+name)).status,404);

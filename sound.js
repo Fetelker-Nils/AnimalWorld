@@ -1,4 +1,4 @@
-// Original procedural music and effects. No downloads or audio files required.
+// Procedural music/effects and bundled MP3 bus announcements. No speech service at runtime.
 function createSound(storage){
   let ctx,master,music,fx,engine,engineGain,busEngine,busGain,unlocked=false;
   let settings={muted:false,music:.3,effects:.55};
@@ -116,16 +116,35 @@ function createSound(storage){
     }
     if(state.braking&&Math.abs(state.speed)>3&&now>nextStep){noise(.09,.07,1500);nextStep=now+.35;}
   }
-  function cancelAnnouncement(){try{window.speechSynthesis?.cancel();}catch{}}
-  function announce(text){
-    if(!unlocked||settings.muted||settings.effects===0)return false;
-    effect('phone');
-    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
-    try{cancelAnnouncement();const speech=new window.SpeechSynthesisUtterance(text);speech.lang='de-DE';speech.rate=.95;speech.volume=settings.effects;
-    const voice=window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('de')&&v.localService);if(voice)speech.voice=voice;
-    window.speechSynthesis.speak(speech);return true;}catch{return false;}
+  const announcementCache=new Map();let announcementSources=[],announcementToken=0;
+  function cancelAnnouncement(){
+    announcementToken++;
+    for(const source of announcementSources){try{source.stop();}catch{}source.disconnect();}
+    announcementSources=[];
+  }
+  function loadAnnouncement(url){
+    if(!announcementCache.has(url))announcementCache.set(url,fetch(url).then(response=>{
+      if(!response.ok)throw Error('Ansage nicht gefunden');return response.arrayBuffer();
+    }).then(bytes=>ctx.decodeAudioData(bytes)).catch(error=>{announcementCache.delete(url);throw error;}));
+    return announcementCache.get(url);
+  }
+  function announce({line,stop,next=false}){
+    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^\d+$/.test(String(line)))return false;
+    cancelAnnouncement();effect('phone');const token=announcementToken;
+    const name=stop.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const urls=['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];
+    Promise.all(urls.map(loadAnnouncement)).then(buffers=>{
+      if(token!==announcementToken||settings.muted||settings.effects===0||ctx.state!=='running')return;
+      let at=ctx.currentTime+.05;
+      for(const buffer of buffers){
+        const source=ctx.createBufferSource();source.buffer=buffer;source.connect(fx);
+        source.onended=()=>{source.disconnect();announcementSources=announcementSources.filter(s=>s!==source);};
+        announcementSources.push(source);source.start(at);at+=buffer.duration+.1;
+      }
+    }).catch(()=>{});
+    return true;
   }
   function set(key,value){if(key==='muted')settings.muted=!!value;else if(key==='music'||key==='effects')settings[key]=Math.max(0,Math.min(1,Number(value)||0));if(settings.muted||settings.effects===0)cancelAnnouncement();save();}
   function quietEngine(){if(ctx)engineGain.gain.setTargetAtTime(0,ctx.currentTime,.03);}
-  return {announce,cancelAnnouncement,unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
+  return {get announcementPlaying(){return announcementSources.length>0;},announce,cancelAnnouncement,unlock,effect,update,set,quietEngine,get scene(){return theme;},get settings(){return {...settings};},get running(){return !!ctx&&ctx.state==='running';},get available(){return !!(window.AudioContext||window.webkitAudioContext);}};
 }

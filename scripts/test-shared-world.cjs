@@ -32,6 +32,17 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,x:1301}));assert.equal(pilot.p.x,900,'Server enforces world border');
   now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,vehicle:{...state.vehicle,z:999}}));assert.equal(pilot.p.vehicle.z,60,'Server rejects invalid altitude');
   await world.webSocketMessage(pilot.ws,JSON.stringify({type:'crash',model:'helicopter',x:900,y:155,z:60,heading:0,speed:20}));assert.equal(pilot.p.impact.z,60,'Aircraft crash height is synchronized');
+  const bus=world.life.buses[0];
+  for(const person of [passenger,third])Object.assign(person.p,{busId:bus.id,busSeat:null,room:'world',car:null,riding:null,x:bus.x+Math.cos(bus.heading),y:bus.y+Math.sin(bus.heading)});
+  await world.webSocketMessage(passenger.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:4}));assert.equal(passenger.p.busSeat,4);
+  await world.webSocketMessage(third.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:4}));assert.equal(third.p.busSeat,null,'Concurrent players cannot share seat');
+  await world.webSocketMessage(passenger.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:null}));
+  await world.webSocketMessage(third.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:4}));assert.equal(third.p.busSeat,4,'Standing frees seat');
+  const npc=world.life.commuters[0];Object.assign(npc,{busId:bus.id,seat:5});
+  await world.webSocketMessage(passenger.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:5}));assert.equal(passenger.p.busSeat,null,'NPC reservations respected');
+  npc.busId=null;await world.remove(third.ws);
+  Object.assign(passenger.p,{busF:1,busS:0,x:bus.x-Math.cos(bus.heading)*3,y:bus.y-Math.sin(bus.heading)*3});
+  await world.webSocketMessage(passenger.ws,JSON.stringify({type:'bus-seat',busId:bus.id,seat:4}));assert.equal(passenger.p.busSeat,4,'Disconnect frees seat; local coordinates tolerate a moving bus');
   // One World owns the bus fleet; more sockets must not create buses or speed it up.
   const single=new c.World(ctx,{});await ctx.ready;const multiple=new c.World(ctx,{});await ctx.ready;
   const connect=(w,id)=>{const ws={send(){},serializeAttachment(){}};w.sessions.set(ws,{id,ownerToken:id,x:100,y:400,room:'world',heading:0,jump:0,last:0});return ws;};
@@ -42,6 +53,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   for(let i=0;i<300;i++){now+=100;await single.webSocketMessage(solo,packet);for(const ws of group)await multiple.webSocketMessage(ws,packet);}
   assert(Math.abs(single.life.buses[0].y-startY)>5,'Online bus actually moves after stopping');
   for(let i=0;i<single.life.buses.length;i++){assert.equal(single.life.buses[i].x,multiple.life.buses[i].x);assert.equal(single.life.buses[i].y,multiple.life.buses[i].y);}
+  assert.deepEqual(single.life.snapshot().commuters,multiple.life.snapshot().commuters,'Passengers independent of player count');
   assert.equal(new Set(multiple.life.buses.map(b=>b.id)).size,9);
   console.log('PASS shared server: all-player sleep vote, morning, cancellation/disconnect, saved clock offset, seat arbitration, safe exit, passenger movement and profiles');
 })().catch(e=>{console.error(e);process.exitCode=1;});

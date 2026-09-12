@@ -61,7 +61,7 @@ function animalMesh(actor, outfit, ground=0, time=0, detail=1){
   const faces=[],kind=actor.species||'cat',fur=kind==='bear'?'#a77e59':kind==='rabbit'?'#c7b8a4':kind==='fox'?'#d68d4b':'#e7ab60';
   const h=actor.heading||0,c=Math.cos(h),s=Math.sin(h),base=ground+(actor.jump||0);
   const vertices=new Map();
-  const transform=p=>{let v=vertices.get(p);if(!v){const [side,forward,z]=p;v=[actor.x+c*forward-s*side,actor.y+s*forward+c*side,base+z];vertices.set(p,v);}return v;};
+  const transform=p=>{let v=vertices.get(p);if(!v){let [side,forward,z]=p;if(actor.seated){if(z<.4)forward+=.28;z=z*.85+.3;}v=[actor.x+c*forward-s*side,actor.y+s*forward+c*side,base+z];vertices.set(p,v);}return v;};
   function face(points,color,shade=1){const rgb=[1,3,5].map(i=>Math.round(parseInt(color.slice(i,i+2),16)*shade).toString(16).padStart(2,'0'));faces.push({points:points.map(transform),color:'#'+rgb.join('')});}
   function ball(x,y,z,rx,ry,rz,color,n=8,m=5){
     if(detail<1){n=Math.max(4,Math.round(n*detail));m=Math.max(3,Math.round(m*detail));}
