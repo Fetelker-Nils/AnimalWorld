@@ -4,7 +4,10 @@ const Island = (() => {
   const docks=[{x:559,y:0,w:28,d:6},{x:645,y:0,w:28,d:6}];
   const airfields=[{x:210,y:230,w:32,d:110},{x:900,y:155,w:32,d:100}];
   const inDock=(x,y)=>docks.some(d=>Math.abs(x-d.x)<d.w/2&&Math.abs(y-d.y)<d.d/2);
-  const inSea=(x,y)=>Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&!inDock(x,y);
+  const bridge={x:610,y:14,w:140,d:12};
+  const onBridge=(x,y)=>Math.abs(x-bridge.x)<=bridge.w/2&&Math.abs(y-bridge.y)<=bridge.d/2;
+  const bridgeBarrier=(x,y)=>Math.abs(x-bridge.x)<bridge.w/2&&Math.abs(y-bridge.y)>bridge.d/2-.7&&Math.abs(y-bridge.y)<bridge.d/2+.7;
+  const inSea=(x,y)=>Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&!inDock(x,y)&&!onBridge(x,y);
   const inBounds=(x,y)=>Math.hypot(x,y)<border;
 
   const buildings=[];
@@ -112,11 +115,15 @@ const Island = (() => {
     {x:1.8,y:-320},{x:-1.8,y:-320}
   ];
   roads.push({x:730,y:50,w:8,d:110},{x:1090,y:32,w:8,d:78},{x:910,y:0,w:370,d:8},{x:910,y:65,w:370,d:8},{x:915,y:100,w:40,d:8},{x:930,y:125,w:8,d:58});
+  roads.push({x:635,y:14,w:200,d:8});
   const busLines=[
     {id:'1',name:'Stadt - Flugplatz',color:'#e0b657',route:busRoute,starts:[0,6]},
     {id:'2',name:'Obstgarten - Hafen',color:'#77a7bf',starts:[0,5],route:[{x:-330,y:15.8,name:'Obstgarten'},{x:-150,y:15.8,name:'Farm'},{x:160,y:15.8,name:'Werkstatt'},{x:520,y:15.8,name:'Osthafen'},{x:535,y:15.8},{x:535,y:12.2,name:'Osthafen'},{x:160,y:12.2,name:'Werkstatt'},{x:-150,y:12.2,name:'Farm'},{x:-330,y:12.2,name:'Obstgarten'},{x:-370,y:12.2},{x:-370,y:15.8}]},
     {id:'3',name:'Perleninsel Rundfahrt',color:'#ba91bb',starts:[0],route:[{x:728.2,y:10,name:'Perlenhafen'},{x:728.2,y:66.8},{x:900,y:66.8,name:'Villenpromenade'},{x:1091.8,y:66.8},{x:1091.8,y:25,name:'Ostpromenade'},{x:1091.8,y:-1.8},{x:900,y:-1.8,name:'Villengarten'},{x:728.2,y:-1.8}]},
-    {id:'4',name:'Perleninsel Flughafenbus',color:'#79aa82',starts:[0],route:[{x:728.2,y:80,name:'Perlenhafen Sued'},{x:728.2,y:101.8},{x:928.2,y:101.8},{x:928.2,y:145,name:'Perlenflugplatz'},{x:931.8,y:145},{x:931.8,y:98.2},{x:731.8,y:98.2},{x:731.8,y:80,name:'Perlenhafen Sued'},{x:731.8,y:70},{x:728.2,y:70}]}
+    {id:'4',name:'Perleninsel Flughafenbus',color:'#79aa82',starts:[0],route:[{x:728.2,y:80,name:'Perlenhafen Sued'},{x:728.2,y:101.8},{x:928.2,y:101.8},{x:928.2,y:145,name:'Perlenflugplatz'},{x:931.8,y:145},{x:931.8,y:98.2},{x:731.8,y:98.2},{x:731.8,y:80,name:'Perlenhafen Sued'},{x:731.8,y:70},{x:728.2,y:70}]},
+    {id:'5',name:'Inselring',color:'#d28b65',starts:[0],route:[{x:-171.8,y:80,name:'Westwiesen'},{x:-171.8,y:166.8},{x:-90,y:166.8,name:'Hafen West'},{x:171.8,y:166.8},{x:171.8,y:80,name:'Ostwiesen'},{x:171.8,y:12.2},{x:80,y:12.2,name:'Stadteingang'},{x:-171.8,y:12.2}]},
+    {id:'6',name:'Hafen - Suedstrand',color:'#649caf',starts:[0],route:[{x:-1.8,y:205,name:'Hafen Sued'},{x:-1.8,y:340,name:'Suedviertel'},{x:-1.8,y:480,name:'Suedstrand'},{x:1.8,y:480},{x:1.8,y:340,name:'Suedviertel'},{x:1.8,y:205,name:'Hafen Sued'},{x:1.8,y:195},{x:-1.8,y:195}]},
+    {id:'7',name:'Perlenbruecke',color:'#cf789c',starts:[0],route:[{x:480,y:15.8,name:'Osthafen Bruecke'},{x:700,y:15.8,name:'Perlenhafen Bruecke'},{x:720,y:15.8},{x:720,y:12.2},{x:700,y:12.2,name:'Perlenhafen Bruecke'},{x:480,y:12.2,name:'Osthafen Bruecke'},{x:460,y:12.2},{x:460,y:15.8}]}
   ];
   const busStops=busLines.flatMap(line=>line.route.flatMap((p,i)=>{if(!p.name)return [];const prev=line.route[(i+line.route.length-1)%line.route.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x);return [{id:'stop-'+line.id+'-'+i,line:line.id,color:line.color,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y}];}));
 
@@ -148,7 +155,7 @@ const Island = (() => {
   const heightAt=(x,y)=>mountain.height*Math.max(0,1-Math.max(0,Math.hypot(x-mountain.x,y-mountain.y)-4)/(mountain.radius-4));
   const inPond=(x,y,pad=0)=>((x-pond.x)/(pond.rx+pad))**2+((y-pond.y)/(pond.ry+pad))**2<1;
   const onRoad=(x,y,pad=1)=>roads.some(r=>Math.abs(x-r.x)<r.w/2+pad&&Math.abs(y-r.y)<r.d/2+pad);
-  const blocked=(x,y)=>(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
+  const blocked=(x,y)=>bridgeBarrier(x,y)||(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
   const lamps=[];
   for(const road of roads){
     const vertical=road.d>road.w,length=vertical?road.d:road.w,edge=(vertical?road.w:road.d)/2+1.2;
@@ -161,7 +168,7 @@ const Island = (() => {
     }
   }
   const reserved=(x,y)=>busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  return {bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;

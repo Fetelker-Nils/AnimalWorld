@@ -195,7 +195,7 @@
     });
   }
   let busAnnouncement='';
-  function announceBus(){const b=busRide&&life.buses.find(b=>b.id===busRide.id);if(!b){if(busAnnouncement)sound.cancelAnnouncement();busAnnouncement='';return;}const stopped=b.wait>0,key=b.id+':'+b.departure+':'+stopped;if(key!==busAnnouncement){busAnnouncement=key;sound.announce(stopped?'Station: '+b.stop+'. Linie '+({'1':'eins','2':'zwei','3':'drei','4':'vier'}[b.line]||b.line)+'.':'N\u00e4chste Station: '+b.nextStop+'.');}}
+  function announceBus(){const b=busRide&&life.buses.find(b=>b.id===busRide.id);if(!b){if(busAnnouncement)sound.cancelAnnouncement();busAnnouncement='';return;}const stopped=b.wait>0,key=b.id+':'+b.departure+':'+stopped;if(key!==busAnnouncement){busAnnouncement=key;sound.announce(stopped?'Station: '+b.stop+'. Linie '+({'1':'eins','2':'zwei','3':'drei','4':'vier','5':'f\u00fcnf','6':'sechs','7':'sieben'}[b.line]||b.line)+'.':'N\u00e4chste Station: '+b.nextStop+'.');}}
   function busLocal(b,x,y){const dx=x-b.x,dy=y-b.y;return {f:dx*Math.cos(b.heading)+dy*Math.sin(b.heading),s:-dx*Math.sin(b.heading)+dy*Math.cos(b.heading)};}
   function busPoint(b,p){return {x:b.x+Math.cos(b.heading)*p.f-Math.sin(b.heading)*p.s,y:b.y+Math.sin(b.heading)*p.f+Math.cos(b.heading)*p.s};}
   function carryBus(){if(!busRide)return;const b=life.buses.find(b=>b.id===busRide.id);if(!b){busRide=null;mauz.busId=null;return;}mauz.heading+=Math.atan2(Math.sin(b.heading-busRide.heading),Math.cos(b.heading-busRide.heading));busRide.heading=b.heading;Object.assign(mauz,busPoint(b,busRide));}
@@ -275,7 +275,7 @@
     if(mauz.jump>ceiling){mauz.jump=ceiling;mauz.vz=Math.min(0,mauz.vz);}
     if(mauz.vz<=0&&mauz.jump<=support){mauz.jump=support;mauz.vz=0;}
   }
-  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(!Island.inBounds(x,y)||!busWalkable(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!jumpObjects(x,y).some(b=>onObject(b,x,y)&&b.h>(mauz.jump||0)+.04)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
+  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(Island.bridgeBarrier(x,y)||!Island.inBounds(x,y)||!busWalkable(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!jumpObjects(x,y).some(b=>onObject(b,x,y)&&b.h>(mauz.jump||0)+.04)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
   function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,touchDevice?1.25:2,Math.sqrt(2073600/(width*height)));canvas.width=Math.max(1,Math.floor(width*dpr));canvas.height=Math.max(1,Math.floor(height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(width*.85,height*1.05);cx=width*.5;cy=height*.43;}
   // A perspective camera seven world units behind Mauz, three units high,
   // tilted down by only seven degrees.
@@ -642,6 +642,7 @@
     for(const dock of Island.docks){groundRect(dock.x,dock.y,dock.w,dock.d,'#b58d64');for(let x=dock.x-dock.w/2;x<dock.x+dock.w/2;x++)groundRect(x,dock.y,.05,dock.d,'#957453');}
     for(const a of Island.airfields){groundRect(a.x,a.y,a.w,a.d,'#728589');for(let y=a.y-a.d/2+4;y<a.y+a.d/2;y+=8)groundRect(a.x,y,.3,4,'#f0edda');}
     drawBorder();
+    groundRect(Island.bridge.x,Island.bridge.y,Island.bridge.w,Island.bridge.d,'#b9bca9');
     for(const r of Island.roads)groundRect(r.x,r.y,r.w+1.3,r.d+1.3,'#d2cfba');
     for(const r of Island.roads)groundRect(r.x,r.y,r.w,r.d,r.w===3||r.d===3?'#e1d0a8':'#85928f');
     for(const r of Island.roads){
@@ -650,6 +651,13 @@
       for(let n=-length/2+2;n<length/2;n+=6)groundRect(r.x+(vertical?0:n),r.y+(vertical?n:0),vertical?.13:2,vertical?2:.13,'#e5e5ce');
     }
     groundOval(0,0,5.5,5.5,'#e9ddbd');
+    const bridge=Island.bridge;
+    for(const side of [-1,1]){
+      const y=bridge.y+side*(bridge.d/2-.25);
+      box(bridge.x,y,bridge.w,.35,.55,'#899b9c','#b7c5bf');
+      for(let x=bridge.x-bridge.w/2+2;x<bridge.x+bridge.w/2;x+=7)box(x,y,.4,.4,1.35,'#64858a','#a7bdba');
+      box(bridge.x,y,bridge.w,.16,1.35,'#6f9093','#b1c9c3');
+    }
     groundRect(Island.depot.x,Island.depot.y,4,3,'#efcc7f');
     const pond=Island.pond;
     groundOval(pond.x,pond.y,pond.rx+1,pond.ry+1,'#d9d4a7');
@@ -851,6 +859,26 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     ctx.restore();
   }
   function drawRoute(c,p){if(!plannedRoute)return;c.save();c.strokeStyle='#f7f9e7';c.lineWidth=6;c.lineJoin='round';c.lineCap='round';c.beginPath();plannedRoute.points.forEach((q,i)=>{if(i)c.lineTo(...p(q.x,q.y));else c.moveTo(...p(q.x,q.y));});c.stroke();c.strokeStyle='#c76d3e';c.lineWidth=3;c.stroke();c.restore();}
+  function drawBusStops(c,p,mini=false){
+    const size=mini?12:16,bounds=mini?180:600,placed=[];
+    c.save();c.textAlign='center';c.textBaseline='middle';
+    for(const stop of Island.busStops){
+      const [x,y]=p(stop.x,stop.y);
+      if(x<-size||y<-size||x>bounds+size||y>bounds+size)continue;
+      if(placed.some(q=>q.name===stop.name&&q.line===stop.line&&Math.hypot(q.x-x,q.y-y)<size))continue;
+      placed.push({x,y,name:stop.name,line:stop.line});
+      c.fillStyle='#fffdf0';c.fillRect(x-size/2,y-size/2,size,size);
+      c.strokeStyle=stop.color;c.lineWidth=2;c.strokeRect(x-size/2,y-size/2,size,size);
+      c.fillStyle='#294d42';c.font='bold '+(mini?10:12)+'px Segoe UI';c.fillText('H',x,y+.5);
+      if(!mini&&mapView.zoom>=3){
+        const label=stop.name+' \u00b7 '+stop.line;c.font='10px Segoe UI';
+        const width=c.measureText(label).width+6;
+        c.fillStyle='#fffdf0';c.fillRect(x+size/2+3,y-7,width,14);
+        c.fillStyle='#294d42';c.textAlign='left';c.fillText(label,x+size/2+6,y);c.textAlign='center';
+      }
+    }
+    c.restore();
+  }
   function drawMiniMap(){
     if(mode!=='playing'||time-miniUpdated<.18)return;miniUpdated=time;
     const c=document.querySelector('#minimap').getContext('2d'),size=180;
@@ -873,8 +901,8 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
       c.fillStyle='#287f87';for(const b of Island.booths)c.fillRect(...p(b.x-1,b.y-1),3,3);
       c.fillStyle='#8861a4';for(const j of [Island.depot,...Island.jobs]){c.beginPath();c.arc(...p(j.x,j.y),3,0,Math.PI*2);c.fill();}
       c.fillStyle='#c75a9a';for(const v of Island.venues)c.fillRect(...p(v.x-1,v.y-1),4,4);
-      c.fillStyle='#3b8a69';for(const stop of Island.busStops){c.fillRect(...p(stop.x-1,stop.y-1),4,4);}
       drawRoute(c,p);
+      drawBusStops(c,p,true);
       const target=navigationTarget(),q=p(target.x,target.y),dx=q[0]-90,dy=q[1]-90,d=Math.hypot(dx,dy),ratio=d>77?77/d:1;
       c.fillStyle='#ffca64';c.strokeStyle='#82552c';c.lineWidth=1.5;c.beginPath();c.arc(90+dx*ratio,90+dy*ratio,5,0,Math.PI*2);c.fill();c.stroke();
     }
@@ -900,6 +928,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     for(const h of Island.homes.filter(h=>h.id===h.buildingId)){const q=p(h.x,h.y);c.fillStyle=ownsHome(h.id)?'#4f895d':'#c79c41';c.fillRect(q[0]-4,q[1]-3,8,7);c.beginPath();c.moveTo(q[0]-6,q[1]-3);c.lineTo(q[0],q[1]-9);c.lineTo(q[0]+6,q[1]-3);c.fill();}
     for(const v of Island.venues){const q=p(v.x,v.y);c.fillStyle='#c75a9a';c.fillRect(q[0]-4,q[1]-4,8,8);if(mapView.zoom>=2){c.font='10px Segoe UI';c.fillText(v.name,q[0],q[1]-8);}}
     drawRoute(c,p);
+    drawBusStops(c,p);
     const t=navigationTarget();c.fillStyle='#e8a44f';c.beginPath();c.arc(...p(t.x,t.y),6,0,Math.PI*2);c.fill();
     c.fillStyle='#2476a5';c.beginPath();c.arc(...p(mauz.x,mauz.y),5,0,Math.PI*2);c.fill();
     c.strokeStyle='#2476a5';c.lineWidth=3;c.beginPath();c.moveTo(...p(mauz.x,mauz.y));c.lineTo(...p(mauz.x+Math.cos(mauz.heading)*7,mauz.y+Math.sin(mauz.heading)*7));c.stroke();
@@ -1134,5 +1163,5 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     state:()=>({busRide,buses:life.buses,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
   let lastPaint=0;
-  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{buses:life.buses,listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();

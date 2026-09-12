@@ -37,5 +37,18 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   const spoken=[];let cancelled=0;sandbox.window.speechSynthesis={speak:u=>spoken.push(u),cancel(){cancelled++;},getVoices:()=>[{lang:'de-DE',localService:true}]};sandbox.window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
   assert(sound.announce('Naechste Station: Stadt.'));assert.equal(spoken[0].lang,'de-DE');assert.equal(spoken[0].volume,.25);
   sound.set('muted',true);assert(!sound.announce('Unhoerbar'));assert.equal(spoken.length,1);assert(cancelled>0);
+  sound.set('muted',false);sound.set('music',0);
+  const bus={id:'test-bus',x:0,y:0,speed:8,wait:0,doors:0};
+  const riding={buses:[bus],listener:{x:0,y:0},busId:bus.id};
+  sound.update('explore',riding);assert(context.gains[4].gain.value>0,'Bus engine audible nearby');
+  const movingPitch=context.oscillators[1].frequency.value;
+  Object.assign(bus,{speed:0,wait:14,doors:1});const beforeStop=context.oscillators.length;
+  sound.update('explore',riding);assert(context.oscillators.length>beforeStop,'Brake and opening effects');
+  assert(context.oscillators[1].frequency.value<movingPitch,'Engine follows speed');
+  const stopped=context.oscillators.length;for(let i=0;i<60;i++)sound.update('explore',riding);
+  assert.equal(context.oscillators.length,stopped,'Do not repeat sounds every frame');
+  bus.wait=.9;sound.update('explore',riding);assert(context.oscillators.length>stopped,'Door closing warning');
+  sound.update('explore',{...riding,listener:{x:100,y:0},busId:null});assert.equal(context.gains[4].gain.value,0,'Distant bus silent');
+  sound.update('explore',{...riding,paused:true});assert.equal(context.gains[4].gain.value,0,'Paused bus silent');
   console.log('PASS: eleven musical themes, six effects, lazy audio activation, engine shutdown, mute and volume persistence');
 })().catch(error=>{console.error(error);process.exitCode=1;});

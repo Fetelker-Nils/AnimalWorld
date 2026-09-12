@@ -1,8 +1,9 @@
 // Original procedural music and effects. No downloads or audio files required.
 function createSound(storage){
-  let ctx,master,music,fx,engine,engineGain,unlocked=false;
+  let ctx,master,music,fx,engine,engineGain,busEngine,busGain,unlocked=false;
   let settings={muted:false,music:.3,effects:.55};
   try{const saved=JSON.parse(storage.getItem('animal-world-audio')||'null');if(saved){settings.muted=!!saved.muted;for(const key of ['music','effects'])if(Number.isFinite(saved[key]))settings[key]=Math.max(0,Math.min(1,saved[key]));}}catch{}
+  const busStates=new Map();
   let theme='',nextNote=0,beat=0,nextStep=0,nextWork=0;
   const themes={
     menu:{bpm:92,root:60,notes:[0,4,7,12,9,7,4,2],wave:'triangle'},
@@ -44,14 +45,20 @@ function createSound(storage){
         master.gain.value=settings.muted?0:.6;music.gain.value=settings.music;fx.gain.value=settings.effects;
         music.connect(master);fx.connect(master);master.connect(limiter);limiter.connect(ctx.destination);
         engine=ctx.createOscillator();engine.type='triangle';engineGain=ctx.createGain();engineGain.gain.value=0;engine.connect(engineGain);engineGain.connect(fx);engine.start();
+        busEngine=ctx.createOscillator();busEngine.type='sawtooth';busGain=ctx.createGain();busGain.gain.value=0;
+        const busFilter=ctx.createBiquadFilter();busFilter.type='lowpass';busFilter.frequency.value=180;
+        busEngine.connect(busFilter);busFilter.connect(busGain);busGain.connect(fx);busEngine.start();
       }catch{return false;}
     }
     try{await ctx.resume();unlocked=ctx.state==='running';nextNote=ctx.currentTime;return unlocked;}catch{return false;}
   }
-  function effect(type){
+  function effect(type,volume=1){
     if(!ctx||ctx.state!=='running'||settings.muted)return;
     const t=ctx.currentTime;
-    if(type==='reward'){for(const [i,f] of [523.25,659.25,783.99,1046.5].entries())tone(f,t+i*.08,.28,.12,'triangle');}
+    if(type==='bus-open'){noise(.55,.12*volume,1800);tone(190,t,.45,.035*volume,'triangle',fx,100);}
+    else if(type==='bus-close'){tone(760,t,.1,.055*volume);tone(760,t+.18,.1,.055*volume);noise(.5,.1*volume,1300);tone(100,t+.45,.1,.05*volume);}
+    else if(type==='bus-stop'){noise(.65,.14*volume,2200);tone(160,t,.25,.025*volume,'sine',fx,65);}
+    else if(type==='reward'){for(const [i,f] of [523.25,659.25,783.99,1046.5].entries())tone(f,t+i*.08,.28,.12,'triangle');}
     else if(type==='phone'){for(let i=0;i<4;i++)tone(i%2?880:660,t+i*.12,.1,.09,'sine');}
     else if(type==='jump')tone(200,t,.18,.1,'sine',fx,520);
     else if(type==='explosion'){noise(.8,.5,450);tone(110,t,.65,.24,'sawtooth',fx,25);}
@@ -60,10 +67,29 @@ function createSound(storage){
     else if(type==='collect'){noise(.12,.09,1500);tone(640,t,.12,.08);}
     else tone(440,t,.08,.07,'sine',fx,580);
   }
+  function updateBuses(state){
+    let loudest=0,speed=0;
+    for(const b of state.buses||[]){
+      const old=busStates.get(b.id),phase=b.wait>1?'open':b.wait>0||b.doors>0?'closing':'closed';
+      const distance=state.listener?Math.hypot(b.x-state.listener.x,b.y-state.listener.y):Infinity;
+      const volume=state.paused||settings.muted?0:state.busId===b.id?1:Math.max(0,1-distance/32)**2;
+      if(volume>loudest){loudest=volume;speed=Math.abs(b.speed);}
+      if(old&&volume>0){
+        if(old.speed>.3&&b.speed<=.3)effect('bus-stop',volume);
+        if(phase!==old.phase&&phase==='open')effect('bus-open',volume);
+        if(phase!==old.phase&&phase==='closing')effect('bus-close',volume);
+      }
+      busStates.set(b.id,{speed:b.speed,phase});
+    }
+    for(const id of busStates.keys())if(!(state.buses||[]).some(b=>b.id===id))busStates.delete(id);
+    busEngine.frequency.setTargetAtTime(38+speed*3,ctx.currentTime,.15);
+    busGain.gain.setTargetAtTime(loudest*(speed>.3?.065:.025),ctx.currentTime,.15);
+  }
   function update(scene,state){
     if(state.paused)cancelAnnouncement();
     if(!ctx||ctx.state!=='running')return;
     const now=ctx.currentTime;
+    updateBuses(state);
     master.gain.setTargetAtTime(settings.muted?0:.6,now,.04);
     music.gain.setTargetAtTime(settings.music*(state.paused?.45:1),now,.08);fx.gain.setTargetAtTime(settings.effects,now,.05);
     engine.frequency.setTargetAtTime(48+Math.abs(state.speed||0)*4,now,.07);
