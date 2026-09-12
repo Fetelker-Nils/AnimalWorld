@@ -31,3 +31,5 @@
 .start-info{font-size:13px;margin-top:14px}.start-info a{color:#385a40;text-underline-offset:3px}.start-card{flex-shrink:0}.start-screen{align-items:safe center}
 
 .site-logo{display:block;width:88px;height:88px;object-fit:cover;border-radius:20px;box-shadow:0 5px 18px #29453c26}@media(max-height:740px){.site-logo{width:56px;height:56px;border-radius:12px}}@media(max-height:500px){.site-logo{width:36px;height:36px;border-radius:8px}}
+
+#bus-map-panel{margin-top:12px;color:#365542;font-size:13px}#bus-map-line{max-width:100%;padding:9px;border:1px solid #b9c9b1;border-radius:8px;background:#fffdf0;color:#365542}.bus-map-status{white-space:pre-line;font-size:12px;line-height:1.6;color:#365542;margin-top:10px}#bus-map-panel[hidden]~.bus-map-status{display:none}

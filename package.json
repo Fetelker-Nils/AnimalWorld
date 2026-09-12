@@ -20,6 +20,7 @@
     "test:navigation": "npm run build && node scripts/test-navigation-ui.cjs",
     "test:housing": "npm run build && node scripts/test-housing-ui.cjs",
     "test:routes": "npm run build && node scripts/test-routes-ui.cjs",
+    "test:bus-plan": "npm run build && node scripts/test-bus-plan-ui.cjs && node scripts/test-bus-plan-ui.cjs --online",
     "test:bus": "node scripts/test-bus.cjs",
     "test:bus:ui": "npm run build && node scripts/test-transport-depth.cjs && node scripts/test-bus-ui.cjs"
   },

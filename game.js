@@ -149,6 +149,7 @@
     const home=interior;interior=null;indoorRenderer?.dispose?.();indoorRenderer=null;moveToDoor(home.x,home.y,Math.PI/2);updateJobUI();return true;
   }
   const mapView={x:0,y:0,zoom:1};
+  let busMapStop=null,busMapLine='all',busMapUpdated=-Infinity;
   const savedHome=Island.homes.find(h=>h.id===job.homeId);
   if(savedHome){mauz.x=savedHome.x;mauz.y=savedHome.y;mauz.heading=0;camera.x=mauz.x;camera.y=mauz.y;camera.heading=0;}
   const sound=createSound(storage);
@@ -775,6 +776,7 @@
     if(nearBed())return {type:'sleep',label:dayCycle.night?(touchDevice?'Bis 07:00 schlafen':'E - Bis 07:00 schlafen'):'Bett - Schlafen ab 20:00'};
     if(interior)return Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<2?{type:'exit',label:'E - Haus verlassen'}:null;
     const candidates=[];
+    if(!vehicles.driving)for(const stop of Island.busStops){const c=Math.cos(stop.heading),s=Math.sin(stop.heading);candidates.push({type:'bus-plan',target:{x:stop.x-1.4*c-2*s,y:stop.y-1.4*s+2*c,stop},label:'E - Fahrplan ansehen',range:2.8});}
     if(!vehicles.driving)for(const v of Island.venues)candidates.push({target:v,type:'venue',label:'E - '+v.name+' betreten'});
     if(!vehicles.driving)for(const house of Island.homes.filter(h=>h.id===h.buildingId))candidates.push({target:house,type:'home',label:ownsHome(house.id)?'E - Mein Haus':'E - Haus ansehen ('+house.price+' Münzen)'});
     if(!vehicles.driving)for(const booth of Island.booths)candidates.push({target:booth,type:'phone',label:'E · Auto anrufen'});
@@ -833,6 +835,7 @@
     if(interior?.lobby){const a=lobbyAction();if(a?.type==='unit'){currentHome=a.target;setMode('home');}else if(a?.type==='exit')leaveHome();return;}
     if(interior){if(contextAction()?.type==='service'){if(interior.id==='clothes')setMode('clothes');else setMode('service');}else if(nearBed())sleepInBed();else leaveHome();return;}
     const action=contextAction();if(!action)return;
+    if(action.type==='bus-plan'){openBusMap(action.target.stop);return;}
     if(action.type==='venue'){enterVenue(action.target);return;}
     if(action.type==='home'){currentHome=action.target;setMode('home');return;}
     if(action.type==='phone'){currentBooth=action.target;sound.effect('phone');setMode('garage');return;}
@@ -939,6 +942,29 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     c.save();c.translate(...p(mauz.x,mauz.y));c.rotate(mauz.heading);c.fillStyle='#f7fcff';c.strokeStyle='#225e8a';c.lineWidth=2;c.beginPath();c.moveTo(8,0);c.lineTo(-5,-5);c.lineTo(-3,0);c.lineTo(-5,5);c.closePath();c.fill();c.stroke();c.restore();
     c.fillStyle='#f9fbef';c.fillRect(78,3,24,16);c.fillStyle='#42634c';c.font='bold 11px Segoe UI';c.textAlign='center';c.fillText('N',90,15);c.restore();
   }
+  function openBusMap(stop){
+    busMapStop=stop;busMapLine='all';busMapUpdated=-Infinity;
+    mapView.x=380;mapView.y=60;mapView.zoom=1.65;
+    const select=document.querySelector('#bus-map-line');select.replaceChildren();
+    for(const line of [{id:'all',name:'Alle Linien'},...Island.busLines]){const option=document.createElement('option');option.value=line.id;option.textContent=(line.id==='all'?'':'Linie '+line.id+' - ')+line.name;select.append(option);}
+    select.value='all';setMode('map');
+  }
+  function drawBusNetwork(c,p){
+    c.save();c.lineJoin='round';c.lineCap='round';
+    for(const line of Island.busLines){
+      const selected=busMapLine==='all'||busMapLine===line.id;
+      c.globalAlpha=selected?.9:.12;c.strokeStyle=line.color;c.lineWidth=selected?3:1;
+      c.beginPath();line.route.forEach((q,i)=>i?c.lineTo(...p(q.x,q.y)):c.moveTo(...p(q.x,q.y)));c.closePath();c.stroke();
+    }
+    c.globalAlpha=1;drawBusStops(c,p);
+    for(const b of life.buses){
+      const selected=busMapLine==='all'||busMapLine===b.line,[x,y]=p(b.x,b.y);c.globalAlpha=selected?1:.3;
+      c.save();c.translate(x,y);c.rotate(b.heading);c.fillStyle=b.color;c.strokeStyle='#fffdf0';c.lineWidth=2;c.beginPath();c.moveTo(12,0);c.lineTo(3,-7);c.lineTo(-9,-7);c.lineTo(-9,7);c.lineTo(3,7);c.closePath();c.fill();c.stroke();c.restore();
+      c.fillStyle='#243e35';c.font='bold 10px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(b.line,x,y);
+    }
+    c.restore();
+    document.querySelector('#bus-map-status').textContent=life.buses.filter(b=>busMapLine==='all'||b.line===busMapLine).map(b=>'Linie '+b.line+' - '+(b.wait>0?'Halt: '+b.stop:'Unterwegs nach '+b.nextStop)).join('\n');
+  }
   function drawMap(){
     const map=document.querySelector('#map-canvas'),c=map.getContext('2d'),factor=273/Island.border*mapView.zoom;
     const p=(x,y)=>[300+(x-mapView.x)*factor,300+(y-mapView.y)*factor];
@@ -951,13 +977,15 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     const pond=Island.pond;c.fillStyle='#82b9c1';c.beginPath();c.ellipse(...p(pond.x,pond.y),pond.rx*factor,pond.ry*factor,0,0,Math.PI*2);c.fill();
     c.font='600 15px Segoe UI';c.textAlign='center';c.fillStyle='#344c40';
     for(const [label,x,y] of [['PERLENINSEL',900,-205],['FLUGPLATZ',210,300],['WELTGRENZE',0,-1230],['STADT',0,-117],['DORF',0,113],['GROSSER BERG',m.x,m.y+48],['See',pond.x,pond.y+22]])c.fillText(label,...p(x,y));
+    if(!busMapStop){
     for(const [i,j] of [Island.depot,...Island.jobs].entries()){c.fillStyle='#927db2';c.beginPath();c.arc(...p(j.x,j.y),5,0,Math.PI*2);c.fill();c.font='bold 10px Segoe UI';c.fillStyle='#493757';const q=p(j.x,j.y);c.fillText(String(i+1),q[0]-7,q[1]-6);}
     c.fillStyle='#238e84';for(const b of Island.booths){const q=p(b.x,b.y);c.fillRect(q[0]-3,q[1]-3,6,6);if(b.kind&&mapView.zoom>=2){c.font='10px Segoe UI';c.fillText(b.name,q[0],q[1]-7);}}
     c.font='600 12px Segoe UI';c.fillStyle='#344c40';for(const [label,x,y] of [['FARM',-150,-28],['WERKSTATT',160,-35],['HAFEN',0,202],['NORDSTADT',0,-390],['OBSTGARTEN',-350,-50],['OSTVIERTEL',300,70],['SÜDVIERTEL',0,385]])c.fillText(label,...p(x,y));
     for(const h of Island.homes.filter(h=>h.id===h.buildingId)){const q=p(h.x,h.y);c.fillStyle=ownsHome(h.id)?'#4f895d':'#c79c41';c.fillRect(q[0]-4,q[1]-3,8,7);c.beginPath();c.moveTo(q[0]-6,q[1]-3);c.lineTo(q[0],q[1]-9);c.lineTo(q[0]+6,q[1]-3);c.fill();}
     for(const v of Island.venues){const q=p(v.x,v.y);c.fillStyle='#c75a9a';c.fillRect(q[0]-4,q[1]-4,8,8);if(mapView.zoom>=2){c.font='10px Segoe UI';c.fillText(v.name,q[0],q[1]-8);}}
+    }
     drawRoute(c,p);
-    drawBusStops(c,p);
+    if(busMapStop)drawBusNetwork(c,p);else drawBusStops(c,p);
     const t=navigationTarget();c.fillStyle='#e8a44f';c.beginPath();c.arc(...p(t.x,t.y),6,0,Math.PI*2);c.fill();
     c.fillStyle='#2476a5';c.beginPath();c.arc(...p(mauz.x,mauz.y),5,0,Math.PI*2);c.fill();
     c.strokeStyle='#2476a5';c.lineWidth=3;c.beginPath();c.moveTo(...p(mauz.x,mauz.y));c.lineTo(...p(mauz.x+Math.cos(mauz.heading)*7,mauz.y+Math.sin(mauz.heading)*7));c.stroke();
@@ -1054,9 +1082,13 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     if(next==='map'&&interior)return;
     if(next==='playing'&&onlineMode&&network.status!=='online')next='pause';
     if(next!=='playing')dayCycle.save();
+    if(next!=='map')busMapStop=null;
     mode=next;miniUpdated=-Infinity;keys.clear();resetStick();destination=null;mauz.moving=false;
     startScreen.hidden=mode!=='start';pauseScreen.hidden=mode!=='pause';gameUI.hidden=mode!=='playing';
     document.querySelector('#map-screen').hidden=mode!=='map';
+    document.querySelector('#bus-map-panel').hidden=!busMapStop;
+    document.querySelector('#map-title').textContent=busMapStop?'Live-Busplan - '+busMapStop.name:'Deine Welt';
+    document.querySelector('#map-legend').hidden=!!busMapStop;
     document.querySelector('#garage-screen').hidden=mode!=='garage';
     document.querySelector('#home-screen').hidden=mode!=='home';
     document.querySelector('#clothes-screen').hidden=mode!=='clothes';
@@ -1080,6 +1112,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   });
   document.querySelector('#mini-open').onclick=()=>{if(!interior)setMode('map');};
   document.querySelector('#map-open').onclick=()=>setMode('map');
+  document.querySelector('#bus-map-line').onchange=e=>{busMapLine=e.target.value;const route=Island.busLines.find(l=>l.id===busMapLine)?.route;if(route){const xs=route.map(p=>p.x),ys=route.map(p=>p.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);mapView.x=(minX+maxX)/2;mapView.y=(minY+maxY)/2;mapView.zoom=Math.min(8,500/Math.max(maxX-minX,maxY-minY,30)/(273/Island.border));}else{mapView.x=380;mapView.y=60;mapView.zoom=1.65;}drawMap();};
   document.querySelector('#map-close').onclick=()=>setMode('playing');
   function cancelSleep(){if(sleeping?.online){network.sleep(false);sleeping=null;document.querySelector('#sleep-screen').hidden=true;setMode('playing');}}
   document.querySelector('#sleep-cancel').onclick=cancelSleep;
@@ -1107,7 +1140,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
       const buttons=[...document.querySelectorAll('[data-car]:not([hidden])'),document.querySelector('#garage-close')];
       const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;
     }
-    if((mode==='map'||mode==='home')&&key==='tab'){const ids=mode==='map'?['map-close','map-minus','map-plus','map-locate','map-reset']:['home-unit','home-lobby','home-buy','home-enter','home-set','home-close'];const buttons=ids.map(id=>document.getElementById(id)).filter(b=>!b.hidden&&!b.disabled);const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;}
+    if((mode==='map'||mode==='home')&&key==='tab'){const ids=mode==='map'?['map-close','bus-map-line','map-minus','map-plus','map-locate','map-reset']:['home-unit','home-lobby','home-buy','home-enter','home-set','home-close'];const buttons=ids.map(id=>document.getElementById(id)).filter(b=>!b.hidden&&!b.disabled&&(b.id!=='bus-map-line'||busMapStop));const i=buttons.indexOf(document.activeElement);e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();return;}
     if(key==='escape'&&!e.repeat&&mode!=='start'){e.preventDefault();setMode(mode==='playing'?'pause':'playing');return;}
     if(mode!=='playing'){
       if(key==='tab'&&mode==='pause'){
@@ -1189,8 +1222,8 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({busRide,buses:life.buses,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({busMap:!!busMapStop,busMapLine,busRide,buses:life.buses,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
   let lastPaint=0;
-  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{buses:life.buses,listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);if(mode==='map'&&busMapStop){if(!onlineMode){let remaining=Math.min(elapsed,1);while(remaining>0){const part=Math.min(remaining,.05);life.tick(part,mauz,vehicles.car);remaining-=part;}}if(now-busMapUpdated>200){drawMap();busMapUpdated=now;}}sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{buses:life.buses,listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||mode!=='map'&&now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();
