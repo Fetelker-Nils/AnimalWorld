@@ -1,7 +1,7 @@
 // Cached world geometry: every face has world-space vertices, never billboard sprites.
 const sceneryTemplates=new Map();
 function sceneryMesh(kind,item,ground=0,options={}){
-  const detail=options.detail===false?4:7,key=kind+':'+detail+':'+(item.color||'')+':'+!!options.lit;
+  const detail=options.detail===false?4:7,key=kind+':'+detail+':'+(item.color||'')+':'+!!options.lit+':'+(item.colors||[]).join(',');
   let template=sceneryTemplates.get(key);
   if(!template){
     template=[];
@@ -27,6 +27,8 @@ function sceneryMesh(kind,item,ground=0,options={}){
       cuboid(0,0,0,.12,.12,3,'#547269');cuboid(0,0,2.6,.7,.18,.7,'#f0d477');
       cuboid(-.17,-.11,2.75,.07,.04,.4,'#42755e');cuboid(.17,-.11,2.75,.07,.04,.4,'#42755e');cuboid(0,-.11,2.92,.35,.04,.07,'#42755e');
       for(const x of [-1.5,1.5])cuboid(x,2,0,.12,.12,2.7,'#547269');cuboid(0,2,2.7,3.5,2,.14,item.color||'#b6cec5');cuboid(0,2,.5,2.8,.65,.15,'#ba9163');cuboid(0,2.4,.65,2.8,.12,.5,'#ba9163');cuboid(-1.4,2,1.2,.1,1.1,1,'#f1efdc');for(let i=0;i<5;i++)cuboid(-1.46,2,1.32+i*.14,.02,.8,.035,'#698b81');
+      for(const x of [-1,1])cuboid(x,2,0,.12,.55,.5,'#547269');
+      (item.colors||[]).forEach((color,i)=>cuboid(-.3+i*.6/item.colors.length,-.12,2.62,.6/item.colors.length,.04,.08,color));
     }else if(kind==='bench'){
       for(const x of [-.8,.8])cuboid(x,0,0,.15,.6,.55,'#536f69');
       for(const y of [-.25,0,.25])cuboid(0,y,.55,2.2,.2,.12,'#bd9365');

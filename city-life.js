@@ -2,7 +2,7 @@ function createCityLife(world, models){
   models=models.filter(m=>!m.kind);
   const cars=[],walkers=[];
   const lines=world.busLines||((world.busRoute||[]).length?[{id:'1',color:'#e0b657',route:world.busRoute,starts:[0,6]}]:[]);
-  const buses=lines.flatMap(line=>line.starts.map((i,n)=>({id:line.id==='1'?'bus-'+n:'bus-'+line.id+'-'+n,x:line.route[i].x,y:line.route[i].y,heading:Math.atan2(line.route[i].y-line.route[(i+line.route.length-1)%line.route.length].y,line.route[i].x-line.route[(i+line.route.length-1)%line.route.length].x),target:(i+1)%line.route.length,speed:0,wait:14,doors:0,stop:line.route[i].name,line:line.id,color:line.color,departure:0,nextStop:line.route.slice(i+1).find(p=>p.name)?.name||line.route.find(p=>p.name).name})));
+  const buses=lines.flatMap(line=>line.starts.map((i,n)=>({id:line.id==='1'?'bus-'+n:'bus-'+line.id+'-'+n,x:line.route[i].x,y:line.route[i].y,heading:Math.atan2(line.route[i].y-line.route[(i+line.route.length-1)%line.route.length].y,line.route[i].x-line.route[(i+line.route.length-1)%line.route.length].x),target:(i+1)%line.route.length,speed:0,wait:14,doors:0,stop:line.route[i].name,stopId:line.route[i].stopId,line:line.id,color:line.color,departure:0,nextStop:line.route.slice(i+1).find(p=>p.name)?.name||line.route.find(p=>p.name).name})));
   function aheadBlocked(vehicle,others,distance){return others.some(p=>{if(p===vehicle||p.id===vehicle.id||p.busId===vehicle.id)return false;const dx=p.x-vehicle.x,dy=p.y-vehicle.y,forward=dx*Math.cos(vehicle.heading)+dy*Math.sin(vehicle.heading),side=-dx*Math.sin(vehicle.heading)+dy*Math.cos(vehicle.heading);return forward>0&&forward<distance&&Math.abs(side)<(p.vehicle||p.model||p.line?2.65:1.6);});}
   function tickBuses(dt,hazards){
     for(const b of buses){
@@ -12,10 +12,10 @@ function createCityLife(world, models){
       const t=routePoints[b.target],dx=t.x-b.x,dy=t.y-b.y,d=Math.hypot(dx,dy),heading=Math.atan2(dy,dx);
       const turn=Math.atan2(Math.sin(heading-b.heading),Math.cos(heading-b.heading));
       if(Math.abs(turn)>.02){b.heading+=Math.sign(turn)*Math.min(Math.abs(turn),dt*1.3);b.speed=0;continue;}
-      const blocked=aheadBlocked(b,hazards,7+b.speed*.5);
+      const blocked=aheadBlocked(b,hazards,10.5+b.speed*.5);
       const desired=blocked?0:Math.min(13,Math.sqrt(4*d));b.speed=Math.max(0,Math.min(desired,b.speed+dt*2));
       const move=Math.min(d,b.speed*dt);if(d>.001){b.x+=dx/d*move;b.y+=dy/d*move;b.heading=heading;}
-      if(d<.07||move===d){b.x=t.x;b.y=t.y;b.target=(b.target+1)%routePoints.length;b.speed=0;if(t.name){b.wait=14;b.stop=t.name;b.departure++;}b.nextStop=Array.from({length:routePoints.length},(_,i)=>routePoints[(b.target+i)%routePoints.length]).find(p=>p.name).name;}
+      if(d<.07||move===d){b.x=t.x;b.y=t.y;b.target=(b.target+1)%routePoints.length;b.speed=0;if(t.name){b.wait=14;b.stop=t.name;b.stopId=t.stopId;b.departure++;}b.nextStop=Array.from({length:routePoints.length},(_,i)=>routePoints[(b.target+i)%routePoints.length]).find(p=>p.name).name;}
     }
   }
 

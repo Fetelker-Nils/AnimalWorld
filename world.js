@@ -125,7 +125,50 @@ const Island = (() => {
     {id:'6',name:'Hafen - Suedstrand',color:'#649caf',starts:[0],route:[{x:-1.8,y:205,name:'Hafen Sued'},{x:-1.8,y:340,name:'Suedviertel'},{x:-1.8,y:480,name:'Suedstrand'},{x:1.8,y:480},{x:1.8,y:340,name:'Suedviertel'},{x:1.8,y:205,name:'Hafen Sued'},{x:1.8,y:195},{x:-1.8,y:195}]},
     {id:'7',name:'Perlenbruecke',color:'#cf789c',starts:[0],route:[{x:480,y:15.8,name:'Osthafen Bruecke'},{x:700,y:15.8,name:'Perlenhafen Bruecke'},{x:720,y:15.8},{x:720,y:12.2},{x:700,y:12.2,name:'Perlenhafen Bruecke'},{x:480,y:12.2,name:'Osthafen Bruecke'},{x:460,y:12.2},{x:460,y:15.8}]}
   ];
-  const busStops=busLines.flatMap(line=>line.route.flatMap((p,i)=>{if(!p.name)return [];const prev=line.route[(i+line.route.length-1)%line.route.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x);return [{id:'stop-'+line.id+'-'+i,line:line.id,color:line.color,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y}];}));
+  // Shared platforms are real route waypoints, grouped by position and travel direction.
+  function addStop(lineId,stop){
+    const line=busLines.find(l=>l.id===lineId),route=line.route,starts=line.starts.map(i=>route[i]);
+    const existing=route.find(p=>p.x===stop.x&&p.y===stop.y);
+    if(existing)Object.assign(existing,stop);
+    else{
+      const i=route.findIndex((a,i)=>{const b=route[(i+1)%route.length],dx=b.x-a.x,dy=b.y-a.y;return Math.abs((stop.x-a.x)*dy-(stop.y-a.y)*dx)<.001&&(stop.x-a.x)*(stop.x-b.x)+(stop.y-a.y)*(stop.y-b.y)<0;});
+      if(i<0)throw Error('Haltestelle liegt nicht auf Linie '+lineId);
+      route.splice(i+1,0,stop);
+    }
+    line.starts=starts.map(p=>route.indexOf(p));
+  }
+  const southLine=busLines.find(l=>l.id==='6');southLine.route.splice(-2,2,{x:1.8,y:25},{x:-1.8,y:25});
+  const pearlAirport=busLines.find(l=>l.id==='4');pearlAirport.route.splice(-2,2,{x:731.8,y:25},{x:728.2,y:25});
+  const bridgeLine=busLines.find(l=>l.id==='7');bridgeLine.route.splice(2,2,{x:728.2,y:15.8},{x:728.2,y:55},{x:731.8,y:55},{x:731.8,y:12.2});
+  delete busLines.find(l=>l.id==='2').route.find(p=>p.x===535&&p.y===12.2).name;
+  for(const [ids,x,y,name] of [
+    [['2','5'],-150,12.2,'Farm'],[['2','5'],80,12.2,'Stadteingang'],[['2','5'],160,12.2,'Werkstatt'],
+    [['1','6'],-1.8,40,'Dorfkreuzung'],[['1','6'],1.8,40,'Dorfkreuzung'],
+    [['1','6'],-1.8,150,'Hafenstrasse'],[['1','6'],1.8,150,'Hafenstrasse'],[['1','5'],80,166.8,'Hafen Ost'],
+    [['2','7'],520,15.8,'Osthafen'],[['2','7'],520,12.2,'Osthafen'],
+    [['3','4','7'],728.2,40,'Perlenhafen Mitte'],[['4','7'],731.8,40,'Perlenhafen Mitte']
+  ])for(const id of ids)addStop(id,{x,y,name});
+  const harbourLine=busLines.find(l=>l.id==='2');harbourLine.starts[1]=harbourLine.route.findIndex(p=>p.x===520&&p.y===12.2);
+  // Lines crossing the east-west road visit the existing village interchange.
+  for(const id of ['2','5']){
+    const line=busLines.find(l=>l.id===id),starts=line.starts.map(i=>line.route[i]);
+    for(let i=line.route.length-1;i>=0;i--){
+      const a=line.route[i],b=line.route[(i+1)%line.route.length];
+      if(a.y!==b.y||![12.2,15.8].includes(a.y)||!((a.x<-1.8&&b.x>1.8)||(a.x>1.8&&b.x<-1.8)))continue;
+      line.route.splice(i+1,0,{x:-1.8,y:a.y},{x:-1.8,y:40,name:'Dorfkreuzung'},
+        {x:-1.8,y:53},{x:1.8,y:53},{x:1.8,y:40,name:'Dorfkreuzung'},{x:1.8,y:a.y});
+    }
+    line.starts=starts.map(p=>line.route.indexOf(p));
+  }
+  const platforms=new Map();
+  for(const line of busLines)for(const [i,p] of line.route.entries()){
+    if(!p.name)continue;
+    const prev=line.route[(i+line.route.length-1)%line.route.length],heading=Math.atan2(p.y-prev.y,p.x-prev.x),key=p.x+':'+p.y+':'+heading.toFixed(3);
+    if(!platforms.has(key))platforms.set(key,{id:'stop-'+key,line:line.id,lines:[],colors:[],color:line.color,name:p.name,heading,x:p.x-Math.sin(heading)*4,y:p.y+Math.cos(heading)*4,roadX:p.x,roadY:p.y});
+    const stop=platforms.get(key);if(!stop.lines.includes(line.id)){stop.lines.push(line.id);stop.colors.push(line.color);}p.stopId=stop.id;
+  }
+  const busStops=[...platforms.values()];
+
 
   const booths=[
     {x:10,y:-5,sx:10,sy:1,name:'Startplatz'},
