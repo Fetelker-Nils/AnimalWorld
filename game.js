@@ -219,13 +219,13 @@
   function busWalkable(x,y){
     for(const b of transit()){const p=busLocal(b,x,y),old=busLocal(b,mauz.x,mauz.y),inside=Math.abs(p.f)<4.7&&Math.abs(p.s)<1.85;
       if(busRide?.id===b.id){
-        if(Math.abs(p.f)>4.15)return false;
+        if(p.f>(b.kind==='train'?3.15:4.15)||p.f< -4.15)return false;
         if(Math.abs(p.s)>.5&&[-3,-1,1].some(f=>Math.abs(p.f-f)<.6))return false;
         if(Math.abs(p.s)>1.3&&!(b.doors>.9&&p.s>0&&p.f>1.7&&p.f<3.6))return false;
       }else if(inside&&!(b.doors>.9&&p.s>0&&p.f>1.7&&p.f<3.6&&old.s>0))return false;
     }return true;
   }
-  function railPlatformHeight(x,y){return Island.railStations.some(s=>{const p=busLocal(s,x,y);return Math.abs(p.f)<30&&Math.abs(p.s)<4.5;})?.3:0;}
+  function railPlatformHeight(x,y){return Island.railStations.some(s=>{const p=busLocal(s,x,y);return Math.abs(p.f)<40&&Math.abs(p.s)<4.5;})?.3:0;}
   function busRamp(x,y){for(const b of transit()){const p=busLocal(b,x,y);if(busRide?.id===b.id&&Math.abs(p.s)<1.4)return .45*(b.scaleZ||1);if(b.doors>.9&&p.f>1.7&&p.f<3.6&&p.s>0&&p.s<2.6)return Math.max(railPlatformHeight(x,y),.45*(b.scaleZ||1)*Math.max(0,Math.min(1,(2.6-p.s)/1.2)));}return railPlatformHeight(x,y);}
   function updateBusRide(){
     if(interior||vehicles.driving||network.rideOwner){busRide=null;mauz.busId=null;return;}
@@ -548,15 +548,80 @@
       transportFrame.mesh.push({points:p.map(q=>[...q,.8]),color:'#44545a'});for(let i=0;i<4;i++)transportFrame.mesh.push({points:[[...p[i],.5],[...p[(i+1)%4],.5],[...p[(i+1)%4],.8],[...p[i],.8]],color:'#34454a'});
     }
     for(const station of Island.railStations){if(Math.hypot(station.x-camera.x,station.y-camera.y)>180)continue;
-      const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:60,d=vertical?60:9;
+      const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:80,d=vertical?80:9;
       railBox(station.x,station.y,w,d,0,.3,'#cec7b2');
       for(const f of [-22,0,22]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,.4,.4,.3,4,'#466b76');}
-      railBox(station.x,station.y,vertical?5:55,vertical?55:5,4.3,.25,'#617d85');
+      railBox(station.x,station.y,vertical?5:75,vertical?75:5,4.3,.25,'#617d85');
       for(const f of [-16,16]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,vertical?1:3,vertical?3:1,.3,.6,'#9f7854');}
       marker(station,station.line+' - '+station.name,'#3a738b');
     }
   }
+  function trainDrawing(b){
+    if(!transportFrame)return;
+    const mesh=[],v=(f,s,z)=>{const p=busPoint(b,{f,s});return [p.x,p.y,z*(b.scaleZ||1)];};
+    const face=(points,color,opacity)=>mesh.push({points:points.map(p=>v(...p)),color,...(opacity?{opacity}: {})});
+    const cube=(f,s,d,w,z,h,color)=>{const p=[[f-d/2,s-w/2],[f+d/2,s-w/2],[f+d/2,s+w/2],[f-d/2,s+w/2]];face(p.map(q=>[...q,z+h]),color);face(p.map(q=>[...q,z]),color);for(let i=0;i<4;i++)face([[...p[i],z],[...p[(i+1)%4],z],[...p[(i+1)%4],z+h],[...p[i],z+h]],color);};
+    const cab=b.coach===0,front=cab?3.35:4.45,paint=b.color||'#b65349';
+    cube(-.05,0,8.9,2.95,.12,.33,'#34434d');
+    cube(-.05,0,8.9,2.95,.45,.08,'#c8c6bc');
+    for(const side of [-1,1]){
+      // Continuous passenger windows and flush sliding doors, above a deep railway skirt.
+      cube(-1.1,side*1.5,6.7,.12,.4,.9,'#e8e9e4');
+      cube(-1.1,side*1.57,6.7,.035,.65,.32,paint);
+      cube(-.1,side*1.5,8.7,.12,2.65,.4,'#e8e9e4');
+      for(const f of [-4.42,-3.5,-2,-.5,1.1])cube(f,side*1.5,.12,.16,1.3,1.4,'#344b5b');
+      face([[-4.4,side*1.51,1.3],[1.5,side*1.51,1.3],[1.5,side*1.51,2.65],[-4.4,side*1.51,2.65]],'#75a9b8',.22);
+      if(side<0){cube(2.6,-1.5,2,.12,.45,.85,'#e8e9e4');face([[1.6,-1.51,1.3],[3.6,-1.51,1.3],[3.6,-1.51,2.65],[1.6,-1.51,2.65]],'#75a9b8',.22);}
+      else for(const half of [-1,1]){const f=2.6+half*(.5+b.doors*.95);cube(f,1.55,.98,.1,.45,.8,paint);cube(f,1.55,.98,.1,2.62,.15,paint);for(const edge of [-.46,.46])cube(f+edge,1.55,.055,.12,1.25,1.4,paint);face([[f-.43,1.56,1.25],[f+.43,1.56,1.25],[f+.43,1.56,2.62],[f-.43,1.56,2.62]],'#8eb5be',.22);}
+      for(const f of [-3,-1,1]){cube(f,side*.95,.85,.75,.45,.55,'#476e89');cube(f-.4,side*.95,.13,.78,1,.95,'#315269');cube(f,side*.55,.75,.07,1.05,.07,'#b6c1c3');}
+    }
+    // Faceted barrel roof, rather than the flat rectangular bus roof.
+    const roof=[[-1.55,2.95],[-1.35,3.2],[-.85,3.36],[.85,3.36],[1.35,3.2],[1.55,2.95]];
+    for(let i=0;i<roof.length-1;i++)face([[-4.5,...roof[i]],[front,...roof[i]],[front,...roof[i+1]],[-4.5,...roof[i+1]]],i%2?'#d1d8d9':'#eef0ec');
+    // Seal the curved roof at both ends of passenger carriages.
+    if(!cab){
+      for(const end of [-4.5,4.45])face(roof.map(([side,z])=>[end,side,z]),'#d2d9d7');
+      for(const side of [-1,1])cube(4.025,side*1.5,.95,.18,2.95,.25,'#e8e9e4');
+    }
+    // Seal the curved roof at both ends of passenger carriages.
+    if(!cab){
+      for(const end of [-4.5,4.45])face(roof.map(([side,z])=>[end,side,z]),'#d2d9d7');
+      for(const side of [-1,1])cube(4.025,side*1.5,.95,.18,2.95,.25,'#e8e9e4');
+    }
+    cube(-1,0,2.2,1.1,3.36,.2,'#667780');
+    // Enclosed end wall and rubber gangway between the coupled carriages.
+    cube(-4.48,0,.12,3,.45,2.65,'#d2d9d7');cube(-4.57,0,.18,1.15,.5,2.1,'#303b43');
+    for(let f=-4.58;f>-4.85;f-=.065)cube(f,0,.035,1.24,.5,2.15,'#52616a');
+    if(cab){
+      const a=[[3.35,-1.5,.45],[3.35,1.5,.45],[3.35,1.5,3.15],[3.35,-1.5,3.15]],tip=[[4.62,-1.05,.55],[4.62,1.05,.55],[4.62,1.05,1.55],[4.62,-1.05,1.55]];
+      for(let i=0;i<4;i++)face([a[i],tip[i],tip[(i+1)%4],a[(i+1)%4]],i===2?'#263e4c':'#e9ece7');
+      face(tip,paint);
+      face([[4.47,-.94,1.67],[4.47,.94,1.67],[3.48,1.3,3.05],[3.48,-1.3,3.05]],'#6094a6',.45);
+      for(const side of [-1,1])cube(4.635,side*.76,.035,.35,.95,.2,'#fff2bd');
+      cube(4.67,0,.08,1.35,.58,.2,'#263944');
+      const p=busPoint(b,{f:3.4,s:-.7});mesh.push(...animalMesh({...p,heading:b.heading,species:'bear',seated:true},null,.45*b.scaleZ,time,.5));
+    }else{
+      // Close the side panels between the door/window section and the carriage end.
+      for(const side of [-1,1])cube(4.025,side*1.5,.95,.16,.45,2.65,'#e8e9e4');
+      cube(4.45,0,.12,3,.45,2.65,'#d2d9d7');cube(4.52,0,.12,1.2,.5,2.15,'#303b43');
+    }
+    // Two underfloor bogies with small inset steel wheels and axles.
+    for(const centre of [-2.9,2.9]){
+      cube(centre,0,1.3,2.15,.08,.25,'#273740');
+      for(const f of [centre-.4,centre+.4])for(const side of [-1,1]){
+        const rings=[side*.93,side*1.12].map(s=>Array.from({length:12},(_,i)=>[f+Math.cos(i*Math.PI/6)*.19,s,.23+Math.sin(i*Math.PI/6)*.19]));
+        for(const ring of rings)face(ring,'#71818b');for(let i=0;i<12;i++)face([rings[0][i],rings[0][(i+1)%12],rings[1][(i+1)%12],rings[1][i]],'#34444e');
+      }
+    }
+    for(const p of network.players.filter(p=>p.busId===b.id&&Number.isInteger(p.busSeat))){const q=busPoint(b,busSeatPoint(p.busSeat));mesh.push(...animalMesh({...p,...q,heading:b.heading,seated:true,moving:false},null,.45*b.scaleZ,time,.5));}
+    cube(3.25,0,.14,1.55,1.9,.48,'#182f32');
+    transportFrame.mesh.push(...mesh);
+    const text='ZUG '+b.line+' | '+(b.wait>0?(b.terminal?'ENDSTATION':'HALT'):'NAECHSTER HALT'),station=b.wait>0?b.stop:b.nextStop,key=text+station;
+    let sign=busSigns.get(b.id+'-train');if(!sign||sign.text!==key){const surface=sign?.surface||document.createElement('canvas');surface.width=1024;surface.height=224;const c=surface.getContext('2d');c.fillStyle='#182f32';c.fillRect(0,0,1024,224);c.textAlign='center';c.fillStyle='#a9d2c9';c.font='bold 38px sans-serif';c.fillText(text,512,65,980);c.fillStyle='#ffe499';c.font='bold 60px sans-serif';c.fillText(station,512,162,980);sign={text:key,surface};busSigns.set(b.id+'-train',sign);}
+    transportFrame.labels.push({surface:sign.surface,points:[[3.17,-.73,1.92],[3.17,.73,1.92],[3.17,.73,2.35],[3.17,-.73,2.35]].map(p=>v(...p))});
+  }
   function busDrawing(b){
+    if(b.kind==='train')return trainDrawing(b);
     const parts=[],add=(f,s,w,d,z,h,color)=>{parts.push({f,s,w,d,z,h,color});};
     add(0,0,3.2,9,.12,.33,'#456f73');
     for(const side of [-1,1]){

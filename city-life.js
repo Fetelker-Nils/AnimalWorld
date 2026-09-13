@@ -38,13 +38,13 @@ function createCityLife(world, models){
     const point=path.points[start],stops=path.points.filter(p=>p.name),index=stops.indexOf(point);
     return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:24,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
   }));
-  const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',line:t.path.id,color:t.path.color,scaleF:1.6,scaleS:1.2,scaleZ:1.15})));
-  function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*16),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}
+  const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',line:t.path.id,color:t.path.color,scaleF:2.1,scaleS:1.35,scaleZ:1.35})));
+  function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*21),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}
   syncTrains();
   function tickTrains(dt,people){
     for(const t of railServices){
       if(t.wait>0){
-        const blocked=people.some(p=>{const b=trains.find(b=>b.service===t.id&&b.id===p.busId);if(!b)return false;const dx=p.x-b.x,dy=p.y-b.y,f=(dx*Math.cos(b.heading)+dy*Math.sin(b.heading))/1.6,s=(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading))/1.2;return f>1.7&&f<3.6&&s>.9&&s<2.8;});
+        const blocked=people.some(p=>{const b=trains.find(b=>b.service===t.id&&b.id===p.busId);if(!b)return false;const dx=p.x-b.x,dy=p.y-b.y,f=(dx*Math.cos(b.heading)+dy*Math.sin(b.heading))/b.scaleF,s=(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading))/b.scaleS;return f>1.7&&f<3.6&&s>.9&&s<2.8;});
         if(blocked&&t.wait<2)t.wait=2;t.speed=0;t.wait=Math.max(0,t.wait-dt);t.doors=Math.max(0,Math.min(1,t.doors+(t.wait>1?dt:-dt)*2));continue;
       }
       t.doors=Math.max(0,t.doors-dt*2);if(t.doors>0)continue;

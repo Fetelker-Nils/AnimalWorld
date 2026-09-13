@@ -45,7 +45,7 @@ const Island = (() => {
   const railStations=railLines.flatMap(l=>l.route.flatMap((p,i)=>{
     if(!p.name)return [];const a=l.route[(i+l.route.length-1)%l.route.length],heading=Math.atan2(p.y-a.y,p.x-a.x);
     p.stopId='rail-'+l.id+'-'+i;
-    return [{id:p.stopId,line:l.id,name:p.name,heading,x:p.x-Math.cos(heading)*16-Math.sin(heading)*7,y:p.y-Math.sin(heading)*16+Math.cos(heading)*7,trackX:p.x,trackY:p.y,color:l.color}];
+    return [{id:p.stopId,line:l.id,name:p.name,heading,x:p.x-Math.cos(heading)*21-Math.sin(heading)*7,y:p.y-Math.sin(heading)*21+Math.cos(heading)*7,trackX:p.x,trackY:p.y,color:l.color}];
   }));
   const railStructures=[{kind:'tunnel',x:-2800,y:-10,w:230,d:14},{kind:'tunnel',x:-2800,y:90,w:230,d:14},
     {kind:'bridge',x:-4200,y:-10,w:190,d:12},{kind:'bridge',x:-4200,y:90,w:190,d:12},
