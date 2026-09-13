@@ -182,23 +182,25 @@
     return {near(x,y,r){const result=[];for(let ix=Math.floor((x-r)/size);ix<=Math.floor((x+r)/size);ix++)for(let iy=Math.floor((y-r)/size);iy<=Math.floor((y+r)/size);iy++){const cell=cells.get(ix+','+iy);if(cell)result.push(...cell);}return result;}};
   }
   for(let i=0;i<220;i++){const x=Island.luxury.x+(random()-.5)*480,y=(random()-.5)*480;if(!Island.blocked(x,y)&&!Island.reserved(x,y))trees.push({x,y,size:1.4+random()*.8});}
+  for(let i=0;i<22000;i++){const x=Island.continent.x+(random()-.5)*5700,y=(random()-.5)*5700;if(!Island.inSea(x,y)&&!Island.blocked(x,y)&&!Island.reserved(x,y)){trees.push({x,y,size:1.3+random()*1.1});grass.push({x:x+2,y:y+2,size:2,color:random()});}}
   const treeIndex=spatialIndex(trees),grassIndex=spatialIndex(grass),lampIndex=spatialIndex(Island.lamps);
   trees.forEach((t,i)=>t.damageId=i);Island.lamps.forEach((l,i)=>l.damageId=i);
   const damage=createSceneryDamage(trees,Island.lamps);
   const life=createCityLife(Island,VehicleModels.filter(m=>!m.kind));
   let busRide=null;
+  const transit=()=>[...life.buses,...life.trains];
   function busVehicleCollision(x,y,heading,model){
     if(model.kind)return false;
-    return life.buses.some(b=>{
+    return transit().some(b=>{
       // Separating-axis test for two oriented rectangles, including bumpers.
       const axes=[heading,heading+Math.PI/2,b.heading,b.heading+Math.PI/2];
-      return axes.every(a=>{const project=(h,l,w)=>Math.abs(Math.cos(h-a))*l/2+Math.abs(Math.sin(h-a))*w/2;return Math.abs((x-b.x)*Math.cos(a)+(y-b.y)*Math.sin(a))<project(heading,model.length,model.width)+project(b.heading,9.2,3.4)+.12;});
+      return axes.every(a=>{const project=(h,l,w)=>Math.abs(Math.cos(h-a))*l/2+Math.abs(Math.sin(h-a))*w/2;return Math.abs((x-b.x)*Math.cos(a)+(y-b.y)*Math.sin(a))<project(heading,model.length,model.width)+project(b.heading,9.2*(b.scaleF||1),3.4*(b.scaleS||1))+.12;});
     });
   }
   let busAnnouncement='';
-  function announceBus(){const b=busRide&&life.buses.find(b=>b.id===busRide.id);if(!b){if(busAnnouncement)sound.cancelAnnouncement();busAnnouncement='';return;}const stopped=b.wait>0,key=b.id+':'+b.departure+':'+stopped;if(key!==busAnnouncement){busAnnouncement=key;sound.announce({line:b.line,stop:stopped?b.stop:b.nextStop,next:!stopped,terminal:stopped?b.terminal:b.nextTerminal});}}
-  function busLocal(b,x,y){const dx=x-b.x,dy=y-b.y;return {f:dx*Math.cos(b.heading)+dy*Math.sin(b.heading),s:-dx*Math.sin(b.heading)+dy*Math.cos(b.heading)};}
-  function busPoint(b,p){return {x:b.x+Math.cos(b.heading)*p.f-Math.sin(b.heading)*p.s,y:b.y+Math.sin(b.heading)*p.f+Math.cos(b.heading)*p.s};}
+  function announceBus(){const b=busRide&&transit().find(b=>b.id===busRide.id);if(!b){if(busAnnouncement)sound.cancelAnnouncement();busAnnouncement='';return;}const stopped=b.wait>0,key=b.id+':'+b.departure+':'+stopped;if(key!==busAnnouncement){busAnnouncement=key;sound.announce({line:b.line,stop:stopped?b.stop:b.nextStop,next:!stopped,terminal:stopped?b.terminal:b.nextTerminal});}}
+  function busLocal(b,x,y){const dx=x-b.x,dy=y-b.y;return {f:(dx*Math.cos(b.heading)+dy*Math.sin(b.heading))/(b.scaleF||1),s:(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading))/(b.scaleS||1)};}
+  function busPoint(b,p){p={f:p.f*(b.scaleF||1),s:p.s*(b.scaleS||1)};return {x:b.x+Math.cos(b.heading)*p.f-Math.sin(b.heading)*p.s,y:b.y+Math.sin(b.heading)*p.f+Math.cos(b.heading)*p.s};}
   const busSeatPoint=seat=>({f:-1-Math.floor(seat/2)*2+(seat>=4?6:0),s:seat%2?.95:-.95});
   function busSeatAction(){
     if(!busRide)return null;
@@ -210,12 +212,12 @@
   function setBusSeat(seat){
     if(!busRide)return;
     busRide.seat=seat;mauz.busSeat=seat;mauz.seated=Number.isInteger(seat);
-    if(mauz.seated){Object.assign(busRide,busSeatPoint(seat));mauz.heading=life.buses.find(b=>b.id===busRide.id).heading;}else busRide.s=0;
-    destination=null;mauz.moving=false;mauz.jump=.45;mauz.vz=0;carryBus();
+    if(mauz.seated){Object.assign(busRide,busSeatPoint(seat));mauz.heading=transit().find(b=>b.id===busRide.id).heading;}else busRide.s=0;
+    destination=null;mauz.moving=false;mauz.jump=.45*(transit().find(b=>b.id===busRide.id)?.scaleZ||1);mauz.vz=0;carryBus();
   }
-  function carryBus(){if(!busRide){mauz.seated=false;mauz.busSeat=null;return;}const b=life.buses.find(b=>b.id===busRide.id);if(!b){busRide=null;mauz.busId=null;return;}mauz.heading+=Math.atan2(Math.sin(b.heading-busRide.heading),Math.cos(b.heading-busRide.heading));busRide.heading=b.heading;Object.assign(mauz,busPoint(b,busRide));}
+  function carryBus(){if(!busRide){mauz.seated=false;mauz.busSeat=null;return;}const b=transit().find(b=>b.id===busRide.id);if(!b){busRide=null;mauz.busId=null;return;}mauz.heading+=Math.atan2(Math.sin(b.heading-busRide.heading),Math.cos(b.heading-busRide.heading));busRide.heading=b.heading;Object.assign(mauz,busPoint(b,busRide));}
   function busWalkable(x,y){
-    for(const b of life.buses){const p=busLocal(b,x,y),old=busLocal(b,mauz.x,mauz.y),inside=Math.abs(p.f)<4.7&&Math.abs(p.s)<1.85;
+    for(const b of transit()){const p=busLocal(b,x,y),old=busLocal(b,mauz.x,mauz.y),inside=Math.abs(p.f)<4.7&&Math.abs(p.s)<1.85;
       if(busRide?.id===b.id){
         if(Math.abs(p.f)>4.15)return false;
         if(Math.abs(p.s)>.5&&[-3,-1,1].some(f=>Math.abs(p.f-f)<.6))return false;
@@ -223,10 +225,11 @@
       }else if(inside&&!(b.doors>.9&&p.s>0&&p.f>1.7&&p.f<3.6&&old.s>0))return false;
     }return true;
   }
-  function busRamp(x,y){for(const b of life.buses){const p=busLocal(b,x,y);if(busRide?.id===b.id&&Math.abs(p.s)<1.4)return .45;if(b.doors>.9&&p.f>1.7&&p.f<3.6&&p.s>0&&p.s<2.6)return .45*Math.max(0,Math.min(1,(2.6-p.s)/1.2));}return 0;}
+  function railPlatformHeight(x,y){return Island.railStations.some(s=>{const p=busLocal(s,x,y);return Math.abs(p.f)<30&&Math.abs(p.s)<4.5;})?.3:0;}
+  function busRamp(x,y){for(const b of transit()){const p=busLocal(b,x,y);if(busRide?.id===b.id&&Math.abs(p.s)<1.4)return .45*(b.scaleZ||1);if(b.doors>.9&&p.f>1.7&&p.f<3.6&&p.s>0&&p.s<2.6)return Math.max(railPlatformHeight(x,y),.45*(b.scaleZ||1)*Math.max(0,Math.min(1,(2.6-p.s)/1.2)));}return railPlatformHeight(x,y);}
   function updateBusRide(){
     if(interior||vehicles.driving||network.rideOwner){busRide=null;mauz.busId=null;return;}
-    for(const b of life.buses){const p=busLocal(b,mauz.x,mauz.y);
+    for(const b of transit()){const p=busLocal(b,mauz.x,mauz.y);
       if(busRide?.id===b.id){if(b.doors>.9&&p.s>2){busRide=null;mauz.busId=null;}else Object.assign(busRide,p);return;}
       if(b.doors>.9&&p.f>1.7&&p.f<3.6&&p.s>0&&p.s<1.5){busRide={id:b.id,heading:b.heading,...p};mauz.busId=b.id;return;}
     }
@@ -270,13 +273,17 @@
     return treeIndex.near(x,y,radius+5).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(t.x-x,t.y-y)<radius+t.size&&z<Island.heightAt(t.x,t.y)+t.size*3.8)||lampIndex.near(x,y,radius+1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<radius+.2&&z<4.9);
   }
   function vehicleWalkable(x,y){if(Island.inSea(x,y))return false;return walkable(x,y)&&!life.cars.some(c=>{const dx=x-c.x,dy=y-c.y;return Math.abs(dx*Math.cos(c.heading)+dy*Math.sin(c.heading))<c.model.length/2+.2&&Math.abs(-dx*Math.sin(c.heading)+dy*Math.cos(c.heading))<c.model.width/2+.2;});}
+  const railFurniture=Island.railStations.flatMap(s=>[-22,0,22,-16,16].map(f=>{
+    const bench=Math.abs(f)===16,vertical=Math.abs(Math.sin(s.heading))>.5;
+    return {x:s.x+Math.cos(s.heading)*f,y:s.y+Math.sin(s.heading)*f,w:bench?(vertical?1:3):.4,d:bench?(vertical?3:1):.4,h:bench?.9:4.3};
+  }));
   function jumpObjects(x,y){
     if(interior)return interior.lobby?[]:indoorFurniture();
-    return detailIndex.near(x,y,3).flatMap(p=>{
+    return [...railFurniture.filter(p=>Math.hypot(p.x-x,p.y-y)<4),...detailIndex.near(x,y,3).flatMap(p=>{
       const parts=p.kind==='bench'?[{x:0,y:0,w:2.2,d:.7,h:.67},{x:0,y:.35,w:2.2,d:.12,h:1.35}]:p.kind==='stall'?[{x:0,y:0,w:2.5,d:1.4,h:1.2},{x:0,y:0,w:2.5,d:1.9,h:2.56}]:[{x:0,y:0,w:1.5,d:1,h:1.23}];
       const c=Math.cos(p.heading),sn=Math.sin(p.heading);
       return parts.map(b=>({...b,x:p.x+b.x*c-b.y*sn,y:p.y+b.x*sn+b.y*c,w:Math.abs(c)*b.w+Math.abs(sn)*b.d,d:Math.abs(sn)*b.w+Math.abs(c)*b.d}));
-    });
+    })];
   }
   function onObject(b,x,y){return Math.abs(x-b.x)<b.w/2+.2&&Math.abs(y-b.y)<b.d/2+.2;}
   function jumpSupport(x,y,height){return jumpObjects(x,y).reduce((top,b)=>onObject(b,x,y)&&b.h<=height+.04?Math.max(top,b.h):top,interior?0:busRamp(x,y));}
@@ -353,6 +360,8 @@
   function outdoorHit(a,b,padding=0){
     let hit=1;
     const test=box=>{const t=segmentBox(a,b,box,padding);if(t!==null)hit=Math.min(hit,t);};
+    for(const wall of Island.railWalls)test(wall);
+    for(const r of Island.railStructures)if(r.kind==='tunnel')test({...r,z:7.4,h:2});
     for(const building of Island.buildings)test({...building,h:building.h+(building.city?0:2.5)});
     for(const lamp of lampIndex.near((a.x+b.x)/2,(a.y+b.y)/2,Math.hypot(b.x-a.x,b.y-a.y)/2+1))if(!damage.get('lamp',lamp.damageId))test({...lamp,w:.2,d:.2,h:4.6});
     for(const booth of Island.booths)test({...booth,w:1.3,d:1.3,h:2.7});
@@ -511,18 +520,55 @@
     }
   }
   const busSigns=new Map();
+  function railBox(x,y,w,d,z,h,color){
+    if(!transportFrame)return;const p=[[x-w/2,y-d/2],[x+w/2,y-d/2],[x+w/2,y+d/2],[x-w/2,y+d/2]];
+    transportFrame.mesh.push({points:p.map(q=>[...q,z+h]),color},{points:p.map(q=>[...q,z]),color});
+    for(let i=0;i<4;i++)transportFrame.mesh.push({points:[[...p[i],z],[...p[(i+1)%4],z],[...p[(i+1)%4],z+h],[...p[i],z+h]],color});
+  }
+  function drawRailway(){
+    for(const line of Island.railLines)for(let i=0;i<line.route.length;i++){
+      const a=line.route[i],b=line.route[(i+1)%line.route.length],dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);if(!length)continue;
+      const t=Math.max(0,Math.min(length,((camera.x-a.x)*dx+(camera.y-a.y)*dy)/length));
+      if(Math.hypot(camera.x-a.x-dx*t/length,camera.y-a.y-dy*t/length)>190)continue;
+      const from=Math.max(0,t-190),to=Math.min(length,t+190),normal={x:-dy/length,y:dx/length};
+      const edge=(n,d,z)=>point(a.x+dx*d/length+normal.x*n,a.y+dy*d/length+normal.y*n,z);
+      polygon([edge(-2.6,from,.03),edge(2.6,from,.03),edge(2.6,to,.03),edge(-2.6,to,.03)],'#99998e');
+      for(let d=Math.ceil(from/2.5)*2.5;d<to;d+=2.5)polygon([edge(-2.1,d,.06),edge(2.1,d,.06),edge(2.1,d+.3,.06),edge(-2.1,d+.3,.06)],'#796b59');
+      for(const n of [-1,1])polygon([edge(n-.08,from,.12),edge(n+.08,from,.12),edge(n+.08,to,.12),edge(n-.08,to,.12)],'#d5dce0');
+    }
+    for(const r of Island.railStructures){if(Math.abs(r.x-camera.x)>r.w/2+180||Math.abs(r.y-camera.y)>180)continue;
+      if(r.kind==='bridge'){groundRect(r.x,r.y,r.w-8,75,'#68aebd');railBox(r.x,r.y,r.w,r.d,-.35,.4,'#a6aaa1');for(let x=r.x-r.w/2;x<r.x+r.w/2;x+=24)for(const side of [-1,1])railBox(x,r.y+side*5,.7,.7,.2,5,'#738d93');}
+      for(const side of [-1,1])railBox(r.x,r.y+side*(r.d/2-.3),r.w,.6,0,r.kind==='tunnel'?8:1.2,r.kind==='tunnel'?'#697775':'#83989c');
+      if(r.kind==='tunnel'){railBox(r.x,r.y,r.w,r.d,7.4,2,'#8b9785');for(const side of [-1,1])transportFrame.mesh.push({color:side>0?'#829774':'#92a57c',points:[[r.x-r.w/2,r.y+side*7,9.4],[r.x+r.w/2,r.y+side*7,9.4],[r.x+r.w/2,r.y+side*30,0],[r.x-r.w/2,r.y+side*30,0]]});}
+    }
+    for(const coach of life.trains.filter(t=>t.coach<2)){
+      const next=life.trains.find(t=>t.service===coach.service&&t.coach===coach.coach+1);if(!next||Math.hypot(coach.x-camera.x,coach.y-camera.y)>180)continue;
+      const a=busPoint(coach,{f:-4.5,s:0}),b=busPoint(next,{f:4.5,s:0}),d=Math.hypot(b.x-a.x,b.y-a.y)||1,nx=-(b.y-a.y)/d*.15,ny=(b.x-a.x)/d*.15;
+      const p=[[a.x+nx,a.y+ny],[b.x+nx,b.y+ny],[b.x-nx,b.y-ny],[a.x-nx,a.y-ny]];
+      transportFrame.mesh.push({points:p.map(q=>[...q,.8]),color:'#44545a'});for(let i=0;i<4;i++)transportFrame.mesh.push({points:[[...p[i],.5],[...p[(i+1)%4],.5],[...p[(i+1)%4],.8],[...p[i],.8]],color:'#34454a'});
+    }
+    for(const station of Island.railStations){if(Math.hypot(station.x-camera.x,station.y-camera.y)>180)continue;
+      const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:60,d=vertical?60:9;
+      railBox(station.x,station.y,w,d,0,.3,'#cec7b2');
+      for(const f of [-22,0,22]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,.4,.4,.3,4,'#466b76');}
+      railBox(station.x,station.y,vertical?5:55,vertical?55:5,4.3,.25,'#617d85');
+      for(const f of [-16,16]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,vertical?1:3,vertical?3:1,.3,.6,'#9f7854');}
+      marker(station,station.line+' - '+station.name,'#3a738b');
+    }
+  }
   function busDrawing(b){
     const parts=[],add=(f,s,w,d,z,h,color)=>{parts.push({f,s,w,d,z,h,color});};
     add(0,0,3.2,9,.12,.33,'#456f73');
     for(const side of [-1,1]){
       // Door on the right near the front; no solid panel across the opening.
       add(-1,side*1.55,.13,6,.45,.7,b.color||'#e0b657');add(4,side*1.55,.13,1,.45,2.5,b.color||'#e0b657');
-      if(side<0)add(2.6,-1.55,.12,2,.45,2.5,'#85bfc7');
+      if(side<0){if(b.kind!=='train')add(2.6,-1.55,.12,2,.45,2.5,'#85bfc7');else add(2.6,-1.55,.12,2,.45,.7,b.color);}
       else for(const half of [-1,1])add(2.6+half*(.5+b.doors*.9),1.62,.1,1,.45,2.5,'#85bfc7');
       for(const f of [-4,-2,0,1])add(f,side*1.55,.13,.13,1.15,1.75,'#456f73');
       for(const f of [-3,-1,1]){add(f,side*.95,.7,.9,.45,.55,'#bf7957');add(f-.4,side*.95,.7,.12,1,.75,'#d9a06b');}
 
     }
+    if(b.kind==='train'){add(0,0,1.5,2.5,3.13,.25,'#566c73');add(0,0,.14,1.6,3.38,.4,'#344c50');}
     // Framed rear window with a solid lower body and a tinted glass pane.
     add(-4.45,0,3.2,.15,.45,.7,b.color||'#e0b657');
     add(-4.45,0,3.2,.15,2.8,.15,'#456f73');
@@ -536,14 +582,16 @@
     for(const side of [-1,1]){add(4.5,side*1.1,.4,.1,.6,.25,'#fff0bd');add(-4.55,side*1.1,.3,.1,.6,.3,'#c96356');add(-1,side*1.57,.05,6,1.12,.1,'#f5ebcf');}
     const shade=(color,n)=>'#'+[1,3,5].map(i=>Math.min(255,Math.round(parseInt(color.slice(i,i+2),16)*n)).toString(16).padStart(2,'0')).join('');
     const mesh=[];for(const q of parts){const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([f,s])=>{const p=busPoint(b,{f:q.f+f*q.d/2,s:q.s+s*q.w/2});return [p.x,p.y];});for(let i=0;i<4;i++)mesh.push({points:[[...c[i],q.z],[...c[(i+1)%4],q.z],[...c[(i+1)%4],q.z+q.h],[...c[i],q.z+q.h]],color:shade(q.color,i%2?.88:.96)});mesh.push({points:c.map(p=>[...p,q.z+q.h]),color:shade(q.color,1.04)},{points:c.map(p=>[...p,q.z]),color:shade(q.color,.65)});}
-    for(const f of [-3,3])for(const side of [-1,1]){
-      const rings=[side*1.5,side*1.8].map(s=>Array.from({length:12},(_,i)=>{const a=i*Math.PI/6,p=busPoint(b,{f:f+Math.cos(a)*.48,s});return [p.x,p.y,.5+Math.sin(a)*.48];}));
-      for(const ring of rings)mesh.push({points:ring,color:'#354847'});
+    for(const f of (b.kind==='train'?[-3.4,-2.6,2.6,3.4]:[-3,3]))for(const side of [-1,1]){
+      const rings=[side*1.5,side*1.8].map(s=>Array.from({length:12},(_,i)=>{const a=i*Math.PI/6,p=busPoint(b,{f:f+Math.cos(a)*(b.kind==='train'?.3:.48),s});return [p.x,p.y,(b.kind==='train'?.34:.5)+Math.sin(a)*(b.kind==='train'?.3:.48)];}));
+      for(const ring of rings)mesh.push({points:ring,color:b.kind==='train'?'#78878e':'#354847'});
       for(let i=0;i<12;i++)mesh.push({points:[rings[0][i],rings[0][(i+1)%12],rings[1][(i+1)%12],rings[1][i]],color:i<6?'#455956':'#293b3a'});
-      mesh.push({points:Array.from({length:12},(_,i)=>{const a=i*Math.PI/6,p=busPoint(b,{f:f+Math.cos(a)*.22,s:side*1.81});return [p.x,p.y,.5+Math.sin(a)*.22];}),color:'#a2b5af'});
+      mesh.push({points:Array.from({length:12},(_,i)=>{const a=i*Math.PI/6,p=busPoint(b,{f:f+Math.cos(a)*(b.kind==='train'?.16:.22),s:side*1.81});return [p.x,p.y,(b.kind==='train'?.34:.5)+Math.sin(a)*(b.kind==='train'?.16:.22)];}),color:b.kind==='train'?'#b7c2c6':'#a2b5af'});
     }
     mesh.push({color:'#85bfc7',opacity:.18,points:[[-1.42,1.15],[1.42,1.15],[1.42,2.8],[-1.42,2.8]].map(([s,z])=>{const p=busPoint(b,{f:-4.45,s});return [p.x,p.y,z];})});
-    const driver=busPoint(b,{f:3.4,s:-.8});mesh.push(...animalMesh({...driver,heading:b.heading,species:'bear'},null,.45,time,.5));
+    if(b.kind==='train')mesh.push({color:'#85bfc7',opacity:.18,points:[[1.6,1.15],[3.6,1.15],[3.6,2.85],[1.6,2.85]].map(([f,z])=>{const p=busPoint(b,{f,s:-1.55});return [p.x,p.y,z];})});
+    if(b.kind==='train')for(const face of mesh)for(const p of face.points)p[2]*=b.scaleZ;
+    const driver=busPoint(b,{f:3.4,s:-.8});if(b.kind!=='train'||b.coach===0)mesh.push(...animalMesh({...driver,heading:b.heading,species:'bear'},null,.45*(b.scaleZ||1),time,.5));
     for(const peer of network.players.filter(p=>p.busId===b.id&&Number.isInteger(p.busSeat))){const position=busPoint(b,busSeatPoint(peer.busSeat));mesh.push(...animalMesh({...peer,...position,heading:b.heading,seated:true,moving:false},null,.45,time,.5));}
     for(const npc of life.commuters.filter(p=>p.busId===b.id))mesh.push(...animalMesh(npc,null,npc.z,time,.5));
     if(transportFrame){
@@ -554,8 +602,8 @@
         const c=surface.getContext('2d');c.fillStyle='#263f42';c.fillRect(0,0,512,96);c.fillStyle='#fff1bb';c.font='bold 40px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(text,256,48,490);
         sign={text,surface};busSigns.set(b.id,sign);
       }
-      transportFrame.labels.push({surface:sign.surface,points:[[1.3,2.4],[-1.3,2.4],[-1.3,2.8],[1.3,2.8]].map(([s,z])=>{const p=busPoint(b,{f:4.54,s});return [p.x,p.y,z];})});
-      const heading='LINIE '+b.line+'  |  '+(b.wait>0?(b.terminal?'ENDSTATION':'HALTESTELLE'):(b.nextTerminal?'NÄCHSTE: ENDSTATION':'NÄCHSTE HALTESTELLE'));
+      transportFrame.labels.push({surface:sign.surface,points:[[1.3,2.4],[-1.3,2.4],[-1.3,2.8],[1.3,2.8]].map(([s,z])=>{const p=busPoint(b,{f:4.54,s});return [p.x,p.y,z*(b.scaleZ||1)];})});
+      const heading=(b.kind==='train'?'ZUG ':'LINIE ')+b.line+'  |  '+(b.wait>0?(b.terminal?'ENDSTATION':'HALTESTELLE'):(b.nextTerminal?'NÄCHSTE: ENDSTATION':'NÄCHSTE HALTESTELLE'));
       const station=b.wait>0?b.stop:b.nextStop,key=heading+'|'+station;
       let inside=busSigns.get(b.id+'-inside');
       if(!inside||inside.text!==key){
@@ -563,7 +611,7 @@
         const c=surface.getContext('2d');c.fillStyle='#182f32';c.fillRect(0,0,1024,224);c.textAlign='center';c.textBaseline='middle';c.fillStyle='#9bccc5';c.font='bold 40px sans-serif';c.fillText(heading,512,54,980);c.fillStyle='#ffe499';c.font='bold 64px sans-serif';c.fillText(station,512,144,980);
         inside={text:key,surface};busSigns.set(b.id+'-inside',inside);
       }
-      transportFrame.labels.push({surface:inside.surface,points:[[-.8,1.87],[.8,1.87],[.8,2.31],[-.8,2.31]].map(([s,z])=>{const p=busPoint(b,{f:4.01,s});return [p.x,p.y,z];})});
+      transportFrame.labels.push({surface:inside.surface,points:[[-.8,1.87],[.8,1.87],[.8,2.31],[-.8,2.31]].map(([s,z])=>{const p=busPoint(b,{f:4.01,s});return [p.x,p.y,z*(b.scaleZ||1)];})});
       return;
     }
     drawMesh(mesh);
@@ -687,7 +735,7 @@
     renderedFrames++;
     if(interior){drawInterior();ctx.fillStyle=`rgba(20,26,57,${dayCycle.darkness*.16})`;ctx.fillRect(0,0,width,height);return;}
     resolveOutdoorCamera();
-    transportFrame=life.buses.some(b=>visible(b.x,b.y)||busRide?.id===b.id)||Island.busStops.some(b=>visible(b.x,b.y))?{mesh:[],occluders:[],labels:[]}:null;
+    transportFrame=transit().some(b=>visible(b.x,b.y)||busRide?.id===b.id)||Island.busStops.some(b=>visible(b.x,b.y))||Island.railLines.length?{mesh:[],occluders:[],labels:[]}:null;
     ctx.clearRect(0,0,width,height);const sky=ctx.createLinearGradient(0,0,0,height);
     sky.addColorStop(0,'#a3d5e8');sky.addColorStop(1,'#e5f1e9');ctx.fillStyle=sky;ctx.fillRect(0,0,width,height);
     const horizon=cy-scale*Math.tan(pitch);
@@ -695,17 +743,20 @@
     groundOval(0,0,Island.radius+5,Island.radius+5,'#b3dcd9');
     groundOval(0,0,Island.radius+1,Island.radius+1,'#e8dab0');
     groundOval(0,0,Island.radius-5,Island.radius-5,'#a7c875');
+    const land=Island.continent;groundOval(land.x,land.y,land.radius+1,land.radius+1,'#e8dab0');groundOval(land.x,land.y,land.radius-5,land.radius-5,'#a7c875');groundRect(-565,40,140,130,'#a7c875');
     const luxury=Island.luxury;groundOval(luxury.x,luxury.y,luxury.radius+1,luxury.radius+1,'#e8dab0');groundOval(luxury.x,luxury.y,luxury.radius-5,luxury.radius-5,'#a7c875');
     for(const dock of Island.docks){groundRect(dock.x,dock.y,dock.w,dock.d,'#b58d64');for(let x=dock.x-dock.w/2;x<dock.x+dock.w/2;x++)groundRect(x,dock.y,.05,dock.d,'#957453');}
     for(const a of Island.airfields){groundRect(a.x,a.y,a.w,a.d,'#728589');for(let y=a.y-a.d/2+4;y<a.y+a.d/2;y+=8)groundRect(a.x,y,.3,4,'#f0edda');}
     drawBorder();
+    drawRailway();
     groundRect(Island.bridge.x,Island.bridge.y,Island.bridge.w,Island.bridge.d,'#b9bca9');
-    for(const r of Island.roads)groundRect(r.x,r.y,r.w+1.3,r.d+1.3,'#d2cfba');
-    for(const r of Island.roads)groundRect(r.x,r.y,r.w,r.d,r.w===3||r.d===3?'#e1d0a8':'#85928f');
-    for(const r of Island.roads){
+    const nearbyRoads=Island.roads.filter(r=>Math.abs(r.x-camera.x)<r.w/2+200&&Math.abs(r.y-camera.y)<r.d/2+200);
+    for(const r of nearbyRoads)groundRect(r.x,r.y,r.w+1.3,r.d+1.3,'#d2cfba');
+    for(const r of nearbyRoads)groundRect(r.x,r.y,r.w,r.d,r.w===3||r.d===3?'#e1d0a8':'#85928f');
+    for(const r of nearbyRoads){
       if(r.w===3||r.d===3)continue;
       const vertical=r.d>r.w,length=vertical?r.d:r.w;
-      for(let n=-length/2+2;n<length/2;n+=6)groundRect(r.x+(vertical?0:n),r.y+(vertical?n:0),vertical?.13:2,vertical?2:.13,'#e5e5ce');
+      for(let n=Math.max(-length/2+2,Math.floor(((vertical?camera.y-r.y:camera.x-r.x)-180)/6)*6);n<Math.min(length/2,(vertical?camera.y-r.y:camera.x-r.x)+180);n+=6)groundRect(r.x+(vertical?0:n),r.y+(vertical?n:0),vertical?.13:2,vertical?2:.13,'#e5e5ce');
     }
     groundOval(0,0,5.5,5.5,'#e9ddbd');
     const bridge=Island.bridge;
@@ -725,7 +776,7 @@
     for(const g of grassIndex.near(camera.x,camera.y,70)){if(visible(g.x,g.y,20))scenery(g.color>.96?'flower':'grass',{x:g.x,y:g.y,size:1});}
     if(dayCycle.darkness>.05){ctx.save();ctx.globalAlpha=dayCycle.darkness*.28;for(const l of lampIndex.near(camera.x,camera.y,90))if(!damage.get('lamp',l.damageId)&&visible(l.x,l.y))groundOval(l.x,l.y,4,4,'#fff2ac');ctx.restore();}
     if(destination){const p=point(destination.x,destination.y);ctx.strokeStyle='#ffffffe0';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9,4.5,0,0,Math.PI*2);ctx.stroke();}
-    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>scenery('lamp',l)})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>scenery('ball',{...p,size:p.big?.8:.15})})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>scenery('ball',b)})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>scenery('stone',t)})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.push(...detailIndex.near(camera.x,camera.y,90).filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>scenery(p.kind,p)})));objects.push(...life.buses.filter(b=>visible(b.x,b.y)||busRide?.id===b.id).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>busDrawing(b)})));objects.push(...[...life.walkers,...life.commuters.filter(p=>!p.busId)].filter(p=>Math.hypot(p.x-mauz.x,p.y-mauz.y)<75&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>cat(p)})),...life.cars.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>carDrawing(p)})));objects.push(...network.players.filter(p=>onlineMode&&p.vehicle&&visible(p.vehicle.x,p.vehicle.y)).map(p=>({depth:-point(p.vehicle.x,p.vehicle.y).depth,draw:()=>{const model=VehicleModels.find(m=>m.id===p.vehicle.model);if(model)carDrawing({...p.vehicle,model,owner:p.id,parked:!p.car});}})));objects.push(...peers().filter(p=>!(p.busId&&Number.isInteger(p.busSeat))&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>remoteDrawing(p)})));objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
+    const objects=[...lampIndex.near(camera.x,camera.y,130).filter(l=>visible(l.x,l.y)).map(l=>({depth:-point(l.x,l.y).depth,draw:()=>scenery('lamp',l)})),...motes.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y,p.z).depth,draw:()=>scenery('ball',{...p,size:p.big?.8:.15})})),...mountain(),...activityObjects(),...Island.booths.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>boothDrawing(b)})),...(vehicles.car?[{depth:-point(vehicles.car.x,vehicles.car.y).depth,draw:()=>carDrawing(vehicles.car)}]:[]),...Island.buildings.filter(b=>buildingVisible(b)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>house(b)})),...balls.filter(b=>visible(b.x,b.y)).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>scenery('ball',b)})),...treeIndex.near(camera.x,camera.y,200).filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,t.size*4)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>tree(t)})),...stones.filter(t=>visible(t.x,t.y)&&!terrainOccludes(t.x,t.y,1)).map(t=>({depth:-point(t.x,t.y).depth,draw:()=>scenery('stone',t)})),{depth:-point(mauz.x,mauz.y).depth,draw:()=>{if(Island.heightAt(mauz.x,mauz.y)===0)cat();}}];objects.push(...detailIndex.near(camera.x,camera.y,90).filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>scenery(p.kind,p)})));objects.push(...transit().filter(b=>visible(b.x,b.y)||busRide?.id===b.id).map(b=>({depth:-point(b.x,b.y).depth,draw:()=>busDrawing(b)})));objects.push(...[...life.walkers,...life.commuters.filter(p=>!p.busId)].filter(p=>Math.hypot(p.x-mauz.x,p.y-mauz.y)<75&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>cat(p)})),...life.cars.filter(p=>visible(p.x,p.y)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>carDrawing(p)})));objects.push(...network.players.filter(p=>onlineMode&&p.vehicle&&visible(p.vehicle.x,p.vehicle.y)).map(p=>({depth:-point(p.vehicle.x,p.vehicle.y).depth,draw:()=>{const model=VehicleModels.find(m=>m.id===p.vehicle.model);if(model)carDrawing({...p.vehicle,model,owner:p.id,parked:!p.car});}})));objects.push(...peers().filter(p=>!(p.busId&&Number.isInteger(p.busSeat))&&remoteVisible(p)).map(p=>({depth:-point(p.x,p.y).depth,draw:()=>remoteDrawing(p)})));objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
     if(Island.heightAt(mauz.x,mauz.y)>0)cat();
     if(transportFrame?.mesh.length){
       transportRenderer ||= createIndoorRenderer({transparent:true});
@@ -810,6 +861,7 @@
     if(nearBed())return {type:'sleep',label:dayCycle.night?(touchDevice?'Bis 07:00 schlafen':'E - Bis 07:00 schlafen'):'Bett - Schlafen ab 20:00'};
     if(interior)return Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<2?{type:'exit',label:'E - Haus verlassen'}:null;
     const candidates=[];
+    if(!vehicles.driving)for(const stop of Island.railStations)candidates.push({type:'bus-plan',target:{...stop,stop},label:'E - Bahnfahrplan ansehen',range:5});
     if(!vehicles.driving)for(const stop of Island.busStops){const c=Math.cos(stop.heading),s=Math.sin(stop.heading);candidates.push({type:'bus-plan',target:{x:stop.x-1.4*c-2*s,y:stop.y-1.4*s+2*c,stop},label:'E - Fahrplan ansehen',range:2.8});}
     if(!vehicles.driving)for(const v of Island.venues)candidates.push({target:v,type:'venue',label:'E - '+v.name+' betreten'});
     if(!vehicles.driving)for(const house of Island.homes.filter(h=>h.id===h.buildingId))candidates.push({target:house,type:'home',label:ownsHome(house.id)?'E - Mein Haus':'E - Haus ansehen ('+house.price+' Münzen)'});
@@ -826,7 +878,7 @@
     return candidates.filter(a=>Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)<=(a.range||2.6)).sort((a,b)=>(Number(b.type==='delivery'&&job.active)-Number(a.type==='delivery'&&job.active))||Math.hypot(a.target.x-mauz.x,a.target.y-mauz.y)-Math.hypot(b.target.x-mauz.x,b.target.y-mauz.y))[0];
   }
   function updateJobUI(){
-    const ridingBus=busRide&&life.buses.find(b=>b.id===busRide.id);
+    const ridingBus=busRide&&transit().find(b=>b.id===busRide.id);
     const water=document.querySelector('#water-status');water.hidden=!!interior||!adventure.wet||mode!=='playing';water.textContent='Luft: '+Math.ceil(adventure.air)+' s - Zurueck ans Ufer!';
     document.querySelector('#mini-open').disabled=!!interior;
     document.querySelector('#world-clock').textContent=dayCycle.label;
@@ -840,7 +892,7 @@
 
     document.querySelector('#map-open').hidden=!!interior;
     if(interior){jobTitle.textContent=roomName();jobDetail.textContent=interior.lobby?'Wendeltreppe: einfach hoch oder runter laufen':interior.public?'Stadtgebaeude - '+job.coins+' Muenzen':interior.name;const action=contextAction();interactButton.hidden=!action;interactButton.textContent=(action?.label||'').replace(touchDevice?/^E - /:/^$/, '');vehicleButton.hidden=true;return;}
-    if(ridingBus){jobTitle.textContent='Bus '+ridingBus.line+' - '+(ridingBus.wait>0?ridingBus.stop:ridingBus.nextStop);jobDetail.textContent=ridingBus.doors>.9?'Tuer offen: hinauslaufen'+((Island.busStops.find(s=>s.id===ridingBus.stopId)?.lines.length||0)>1?' | Umstieg: '+Island.busStops.find(s=>s.id===ridingBus.stopId).lines.filter(l=>l!==ridingBus.line).join(', '):''):'Unterwegs - Ausstieg an der naechsten Haltestelle';const action=busSeatAction();interactButton.hidden=!action;interactButton.textContent=action?(touchDevice?action.label.replace('E - ',''):action.label):'';vehicleButton.hidden=true;return;}
+    if(ridingBus){jobTitle.textContent=(ridingBus.kind==='train'?'Zug ':'Bus ')+ridingBus.line+' - '+(ridingBus.wait>0?ridingBus.stop:ridingBus.nextStop);jobDetail.textContent=ridingBus.doors>.9?'Tuer offen: hinauslaufen'+((Island.busStops.find(s=>s.id===ridingBus.stopId)?.lines.length||0)>1?' | Umstieg: '+Island.busStops.find(s=>s.id===ridingBus.stopId).lines.filter(l=>l!==ridingBus.line).join(', '):''):'Unterwegs - Ausstieg an der naechsten Haltestelle';const action=busSeatAction();interactButton.hidden=!action;interactButton.textContent=action?(touchDevice?action.label.replace('E - ',''):action.label):'';vehicleButton.hidden=true;return;}
     const target=navigationTarget(),distance=Math.hypot(target.x-mauz.x,target.y-mauz.y);
     const direction=Math.atan2(target.y-mauz.y,target.x-mauz.x)-camera.heading;
     const angle=Math.atan2(Math.sin(direction),Math.cos(direction));
@@ -911,7 +963,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   vehicleButton.onclick=toggleCar;
   let miniUpdated=-Infinity;
   function mapIslands(c,p,factor){
-    for(const island of [{x:0,y:0,radius:Island.radius},Island.luxury]){c.fillStyle='#e4d5a8';c.beginPath();c.arc(...p(island.x,island.y),island.radius*factor,0,Math.PI*2);c.fill();c.fillStyle='#aec58a';c.beginPath();c.arc(...p(island.x,island.y),(island.radius-5)*factor,0,Math.PI*2);c.fill();}
+    for(const island of [{x:0,y:0,radius:Island.radius},Island.luxury,Island.continent]){c.fillStyle='#e4d5a8';c.beginPath();c.arc(...p(island.x,island.y),island.radius*factor,0,Math.PI*2);c.fill();c.fillStyle='#aec58a';c.beginPath();c.arc(...p(island.x,island.y),(island.radius-5)*factor,0,Math.PI*2);c.fill();}
     c.strokeStyle='#946fbe';c.lineWidth=2;c.setLineDash([5,4]);c.beginPath();c.arc(...p(0,0),Island.border*factor,0,Math.PI*2);c.stroke();c.setLineDash([]);
     c.fillStyle='#b49570';for(const d of Island.docks)c.fillRect(...p(d.x-d.w/2,d.y-d.d/2),d.w*factor,d.d*factor);
     c.fillStyle='#657e8b';for(const a of Island.airfields)c.fillRect(...p(a.x-a.w/2,a.y-a.d/2),a.w*factor,a.d*factor);
@@ -945,7 +997,15 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
         c.fillStyle='#294d42';c.textAlign='left';c.fillText(label,x+size/2+6,y);c.textAlign='center';
       }
     }
+    drawRailMap(c,p,mini);
     c.restore();
+  }
+  function drawRailMap(c,p,mini){
+    c.fillStyle='#68aebd';for(const r of Island.railStructures.filter(r=>r.kind==='bridge')){const a=p(r.x-r.w/2,r.y-37.5),b=p(r.x+r.w/2,r.y+37.5);c.fillRect(a[0],a[1],b[0]-a[0],b[1]-a[1]);}
+    for(const line of Island.railLines){c.strokeStyle=line.color;c.lineWidth=mini?2:3;c.beginPath();line.route.forEach((q,i)=>i?c.lineTo(...p(q.x,q.y)):c.moveTo(...p(q.x,q.y)));c.closePath();c.stroke();}
+    for(const station of Island.railStations){const [x,y]=p(station.x,station.y),limit=mini?180:600;if(x<0||y<0||x>limit||y>limit)continue;c.fillStyle='#fff8df';c.fillRect(x-6,y-6,12,12);c.fillStyle='#345d73';c.font='bold 9px sans-serif';c.fillText('Z',x,y+1);if(!mini&&mapView.zoom>2){c.font='10px sans-serif';c.fillText(station.name,x,y-12);}}
+    for(const train of life.trains.filter(t=>t.coach===0)){const [x,y]=p(train.x,train.y);c.fillStyle=train.color;c.beginPath();c.arc(x,y,mini?4:5,0,Math.PI*2);c.fill();}
+    if(!mini){c.font='bold 12px sans-serif';c.fillStyle='#38594d';for(const town of Island.towns)c.fillText(town.name,...p(town.x,town.y-170));}
   }
   function drawMiniMap(){
     if(mode!=='playing'||time-miniUpdated<.18)return;miniUpdated=time;
@@ -981,25 +1041,26 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   function openBusMap(stop){
     busMapStop=stop;busMapLine='all';busMapUpdated=-Infinity;
     mapView.x=380;mapView.y=60;mapView.zoom=1.65;
+    if(stop.id?.startsWith('rail-')){mapView.x=-2700;mapView.y=700;mapView.zoom=2;}else mapView.zoom=8;
     const select=document.querySelector('#bus-map-line');select.replaceChildren();
-    for(const line of [{id:'all',name:'Alle Linien'},...Island.busLines]){const option=document.createElement('option');option.value=line.id;option.textContent=(line.id==='all'?'':'Linie '+line.id+' - ')+line.name;select.append(option);}
+    for(const line of [{id:'all',name:'Alle Linien'},...Island.busLines,...Island.railLines]){const option=document.createElement('option');option.value=line.id;option.textContent=(line.id==='all'?'':'Linie '+line.id+' - ')+line.name;select.append(option);}
     select.value='all';setMode('map');
   }
   function drawBusNetwork(c,p){
     c.save();c.lineJoin='round';c.lineCap='round';
-    for(const line of Island.busLines){
+    for(const line of [...Island.busLines,...Island.railLines]){
       const selected=busMapLine==='all'||busMapLine===line.id;
       c.globalAlpha=selected?.9:.12;c.strokeStyle=line.color;c.lineWidth=selected?3:1;
       c.beginPath();line.route.forEach((q,i)=>i?c.lineTo(...p(q.x,q.y)):c.moveTo(...p(q.x,q.y)));c.closePath();c.stroke();
     }
     c.globalAlpha=1;drawBusStops(c,p);
-    for(const b of life.buses){
+    for(const b of transit().filter(t=>t.coach===undefined||t.coach===0)){
       const selected=busMapLine==='all'||busMapLine===b.line,[x,y]=p(b.x,b.y);c.globalAlpha=selected?1:.3;
       c.save();c.translate(x,y);c.rotate(b.heading);c.fillStyle=b.color;c.strokeStyle='#fffdf0';c.lineWidth=2;c.beginPath();c.moveTo(12,0);c.lineTo(3,-7);c.lineTo(-9,-7);c.lineTo(-9,7);c.lineTo(3,7);c.closePath();c.fill();c.stroke();c.restore();
       c.fillStyle='#243e35';c.font='bold 10px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(b.line,x,y);
     }
     c.restore();
-    document.querySelector('#bus-map-status').textContent=life.buses.filter(b=>busMapLine==='all'||b.line===busMapLine).map(b=>'Linie '+b.line+' - '+(b.wait>0?'Halt: '+b.stop:'Unterwegs nach '+b.nextStop)).join('\n');
+    document.querySelector('#bus-map-status').textContent=transit().filter(b=>(b.coach===undefined||b.coach===0)).filter(b=>busMapLine==='all'||b.line===busMapLine).map(b=>'Linie '+b.line+' - '+(b.wait>0?'Halt: '+b.stop:'Unterwegs nach '+b.nextStop)).join('\n');
   }
   function drawMap(){
     const map=document.querySelector('#map-canvas'),c=map.getContext('2d'),factor=273/Island.border*mapView.zoom;
@@ -1095,10 +1156,10 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   document.querySelector('#home-enter').onclick=enterHome;
   document.querySelector('#home-close').onclick=()=>setMode('playing');
   const mapCanvas=document.querySelector('#map-canvas');let mapDrag=null;
-  function zoomMap(multiplier){mapView.zoom=Math.max(1,Math.min(8,mapView.zoom*multiplier));drawMap();}
+  function zoomMap(multiplier){mapView.zoom=Math.max(1,Math.min(48,mapView.zoom*multiplier));drawMap();}
   document.querySelector('#map-plus').onclick=()=>zoomMap(1.5);
   document.querySelector('#map-minus').onclick=()=>zoomMap(1/1.5);
-  document.querySelector('#map-locate').onclick=()=>{mapView.x=mauz.x;mapView.y=mauz.y;mapView.zoom=4;drawMap();};
+  document.querySelector('#map-locate').onclick=()=>{mapView.x=mauz.x;mapView.y=mauz.y;mapView.zoom=20;drawMap();};
   document.querySelector('#map-reset').onclick=()=>{mapView.x=0;mapView.y=0;mapView.zoom=1;drawMap();};
   mapCanvas.addEventListener('contextmenu',e=>{
     e.preventDefault();mapDrag=null;if(plannedRoute){plannedRoute=null;document.querySelector('#map-route-status').textContent='Route entfernt. Rechtsklick setzt ein neues Ziel.';drawMap();return;}
@@ -1123,7 +1184,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     startScreen.hidden=mode!=='start';pauseScreen.hidden=mode!=='pause';gameUI.hidden=mode!=='playing';
     document.querySelector('#map-screen').hidden=mode!=='map';
     document.querySelector('#bus-map-panel').hidden=!busMapStop;
-    document.querySelector('#map-title').textContent=busMapStop?'Live-Busplan - '+busMapStop.name:'Deine Welt';
+    document.querySelector('#map-title').textContent=busMapStop?(busMapStop.id?.startsWith('rail-')?'Live-Bahnplan - ':'Live-Busplan - ')+busMapStop.name:'Deine Welt';
     document.querySelector('#map-legend').hidden=!!busMapStop;
     document.querySelector('#garage-screen').hidden=mode!=='garage';
     document.querySelector('#home-screen').hidden=mode!=='home';
@@ -1148,7 +1209,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   });
   document.querySelector('#mini-open').onclick=()=>{if(!interior)setMode('map');};
   document.querySelector('#map-open').onclick=()=>setMode('map');
-  document.querySelector('#bus-map-line').onchange=e=>{busMapLine=e.target.value;const route=Island.busLines.find(l=>l.id===busMapLine)?.route;if(route){const xs=route.map(p=>p.x),ys=route.map(p=>p.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);mapView.x=(minX+maxX)/2;mapView.y=(minY+maxY)/2;mapView.zoom=Math.min(8,500/Math.max(maxX-minX,maxY-minY,30)/(273/Island.border));}else{mapView.x=380;mapView.y=60;mapView.zoom=1.65;}drawMap();};
+  document.querySelector('#bus-map-line').onchange=e=>{busMapLine=e.target.value;const route=[...Island.busLines,...Island.railLines].find(l=>l.id===busMapLine)?.route;if(route){const xs=route.map(p=>p.x),ys=route.map(p=>p.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);mapView.x=(minX+maxX)/2;mapView.y=(minY+maxY)/2;mapView.zoom=Math.min(48,500/Math.max(maxX-minX,maxY-minY,30)/(273/Island.border));}else{mapView.x=380;mapView.y=60;mapView.zoom=1.65;}drawMap();};
   document.querySelector('#map-close').onclick=()=>setMode('playing');
   function cancelSleep(){if(sleeping?.online){network.sleep(false);sleeping=null;document.querySelector('#sleep-screen').hidden=true;setMode('playing');}}
   document.querySelector('#sleep-cancel').onclick=cancelSleep;
@@ -1244,7 +1305,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   window.addEventListener('resize',resize);resize();setMode('start');
   // Available only in the isolated browser test context.
   if(location.hash==='#smoke-test')window.__animalTest={
-    boardBus(id){const b=life.buses.find(b=>b.id===id);busRide=b?{id:b.id,heading:b.heading,f:1,s:0}:null;mauz.busId=b?.id||null;mauz.seated=false;mauz.busSeat=null;carryBus();updateJobUI();},
+    boardBus(id){const b=transit().find(b=>b.id===id);busRide=b?{id:b.id,heading:b.heading,f:1,s:0}:null;mauz.busId=b?.id||null;mauz.seated=false;mauz.busSeat=null;carryBus();updateJobUI();},
     visit(x,y,heading=-Math.PI/2){mauz.x=x;mauz.y=y;mauz.heading=heading;if(vehicles.driving){vehicles.car.x=x;vehicles.car.y=y;vehicles.car.heading=heading;vehicles.stop();}camera.x=x;camera.y=y;camera.z=Island.heightAt(x,y);camera.heading=heading;keys.clear();destination=null;updateJobUI();draw();},
     airCrashSetup(){if(!vehicles.car||vehicles.car.model.kind!=='air')return false;Object.assign(vehicles.car,{x:160,y:-38,z:5,heading:Math.PI/2,speed:25});Object.assign(mauz,{x:160,y:-38,heading:Math.PI/2});return true;},
     crashSetup(kind,kmh){
@@ -1259,15 +1320,15 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,trains:life.trains,railStations:Island.railStations,worldBorder:Island.border,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
   let lastPaint=0;
   function soundEnvironment(){
     if(interior)return {paved:true};
-    const sea=Island.inSea(mauz.x,mauz.y),shore=Math.min(Math.abs(Math.hypot(mauz.x,mauz.y)-Island.radius),Math.abs(Math.hypot(mauz.x-Island.luxury.x,mauz.y-Island.luxury.y)-Island.luxury.radius));
+    const sea=Island.inSea(mauz.x,mauz.y),shore=Math.min(Math.abs(Math.hypot(mauz.x,mauz.y)-Island.radius),Math.abs(Math.hypot(mauz.x-Island.luxury.x,mauz.y-Island.luxury.y)-Island.luxury.radius),Math.abs(Math.hypot(mauz.x-Island.continent.x,mauz.y)-Island.continent.radius));
     const traffic=life.cars.reduce((level,c)=>Math.max(level,Math.max(0,1-Math.hypot(c.x-mauz.x,c.y-mauz.y)/35)*Math.min(1,c.speed/6)),0);
     const coast=sea?1:Math.max(0,1-shore/55),nature=coast>.4?0:Math.min(1,treeIndex.near(mauz.x,mauz.y,18).length/8);
     return {sea:coast,wind:.5+Math.min(.5,Island.heightAt(mauz.x,mauz.y)/40),nature,traffic,night:dayCycle.night,paved:Island.onRoad(mauz.x,mauz.y),water:sea&&!busRide&&!vehicles.driving};
   }
-  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busF:busRide?.f,busS:busRide?.s,busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);if(mode==='map'&&busMapStop){if(!onlineMode){let remaining=Math.min(elapsed,1);while(remaining>0){const part=Math.min(remaining,.05);life.tick(part,mauz,vehicles.car);remaining-=part;}}if(now-busMapUpdated>200){drawMap();busMapUpdated=now;}}sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{environment:mode==='playing'?soundEnvironment():{},buses:life.buses,listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||mode!=='map'&&now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busF:busRide?.f,busS:busRide?.s,busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);if(mode==='map'&&busMapStop){if(!onlineMode){let remaining=Math.min(elapsed,1);while(remaining>0){const part=Math.min(remaining,.05);life.tick(part,mauz,vehicles.car);remaining-=part;}}if(now-busMapUpdated>200){drawMap();busMapUpdated=now;}}sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{environment:mode==='playing'?soundEnvironment():{},buses:transit(),listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});if(mode==='playing'||mode==='sleeping'||mode!=='map'&&now-lastPaint>150){draw();lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();

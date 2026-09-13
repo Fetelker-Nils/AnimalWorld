@@ -1,5 +1,6 @@
 const Island = (() => {
-  const radius=560,border=1300;
+  const radius=560,border=6800;
+  const continent={x:-3400,y:0,radius:2850,name:'Pfotenland'};
   const luxury={x:900,y:0,radius:radius/Math.sqrt(5),name:'Perleninsel'};
   const docks=[{x:559,y:0,w:28,d:6},{x:645,y:0,w:28,d:6}];
   const airfields=[{x:210,y:230,w:32,d:110},{x:900,y:155,w:32,d:100}];
@@ -7,9 +8,51 @@ const Island = (() => {
   const bridge={x:610,y:14,w:140,d:12};
   const onBridge=(x,y)=>Math.abs(x-bridge.x)<=bridge.w/2&&Math.abs(y-bridge.y)<=bridge.d/2;
   const bridgeBarrier=(x,y)=>Math.abs(x-bridge.x)<bridge.w/2&&Math.abs(y-bridge.y)>bridge.d/2-.7&&Math.abs(y-bridge.y)<bridge.d/2+.7;
-  const inSea=(x,y)=>Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&!inDock(x,y)&&!onBridge(x,y);
+  const inSea=(x,y)=>railStructures.some(r=>r.kind==='bridge'&&Math.abs(x-r.x)<r.w/2-4&&Math.abs(y-r.y)>r.d/2&&Math.abs(y-r.y)<37.5)||Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&Math.hypot(x-continent.x,y-continent.y)>continent.radius-1&&!(x>-635&&x<-495&&y>-25&&y<105)&&!inDock(x,y)&&!onBridge(x,y);
   const inBounds=(x,y)=>Math.hypot(x,y)<border;
 
+  const towns=[
+    {name:'Weststadt',x:-1000,y:-80,city:true},{name:'Lindenau',x:-2200,y:-80},
+    {name:'Bergstadt',x:-3500,y:-80,city:true},{name:'Tannenheim',x:-5000,y:-80},
+    {name:'Sonnenfeld',x:-2200,y:1140},{name:'Seestadt',x:-4000,y:1140,city:true},
+    {name:'Blumental',x:-1800,y:1540},{name:'Waldruh',x:-4000,y:1540}
+  ];
+  const railLines=[{id:'R1',name:'Westbahn',color:'#b65349',starts:[0,5],route:[
+    {x:-170,y:-10,name:'Mauz Hauptbahnhof',terminal:true},{x:-1000,y:-10,name:'Weststadt'},
+    {x:-2200,y:-10,name:'Lindenau'},{x:-3500,y:-10,name:'Bergstadt'},{x:-5000,y:-10,name:'Tannenheim',terminal:true},
+    {x:-5350,y:-10},{x:-5400,y:40},{x:-5350,y:90},
+    {x:-5000,y:90,name:'Tannenheim',terminal:true},{x:-3500,y:90,name:'Bergstadt'},
+    {x:-2200,y:90,name:'Lindenau'},{x:-1000,y:90,name:'Weststadt'},{x:-170,y:90,name:'Mauz Hauptbahnhof',terminal:true},
+    {x:-90,y:90},{x:-90,y:-10}
+  ]},{id:'R2',name:'Seenlandbahn',color:'#497fa9',starts:[0],route:[
+    {x:-2200,y:230,name:'Lindenau Sued',terminal:true},{x:-2200,y:1130,name:'Sonnenfeld'},
+    {x:-2200,y:1200},{x:-3910,y:1200,name:'Seestadt'},{x:-4000,y:1200},
+    {x:-4000,y:1510,name:'Waldruh'},{x:-4000,y:1600},{x:-1880,y:1600,name:'Blumental',terminal:true},
+    {x:-1800,y:1600},{x:-1800,y:170},{x:-2200,y:170}
+  ]}];
+  // Round bends into short quadratic segments; coaches follow the same track independently.
+  for(const line of railLines){
+    const raw=line.route,out=[];
+    for(let i=0;i<raw.length;i++){
+      const p=raw[i],a=raw[(i+raw.length-1)%raw.length],b=raw[(i+1)%raw.length];
+      const da=Math.hypot(p.x-a.x,p.y-a.y),db=Math.hypot(b.x-p.x,b.y-p.y),r=Math.min(35,da*.3,db*.3);
+      const enter={x:p.x+(a.x-p.x)*r/da,y:p.y+(a.y-p.y)*r/da},leave={x:p.x+(b.x-p.x)*r/db,y:p.y+(b.y-p.y)*r/db};
+      if(p.name||Math.abs((p.x-a.x)*(b.y-p.y)-(p.y-a.y)*(b.x-p.x))<.01){out.push({...p});continue;}
+      out.push(enter);for(let n=1;n<=12;n++){const t=n/12;out.push({x:(1-t)**2*enter.x+2*(1-t)*t*p.x+t*t*leave.x,y:(1-t)**2*enter.y+2*(1-t)*t*p.y+t*t*leave.y});}
+    }
+    line.route=out;line.starts=line.id==='R1'?[0,out.findIndex(p=>p.name==='Tannenheim'&&p.y===90)]:[0];
+  }
+  const railStations=railLines.flatMap(l=>l.route.flatMap((p,i)=>{
+    if(!p.name)return [];const a=l.route[(i+l.route.length-1)%l.route.length],heading=Math.atan2(p.y-a.y,p.x-a.x);
+    p.stopId='rail-'+l.id+'-'+i;
+    return [{id:p.stopId,line:l.id,name:p.name,heading,x:p.x-Math.cos(heading)*16-Math.sin(heading)*7,y:p.y-Math.sin(heading)*16+Math.cos(heading)*7,trackX:p.x,trackY:p.y,color:l.color}];
+  }));
+  const railStructures=[{kind:'tunnel',x:-2800,y:-10,w:230,d:14},{kind:'tunnel',x:-2800,y:90,w:230,d:14},
+    {kind:'bridge',x:-4200,y:-10,w:190,d:12},{kind:'bridge',x:-4200,y:90,w:190,d:12},
+    {kind:'tunnel',x:-3000,y:1600,w:190,d:14},{kind:'bridge',x:-3000,y:1200,w:190,d:12}];
+  const railReserved=(x,y,margin=9)=>railLines.some(l=>l.route.some((b,i)=>{const a=l.route[(i+l.route.length-1)%l.route.length],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a.x-t*dx,y-a.y-t*dy)<margin;}));
+  const railWalls=railStructures.flatMap(r=>[-1,1].map(side=>({x:r.x,y:r.y+side*(r.kind==='tunnel'?18:r.d/2-.3),w:r.w,d:r.kind==='tunnel'?24:.6,h:r.kind==='tunnel'?12:1.2})));
+  const railBlocked=(x,y)=>railWalls.some(b=>Math.abs(x-b.x)<b.w/2+.4&&Math.abs(y-b.y)<b.d/2+.4);
   const buildings=[];
   const palette=['#e9d3af','#bfd7de','#d0d9bd','#e2c5bb','#d0ccdf'];
   for(const [row,y] of [-25,-43,-61,-79,-97].entries()) {
@@ -54,6 +97,13 @@ const Island = (() => {
     {id:'fire',name:'Feuerwehr-Outfit',price:220,color:'#bb6049',trim:'#f2dc72',hat:'#dabb4d'},
     {id:'medic',name:'Arztkittel',price:190,color:'#e5ece6',trim:'#6ba6a4'}
   ];
+  for(const town of towns){const n=town.city?6:4;
+    for(let row=0;row<n;row++)for(let col=0;col<n;col++){
+      const x=town.x+(col-(n-1)/2)*22,y=town.y-row*23;
+      if(railReserved(x,y,18))continue;
+      buildings.push({x,y,w:town.city?13:10,d:town.city?12:9,h:town.city?12+(row+col)%4*4:5+(col%2),color:palette[(row+col)%palette.length],roof:town.city?'#839594':'#b58261',city:!!town.city,town:town.name});
+    }
+  }
   const venues=[
     {id:'clothes',name:'Mauz Mode',kind:'clothes',bx:-18,by:-25,color:'#d4b1cd',floor:'#d9cfbc',message:'Willkommen bei Mauz Mode! Schau dir unsere Outfits an.'},
     {id:'restaurant',name:'Restaurant Pfotenstube',bx:18,by:-43,color:'#e8ba91',floor:'#dfc798',message:'Willkommen in der Pfotenstube! Such dir einen Platz zwischen den Tischen.'},
@@ -201,7 +251,7 @@ const Island = (() => {
   const heightAt=(x,y)=>mountain.height*Math.max(0,1-Math.max(0,Math.hypot(x-mountain.x,y-mountain.y)-4)/(mountain.radius-4));
   const inPond=(x,y,pad=0)=>((x-pond.x)/(pond.rx+pad))**2+((y-pond.y)/(pond.ry+pad))**2<1;
   const onRoad=(x,y,pad=1)=>roads.some(r=>Math.abs(x-r.x)<r.w/2+pad&&Math.abs(y-r.y)<r.d/2+pad);
-  const blocked=(x,y)=>bridgeBarrier(x,y)||(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
+  const blocked=(x,y)=>railBlocked(x,y)||bridgeBarrier(x,y)||(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
   const lamps=[];
   for(const road of roads){
     const vertical=road.d>road.w,length=vertical?road.d:road.w,edge=(vertical?road.w:road.d)/2+1.2;
@@ -213,8 +263,16 @@ const Island = (() => {
       lamps.push({x,y});
     }
   }
-  const reserved=(x,y)=>busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
-  return {bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  roads.push({x:-2800,y:40,w:5540,d:8},{x:-170,y:-4,w:6,d:38},{x:-85,y:14,w:180,d:6});
+  for(const town of towns){
+    roads.push({x:town.x,y:(town.y+40)/2,w:8,d:Math.abs(town.y-40)+160});
+    const n=town.city?6:4;for(let row=0;row<=n;row++)roads.push({x:town.x,y:town.y+12-row*23,w:n*22+20,d:6});
+    for(let col=0;col<=n;col++)roads.push({x:town.x+(col-n/2)*22,y:town.y-(n-1)*23/2,w:6,d:n*23+20});
+    for(let row=0;row<n;row++)for(const side of [-1,1])lamps.push({x:town.x+side*(n*11+4),y:town.y-row*23});
+    booths.push({x:town.x+10,y:town.y+10,sx:town.x,sy:town.y+12,name:town.name});
+  }
+  const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  return {continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;

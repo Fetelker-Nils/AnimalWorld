@@ -21,8 +21,44 @@ function createCityLife(world, models){
     }
   }
 
+  const railPaths=(world.railLines||[]).map(line=>{
+    let length=0;const points=line.route.map((p,i)=>{const a=line.route[(i+line.route.length-1)%line.route.length];if(i)length+=Math.hypot(p.x-a.x,p.y-a.y);return {...p,distance:length};});
+    const last=points.at(-1),first=points[0];length+=Math.hypot(last.x-first.x,last.y-first.y);
+    return {...line,points,length};
+  });
+  function railAt(path,distance){
+    const d=((distance%path.length)+path.length)%path.length;
+    for(let i=0;i<path.points.length;i++){
+      const a=path.points[i],b=path.points[(i+1)%path.points.length],end=i===path.points.length-1?path.length:b.distance;
+      if(d<=end&&end>a.distance){const t=(d-a.distance)/(end-a.distance);return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,heading:Math.atan2(b.y-a.y,b.x-a.x)};}
+    }
+    return {...path.points[0],heading:0};
+  }
+  const railServices=railPaths.flatMap(path=>path.starts.map((start,i)=>{
+    const point=path.points[start],stops=path.points.filter(p=>p.name),index=stops.indexOf(point);
+    return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:24,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
+  }));
+  const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',line:t.path.id,color:t.path.color,scaleF:1.6,scaleS:1.2,scaleZ:1.15})));
+  function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*16),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}
+  syncTrains();
+  function tickTrains(dt,people){
+    for(const t of railServices){
+      if(t.wait>0){
+        const blocked=people.some(p=>{const b=trains.find(b=>b.service===t.id&&b.id===p.busId);if(!b)return false;const dx=p.x-b.x,dy=p.y-b.y,f=(dx*Math.cos(b.heading)+dy*Math.sin(b.heading))/1.6,s=(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading))/1.2;return f>1.7&&f<3.6&&s>.9&&s<2.8;});
+        if(blocked&&t.wait<2)t.wait=2;t.speed=0;t.wait=Math.max(0,t.wait-dt);t.doors=Math.max(0,Math.min(1,t.doors+(t.wait>1?dt:-dt)*2));continue;
+      }
+      t.doors=Math.max(0,t.doors-dt*2);if(t.doors>0)continue;
+      const remaining=(t.next.distance-t.distance+t.path.length)%t.path.length;
+      t.speed=Math.min(48,t.speed+dt*3,Math.sqrt(3*remaining));
+      const move=Math.min(remaining,t.speed*dt);t.distance=(t.distance+move)%t.path.length;
+      if(remaining<.05||move===remaining){t.distance=t.next.distance;t.stop=t.next.name;t.stopId=t.next.stopId;t.terminal=!!t.next.terminal;t.wait=24;t.speed=0;t.departure++;
+        const stops=t.path.points.filter(p=>p.name);t.next=stops[(stops.indexOf(t.next)+1)%stops.length];}
+    }
+    syncTrains();
+  }
   // Pavement circuits around city blocks. Lane offsets keep opposing cars apart.
   const blocks=[[-45,-27,-34,-70],[-27,0,-34,-88],[0,27,-34,-88],[27,45,-52,-106],[-45,-27,-121,-175],[0,27,-139,-193],[-27,0,-271,-325],[0,27,-289,-343]];
+  for(const town of world.towns||[])blocks.push([town.x-22,town.x,town.y+12,town.y-11]);
   function route(block,inset){const [l,r,t,b]=block;return [{x:l+inset,y:t-inset},{x:r-inset,y:t-inset},{x:r-inset,y:b+inset},{x:l+inset,y:b+inset}];}
   function at(path,d){const lengths=path.map((p,i)=>Math.hypot(p.x-path[(i+1)%4].x,p.y-path[(i+1)%4].y)),total=lengths.reduce((a,b)=>a+b,0);d=((d%total)+total)%total;for(let i=0;i<4;i++){if(d<=lengths[i]){const a=path[i],b=path[(i+1)%4],t=d/lengths[i];return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,heading:Math.atan2(b.y-a.y,b.x-a.x)};}d-=lengths[i];}}
   for(let i=0;i<blocks.length;i++){
@@ -67,6 +103,7 @@ function createCityLife(world, models){
     const hazards=[...onlinePlayers.flatMap(p=>[{...p,r:p.car?3:1},...(['compact','roadster','pickup'].includes(p.vehicle?.model)?[{...p.vehicle,id:'vehicle-'+p.id,vehicle:true,r:3}]:[])]),...(player?[{...player,r:1}]:[]),...(playerCar?[{...playerCar,r:3}]:[])];
     for(const b of buses)if(commuters.some(p=>p.busId===b.id&&(p.stage==='boarding'||p.stage==='exiting')))b.wait=Math.max(b.wait,2.5);
     tickBuses(dt,[...hazards,...buses,...cars]);
+    tickTrains(dt,[...onlinePlayers,...(player?[player]:[])]);
     tickCommuters(dt,[...onlinePlayers,...(player?[player]:[])]);
     for(const car of cars){
       const ahead={x:car.x+Math.cos(car.heading)*5,y:car.y+Math.sin(car.heading)*5};
@@ -86,7 +123,7 @@ function createCityLife(world, models){
       if(npc.moving){const old=Math.floor(npc.distance/25);npc.distance+=dt*1.25;Object.assign(npc,at(npc.path,npc.distance));if(Math.floor(npc.distance/25)!==old)npc.wait=1.5+(npc.phase%3);}
     }
   }
-  return {cars,walkers,buses,commuters,tick,snapshot(){return {commuters:commuters.map(p=>({...p,path:p.path?.map(q=>({...q}))})),buses:buses.map(b=>({...b})),cars:cars.map(({path,model,...p})=>({...p,model:model.id})),walkers:walkers.map(({path,...p})=>p)};},accept(state){for(const p of state.commuters||[]){const npc=commuters.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}if(Array.isArray(state.buses)){const incoming=new Map(state.buses.map(p=>[p.id,p]));for(let i=buses.length-1;i>=0;i--)if(!incoming.has(buses[i].id))buses.splice(i,1);for(const [id,p] of incoming){let b=buses.find(b=>b.id===id);if(!b&&lines.some(l=>l.id===p.line)){b={};buses.push(b);}if(b)Object.assign(b,p);}}for(const p of state.cars||[]){const car=cars.find(c=>c.id===p.id);if(car)Object.assign(car,{...p,model:models.find(m=>m.id===p.model)||car.model});}for(const p of state.walkers||[]){const npc=walkers.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}}};
+  return {cars,walkers,buses,trains,commuters,tick,snapshot(){return {railServices:railServices.map(({path,next,...t})=>({...t,nextIndex:path.points.indexOf(next)})),trains:trains.map(p=>({...p})),commuters:commuters.map(p=>({...p,path:p.path?.map(q=>({...q}))})),buses:buses.map(b=>({...b})),cars:cars.map(({path,model,...p})=>({...p,model:model.id})),walkers:walkers.map(({path,...p})=>p)};},accept(state){for(const p of state.railServices||[]){const t=railServices.find(t=>t.id===p.id);if(t){const {nextIndex,...values}=p;Object.assign(t,values);t.next=t.path.points[nextIndex]||t.next;}}for(const p of state.trains||[]){const t=trains.find(t=>t.id===p.id);if(t)Object.assign(t,p);}for(const p of state.commuters||[]){const npc=commuters.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}if(Array.isArray(state.buses)){const incoming=new Map(state.buses.map(p=>[p.id,p]));for(let i=buses.length-1;i>=0;i--)if(!incoming.has(buses[i].id))buses.splice(i,1);for(const [id,p] of incoming){let b=buses.find(b=>b.id===id);if(!b&&lines.some(l=>l.id===p.line)){b={};buses.push(b);}if(b)Object.assign(b,p);}}for(const p of state.cars||[]){const car=cars.find(c=>c.id===p.id);if(car)Object.assign(car,{...p,model:models.find(m=>m.id===p.model)||car.model});}for(const p of state.walkers||[]){const npc=walkers.find(n=>n.id===p.id);if(npc)Object.assign(npc,p);}}};
 }
 
 globalThis.createCityLife=createCityLife;

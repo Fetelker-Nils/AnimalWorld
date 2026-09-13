@@ -29,7 +29,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   const pilot=add('pilot','world');now+=200;
   const state={type:'state',x:900,y:155,heading:0,jump:0,room:'world',car:'helicopter',vehicle:{model:'helicopter',x:900,y:155,z:60,heading:0,speed:20}};
   await world.webSocketMessage(pilot.ws,JSON.stringify(state));assert.equal(pilot.p.vehicle.z,60);assert.equal(pilot.p.x,900);
-  now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,x:1301}));assert.equal(pilot.p.x,900,'Server enforces world border');
+  now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,x:c.AnimalIsland.border+1}));assert.equal(pilot.p.x,900,'Server enforces world border');
   now+=200;await world.webSocketMessage(pilot.ws,JSON.stringify({...state,vehicle:{...state.vehicle,z:999}}));assert.equal(pilot.p.vehicle.z,60,'Server rejects invalid altitude');
   await world.webSocketMessage(pilot.ws,JSON.stringify({type:'crash',model:'helicopter',x:900,y:155,z:60,heading:0,speed:20}));assert.equal(pilot.p.impact.z,60,'Aircraft crash height is synchronized');
   const bus=world.life.buses[0];
@@ -55,5 +55,6 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   for(let i=0;i<single.life.buses.length;i++){assert.equal(single.life.buses[i].x,multiple.life.buses[i].x);assert.equal(single.life.buses[i].y,multiple.life.buses[i].y);}
   assert.deepEqual(single.life.snapshot().commuters,multiple.life.snapshot().commuters,'Passengers independent of player count');
   assert.equal(new Set(multiple.life.buses.map(b=>b.id)).size,9);
+  assert.deepEqual(single.life.snapshot().trains,multiple.life.snapshot().trains,'More players do not duplicate or accelerate trains');
   console.log('PASS shared server: all-player sleep vote, morning, cancellation/disconnect, saved clock offset, seat arbitration, safe exit, passenger movement and profiles');
 })().catch(e=>{console.error(e);process.exitCode=1;});

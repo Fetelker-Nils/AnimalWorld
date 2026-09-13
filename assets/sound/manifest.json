@@ -39,6 +39,14 @@
       "text": "Linie sieben."
     },
     {
+      "file": "line-R1.mp3",
+      "text": "Regionalzug eins."
+    },
+    {
+      "file": "line-R2.mp3",
+      "text": "Regionalzug zwei."
+    },
+    {
       "file": "station-nordstadt.mp3",
       "text": "Station: Nordstadt."
     },
@@ -253,6 +261,86 @@
     {
       "file": "next-perlenhafen-bruecke.mp3",
       "text": "Nächste Station: Perlenhafen Brücke."
+    },
+    {
+      "file": "station-mauz-hauptbahnhof.mp3",
+      "text": "Station: Mauz Hauptbahnhof."
+    },
+    {
+      "file": "next-mauz-hauptbahnhof.mp3",
+      "text": "Nächste Station: Mauz Hauptbahnhof."
+    },
+    {
+      "file": "station-weststadt.mp3",
+      "text": "Station: Weststadt."
+    },
+    {
+      "file": "next-weststadt.mp3",
+      "text": "Nächste Station: Weststadt."
+    },
+    {
+      "file": "station-lindenau.mp3",
+      "text": "Station: Lindenau."
+    },
+    {
+      "file": "next-lindenau.mp3",
+      "text": "Nächste Station: Lindenau."
+    },
+    {
+      "file": "station-bergstadt.mp3",
+      "text": "Station: Bergstadt."
+    },
+    {
+      "file": "next-bergstadt.mp3",
+      "text": "Nächste Station: Bergstadt."
+    },
+    {
+      "file": "station-tannenheim.mp3",
+      "text": "Station: Tannenheim."
+    },
+    {
+      "file": "next-tannenheim.mp3",
+      "text": "Nächste Station: Tannenheim."
+    },
+    {
+      "file": "station-lindenau-sued.mp3",
+      "text": "Station: Lindenau Süd."
+    },
+    {
+      "file": "next-lindenau-sued.mp3",
+      "text": "Nächste Station: Lindenau Süd."
+    },
+    {
+      "file": "station-sonnenfeld.mp3",
+      "text": "Station: Sonnenfeld."
+    },
+    {
+      "file": "next-sonnenfeld.mp3",
+      "text": "Nächste Station: Sonnenfeld."
+    },
+    {
+      "file": "station-seestadt.mp3",
+      "text": "Station: Seestadt."
+    },
+    {
+      "file": "next-seestadt.mp3",
+      "text": "Nächste Station: Seestadt."
+    },
+    {
+      "file": "station-waldruh.mp3",
+      "text": "Station: Waldruh."
+    },
+    {
+      "file": "next-waldruh.mp3",
+      "text": "Nächste Station: Waldruh."
+    },
+    {
+      "file": "station-blumental.mp3",
+      "text": "Station: Blumental."
+    },
+    {
+      "file": "next-blumental.mp3",
+      "text": "Nächste Station: Blumental."
     }
   ]
 }

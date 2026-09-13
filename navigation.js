@@ -3,10 +3,10 @@ function planWorldRoute(world,start,target,walkable){
   if(!world.inBounds(target.x,target.y))return null;
   const building=world.buildings.find(b=>Math.abs(target.x-b.x)<b.w/2&&Math.abs(target.y-b.y)<b.d/2);
   if(building)target={x:building.x,y:building.y+building.d/2+2};
-  const island=p=>Math.hypot(p.x,p.y)<world.radius?0:Math.hypot(p.x-world.luxury.x,p.y-world.luxury.y)<world.luxury.radius?1:-1;
+  const island=p=>(Math.hypot(p.x,p.y)<world.radius||world.continent&&Math.hypot(p.x-world.continent.x,p.y-world.continent.y)<world.continent.radius)?0:Math.hypot(p.x-world.luxury.x,p.y-world.luxury.y)<world.luxury.radius?1:-1;
   const harbors=[{land:{x:550,y:2.5},sea:{x:563,y:6}},{land:{x:655,y:2.5},sea:{x:645,y:6}}];
   function search(from,to,water=false){
-    const distance=Math.hypot(from.x-to.x,from.y-to.y),step=water?4:distance<350?2:4;
+    const distance=Math.hypot(from.x-to.x,from.y-to.y),step=water?Math.max(4,Math.ceil(distance/300)):distance<350?2:Math.max(4,Math.ceil(distance/300));
     const valid=(x,y)=>world.inBounds(x,y)&&(water?world.inSea(x,y):!world.inSea(x,y)&&walkable(x,y));
     const clear=(a,b)=>{const n=Math.max(1,Math.ceil(Math.hypot(a.x-b.x,a.y-b.y)));for(let i=0;i<=n;i++){const t=i/n;if(!valid(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t))return false;}return true;};
     const nearest=p=>{let best=null;for(let dx=-4;dx<=4;dx++)for(let dy=-4;dy<=4;dy++){const q={x:Math.round(p.x/step)*step+dx*step,y:Math.round(p.y/step)*step+dy*step};if(valid(q.x,q.y)&&clear(p,q)&&(!best||Math.hypot(q.x-p.x,q.y-p.y)<Math.hypot(best.x-p.x,best.y-p.y)))best=q;}return best;};

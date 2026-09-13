@@ -20,11 +20,11 @@ def slug(name):
 
 async def main():
     world = json.loads(subprocess.check_output(['node', '-e',
-        "require('./world.js');console.log(JSON.stringify({lines:AnimalIsland.busLines.map(l=>l.id),stops:[...new Set(AnimalIsland.busStops.map(s=>s.name))]}));"], cwd=ROOT))
+        "require('./world.js');console.log(JSON.stringify({lines:[...AnimalIsland.busLines,...AnimalIsland.railLines].map(l=>l.id),stops:[...new Set([...AnimalIsland.busStops,...AnimalIsland.railStations].map(s=>s.name))]}));"], cwd=ROOT))
     clips = [{'file':'terminal-next.mp3','text':'Diese Fahrt endet an der nächsten Station.'},{'file':'terminal-arrival.mp3','text':'Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!'}]
     for line in world['lines']:
-        word = {'1':'eins','2':'zwei','3':'drei','4':'vier','5':'fünf','6':'sechs','7':'sieben'}[line]
-        clips.append({'file':f'line-{line}.mp3', 'text':f'Linie {word}.'})
+        word = {'R1':'eins','R2':'zwei','1':'eins','2':'zwei','3':'drei','4':'vier','5':'fünf','6':'sechs','7':'sieben'}[line]
+        clips.append({'file':f'line-{line}.mp3', 'text':f'Regionalzug {word}.' if line.startswith('R') else f'Linie {word}.'})
     for name in world['stops']:
         spoken = name.replace('Sued', 'Süd').replace('Bruecke', 'Brücke').replace('Hafenstrasse', 'Hafenstraße')
         clips.append({'file':f'station-{slug(name)}.mp3', 'text':f'Station: {spoken}.'})

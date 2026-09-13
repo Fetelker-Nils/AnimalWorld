@@ -3,7 +3,7 @@ function createSound(storage){
   let ctx,master,music,fx,engine,engineGain,busEngine,busGain,unlocked=false;
   let settings={muted:false,music:.3,effects:.55};
   try{const saved=JSON.parse(storage.getItem('animal-world-audio')||'null');if(saved){settings.muted=!!saved.muted;for(const key of ['music','effects'])if(Number.isFinite(saved[key]))settings[key]=Math.max(0,Math.min(1,saved[key]));}}catch{}
-  const busStates=new Map(),beds={};let busFilter,nextAmbient=0;
+  const busStates=new Map(),beds={};let busFilter,nextAmbient=0,nextRail=0;
   let ambience={wind:0,sea:0,traffic:0,busRoad:0};
   let theme='',nextNote=0,beat=0,nextStep=0,nextWork=0;
   const themes={
@@ -77,24 +77,26 @@ function createSound(storage){
     else tone(440,t,.08,.07,'sine',fx,580);
   }
   function updateBuses(state){
-    let loudest=0,speed=0;
+    let loudest=0,speed=0,train=false;
     for(const b of state.buses||[]){
       const old=busStates.get(b.id),phase=b.wait>1?'open':b.wait>0||b.doors>0?'closing':'closed';
       const distance=state.listener?Math.hypot(b.x-state.listener.x,b.y-state.listener.y):Infinity;
       const volume=state.paused||settings.muted?0:state.busId===b.id?1:Math.max(0,1-distance/32)**2;
-      if(volume>loudest){loudest=volume;speed=Math.abs(b.speed);}
+      if(volume>loudest){loudest=volume;speed=Math.abs(b.speed);train=b.kind==='train';}
       if(old&&volume>0){
         if(old.speed>.3&&b.speed<=.3)effect('bus-stop',volume);
+        if(b.kind==='train'&&old.phase!=='closed'&&phase==='closed'&&b.coach===0){tone(390,ctx.currentTime,.65,.045*volume,'sine');tone(520,ctx.currentTime,.65,.03*volume,'sine');}
         if(phase!==old.phase&&phase==='open')effect('bus-open',volume);
         if(phase!==old.phase&&phase==='closing')effect('bus-close',volume);
       }
       busStates.set(b.id,{speed:b.speed,phase});
     }
     for(const id of busStates.keys())if(!(state.buses||[]).some(b=>b.id===id))busStates.delete(id);
-    busEngine.frequency.setTargetAtTime(38+speed*3,ctx.currentTime,.15);
-    busFilter.frequency.setTargetAtTime(220+speed*22,ctx.currentTime,.2);
+    busEngine.frequency.setTargetAtTime(train?105+speed*3:38+speed*3,ctx.currentTime,.15);
+    busFilter.frequency.setTargetAtTime(train?650+speed*18:220+speed*22,ctx.currentTime,.2);
     const duck=announcementSources.length?.55:1;
     busGain.gain.setTargetAtTime(loudest*(speed>.3?.17:.055)*duck,ctx.currentTime,.15);
+    if(train&&speed>1&&loudest>0&&!settings.muted&&settings.effects>0&&ctx.currentTime>nextRail){noise(.035,.08*loudest,1300);tone(140,ctx.currentTime,.045,.04*loudest,'triangle');nextRail=ctx.currentTime+Math.max(.12,3/speed);}
     ambience.busRoad=loudest*Math.min(1,speed/13)*.1*duck;
     beds.busRoad.gain.gain.setTargetAtTime(ambience.busRoad,ctx.currentTime,.2);
   }
@@ -157,7 +159,7 @@ function createSound(storage){
     return announcementCache.get(url);
   }
   function announce({line,stop,next=false,terminal=false}){
-    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^\d+$/.test(String(line)))return false;
+    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^(R)?\d+$/.test(String(line)))return false;
     cancelAnnouncement();effect('phone');const token=announcementToken;
     const name=stop.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
     const urls=['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];

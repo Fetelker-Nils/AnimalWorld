@@ -25,10 +25,10 @@ assert(!buildingVisible({x:0,y:100,w:4,d:4,h:5,city:true}),'Entirely outside sid
 Object.assign(camera,originalCamera);
 assert.equal(Island.radius,560);
 assert((Island.radius/240)**2>=5,'At least five times the playable area');
-assert.equal(Island.buildings.filter(b=>b.city).length,56);
+assert.equal(Island.buildings.filter(b=>b.city&&!b.town).length,56);
 assert.equal(Island.heightAt(Island.mountain.x,Island.mountain.y),38);
 assert(!walkable(Island.pond.x,Island.pond.y));
-assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(1301,0));
+assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(Island.border+1,0));
 for(const building of Island.buildings)assert(!walkable(building.x,building.y));
 function finishTiming(){
   const before=activities.done.size;

@@ -44,6 +44,7 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   sound.set('muted',false);sound.announce({line:'2',stop:'Stadtzentrum',next:true});await new Promise(r=>setImmediate(r));assert.equal(fetched.length,2,'Decoded clips are cached');sound.cancelAnnouncement();
   sound.announce({line:'2',stop:'Stadtzentrum',terminal:true});await new Promise(r=>setImmediate(r));assert(fetched.includes('assets/sound/terminal-arrival.mp3'));sound.cancelAnnouncement();
   sound.announce({line:'2',stop:'Stadtzentrum',next:true,terminal:true});await new Promise(r=>setImmediate(r));assert(fetched.includes('assets/sound/terminal-next.mp3'));sound.cancelAnnouncement();
+  sound.announce({line:'R1',stop:'Weststadt',next:true});await new Promise(r=>setImmediate(r));assert(fetched.includes('assets/sound/line-R1.mp3')&&fetched.includes('assets/sound/next-weststadt.mp3'));sound.cancelAnnouncement();
   let resolveFetch;sandbox.fetch=()=>new Promise(resolve=>resolveFetch=resolve);
   const beforeCancel=context.sources.filter(s=>s.buffer?.decoded).length;
   sound.announce({line:'2',stop:'Nordstadt',next:true});sound.cancelAnnouncement();
