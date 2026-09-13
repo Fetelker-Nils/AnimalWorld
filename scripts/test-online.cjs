@@ -24,14 +24,14 @@ const {createServer}=require('./browser.cjs');
     assert.equal(trafficA.length,16);assert.equal(trafficB.length,16);
     assert(Math.hypot(trafficA[0].x-trafficB[0].x,trafficA[0].y-trafficB[0].y)<3,'Shared server traffic');
     const initialBuses=await a.evaluate(()=>window.__animalTest.state().buses);
-    assert.equal(initialBuses.length,9,'Server creates the complete fleet');
+    assert.equal(initialBuses.length,18,'Server creates the complete fleet');
     await a.waitForFunction(start=>window.__animalTest.state().buses.some(bus=>Math.hypot(bus.x-start.find(s=>s.id===bus.id).x,bus.y-start.find(s=>s.id===bus.id).y)>8),initialBuses,{timeout:40000});
     const fleetA=await a.evaluate(()=>window.__animalTest.state().buses),fleetB=await b.evaluate(()=>window.__animalTest.state().buses);
-    assert.equal(new Set(fleetA.map(bus=>bus.id)).size,9);
-    assert.equal(fleetB.length,9);
+    assert.equal(new Set(fleetA.map(bus=>bus.id)).size,18);
+    assert.equal(fleetB.length,18);
     for(const bus of fleetA){const other=fleetB.find(p=>p.id===bus.id);assert(other&&Math.hypot(bus.x-other.x,bus.y-other.y)<5,'One moving, shared instance of '+bus.id);}
     const passengersA=await a.evaluate(()=>window.__animalTest.state().commuters),passengersB=await b.evaluate(()=>window.__animalTest.state().commuters);
-    assert.equal(passengersA.length,9);assert.equal(passengersB.length,9);assert(passengersA.some(p=>p.busId),'Online NPC passengers board buses');
+    assert.equal(passengersA.length,18);assert.equal(passengersB.length,18);assert(passengersA.some(p=>p.busId),'Online NPC passengers board buses');
     for(const p of passengersA){const other=passengersB.find(q=>q.id===p.id);assert(other&&Math.hypot(p.x-other.x,p.y-other.y)<8,'Shared NPC passenger');}
     const seatingBus=await a.evaluate(()=>window.__animalTest.state().buses[0].id);
     for(const page of [a,b]){
@@ -43,8 +43,11 @@ const {createServer}=require('./browser.cjs');
     if(seatA.id===seatB.id)assert.notEqual(seatA.seat,seatB.seat,'Online players use different seats');
     await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>Number.isInteger(p.busSeat)));
     for(const page of [a,b]){await page.click('#interact');await page.waitForFunction(()=>window.__animalTest.state().busRide?.seat===null);await page.evaluate(()=>window.__animalTest.boardBus(null));}
+    const gatesA=await a.evaluate(()=>window.__animalTest.state().crossings),gatesB=await b.evaluate(()=>window.__animalTest.state().crossings);
+    assert(gatesA.length>0);assert.equal(gatesA.length,gatesB.length);
+    assert(gatesA.filter(g=>Math.abs(g.gate-gatesB.find(h=>h.id===g.id).gate)<.3).length>=gatesA.length*.9,'Shared animated crossing gates');
     const trainsA=await a.evaluate(()=>window.__animalTest.state().trains),trainsB=await b.evaluate(()=>window.__animalTest.state().trains);
-    assert.equal(trainsA.length,9);assert.equal(trainsB.length,9);for(const t of trainsA)assert(Math.hypot(t.x-trainsB.find(b=>b.id===t.id).x,t.y-trainsB.find(b=>b.id===t.id).y)<12,'Shared train fleet');
+    assert.equal(trainsA.length,15);assert.equal(trainsB.length,15);for(const t of trainsA)assert(Math.hypot(t.x-trainsB.find(b=>b.id===t.id).x,t.y-trainsB.find(b=>b.id===t.id).y)<12,'Shared train fleet');
     await a.evaluate(()=>window.__animalTest.visit(-3500,-45));await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>p.x===-3500),'Expanded online world');
     await a.evaluate(()=>window.__animalTest.boardBus(window.__animalTest.state().trains[0].id));await a.waitForTimeout(400);await a.click('#interact');await a.waitForFunction(()=>Number.isInteger(window.__animalTest.state().busRide?.seat));
     await b.waitForFunction(()=>window.__animalTest.state().peers.some(p=>p.busId?.startsWith('train-')&&Number.isInteger(p.busSeat)));

@@ -190,6 +190,7 @@
   let busRide=null;
   const transit=()=>[...life.buses,...life.trains];
   function busVehicleCollision(x,y,heading,model){
+    if(life.crossingBlocked(x,y,Math.max(model.length,model.width)/2))return true;
     if(model.kind)return false;
     return transit().some(b=>{
       // Separating-axis test for two oriented rectangles, including bumpers.
@@ -297,7 +298,7 @@
     if(mauz.jump>ceiling){mauz.jump=ceiling;mauz.vz=Math.min(0,mauz.vz);}
     if(mauz.vz<=0&&mauz.jump<=support){mauz.jump=support;mauz.vz=0;}
   }
-  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(Island.bridgeBarrier(x,y)||!Island.inBounds(x,y)||!busWalkable(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!jumpObjects(x,y).some(b=>onObject(b,x,y)&&b.h>(mauz.jump||0)+.04)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
+  function walkable(x,y){if(interior)return indoorWalkable(x,y);if(life.crossingBlocked(x,y)||Island.bridgeBarrier(x,y)||!Island.inBounds(x,y)||!busWalkable(x,y))return false;if(Island.inSea(x,y))return true;return !Island.blocked(x,y)&&!jumpObjects(x,y).some(b=>onObject(b,x,y)&&b.h>(mauz.jump||0)+.04)&&!lampIndex.near(x,y,1).some(l=>!damage.get('lamp',l.damageId)&&Math.hypot(l.x-x,l.y-y)<.55)&&!treeIndex.near(x,y,2).some(t=>!damage.get('tree',t.damageId)&&Math.hypot(x-t.x,y-t.y)<.65)&&!Island.booths.some(b=>Math.hypot(x-b.x,y-b.y)<.7);}
   function resize(){width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,touchDevice?1.25:2,Math.sqrt(2073600/(width*height)));canvas.width=Math.max(1,Math.floor(width*dpr));canvas.height=Math.max(1,Math.floor(height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);scale=Math.min(width*.85,height*1.05);cx=width*.5;cy=height*.43;}
   // A perspective camera seven world units behind Mauz, three units high,
   // tilted down by only seven degrees.
@@ -539,7 +540,7 @@
     for(const r of Island.railStructures){if(Math.abs(r.x-camera.x)>r.w/2+180||Math.abs(r.y-camera.y)>180)continue;
       if(r.kind==='bridge'){groundRect(r.x,r.y,r.w-8,75,'#68aebd');railBox(r.x,r.y,r.w,r.d,-.35,.4,'#a6aaa1');for(let x=r.x-r.w/2;x<r.x+r.w/2;x+=24)for(const side of [-1,1])railBox(x,r.y+side*5,.7,.7,.2,5,'#738d93');}
       for(const side of [-1,1])railBox(r.x,r.y+side*(r.d/2-.3),r.w,.6,0,r.kind==='tunnel'?8:1.2,r.kind==='tunnel'?'#697775':'#83989c');
-      if(r.kind==='tunnel'){railBox(r.x,r.y,r.w,r.d,7.4,2,'#8b9785');for(const side of [-1,1])transportFrame.mesh.push({color:side>0?'#829774':'#92a57c',points:[[r.x-r.w/2,r.y+side*7,9.4],[r.x+r.w/2,r.y+side*7,9.4],[r.x+r.w/2,r.y+side*30,0],[r.x-r.w/2,r.y+side*30,0]]});}
+      if(r.kind==='tunnel'){railBox(r.x,r.y,r.w,r.d,7.4,2,'#8b9785');for(const side of [-1,1])transportFrame.mesh.push({color:side>0?'#829774':'#92a57c',points:[[r.x-r.w/2,r.y+side*(r.d/2),9.4],[r.x+r.w/2,r.y+side*(r.d/2),9.4],[r.x+r.w/2,r.y+side*(r.d/2+24),0],[r.x-r.w/2,r.y+side*(r.d/2+24),0]]});}
     }
     for(const coach of life.trains.filter(t=>t.coach<2)){
       const next=life.trains.find(t=>t.service===coach.service&&t.coach===coach.coach+1);if(!next||Math.hypot(coach.x-camera.x,coach.y-camera.y)>180)continue;
@@ -547,13 +548,24 @@
       const p=[[a.x+nx,a.y+ny],[b.x+nx,b.y+ny],[b.x-nx,b.y-ny],[a.x-nx,a.y-ny]];
       transportFrame.mesh.push({points:p.map(q=>[...q,.8]),color:'#44545a'});for(let i=0;i<4;i++)transportFrame.mesh.push({points:[[...p[i],.5],[...p[(i+1)%4],.5],[...p[(i+1)%4],.8],[...p[i],.8]],color:'#34454a'});
     }
+    for(const gate of life.crossings){
+      if(Math.hypot(gate.x-camera.x,gate.y-camera.y)>180)continue;
+      for(const side of [-1,1]){
+        const x=gate.x+(gate.vertical?-gate.width/2-.4:side*9),y=gate.y+(gate.vertical?side*9:-gate.width/2-.4);
+        railBox(x,y,.45,.45,0,1.4,'#596b70');
+        const angle=(1-gate.gate)*Math.PI/2,length=gate.width+.8;
+        for(let d=0;d<length;d+=.4){const horizontal=d*Math.cos(angle),z=1.2+d*Math.sin(angle);
+          railBox(x+(gate.vertical?horizontal:0),y+(gate.vertical?0:horizontal),gate.vertical?.45:.18,gate.vertical?.18:.45,z,.18,Math.floor(d/.8)%2?'#f4eee0':'#c9433e');}
+        railBox(x,y,.65,.25,1.7,.35,gate.closed&&Math.floor(time*3)%2?'#ff453a':'#502f2c');
+      }
+    }
     for(const station of Island.railStations){if(Math.hypot(station.x-camera.x,station.y-camera.y)>180)continue;
       const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:80,d=vertical?80:9;
       railBox(station.x,station.y,w,d,0,.3,'#cec7b2');
       for(const f of [-22,0,22]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,.4,.4,.3,4,'#466b76');}
       railBox(station.x,station.y,vertical?5:75,vertical?75:5,4.3,.25,'#617d85');
       for(const f of [-16,16]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,vertical?1:3,vertical?3:1,.3,.6,'#9f7854');}
-      marker(station,station.line+' - '+station.name,'#3a738b');
+      marker(station,station.line+' - '+station.name+' | Gleis '+station.platform,'#3a738b');
     }
   }
   function trainDrawing(b){
@@ -583,11 +595,6 @@
       for(const end of [-4.5,4.45])face(roof.map(([side,z])=>[end,side,z]),'#d2d9d7');
       for(const side of [-1,1])cube(4.025,side*1.5,.95,.18,2.95,.25,'#e8e9e4');
     }
-    // Seal the curved roof at both ends of passenger carriages.
-    if(!cab){
-      for(const end of [-4.5,4.45])face(roof.map(([side,z])=>[end,side,z]),'#d2d9d7');
-      for(const side of [-1,1])cube(4.025,side*1.5,.95,.18,2.95,.25,'#e8e9e4');
-    }
     cube(-1,0,2.2,1.1,3.36,.2,'#667780');
     // Enclosed end wall and rubber gangway between the coupled carriages.
     cube(-4.48,0,.12,3,.45,2.65,'#d2d9d7');cube(-4.57,0,.18,1.15,.5,2.1,'#303b43');
@@ -605,6 +612,10 @@
       for(const side of [-1,1])cube(4.025,side*1.5,.95,.16,.45,2.65,'#e8e9e4');
       cube(4.45,0,.12,3,.45,2.65,'#d2d9d7');cube(4.52,0,.12,1.2,.5,2.15,'#303b43');
     }
+    // Solid door jambs close the seams; only the sliding doorway remains open.
+    for(const side of [-1,1])for(const f of [1.55,3.6])cube(f,side*1.5,.14,.2,.45,2.55,'#d2d9d7');
+    face(roof.map(([side,z])=>[-4.5,side,z]),'#d2d9d7');
+    if(cab)cube(3.32,0,.12,3,.45,2.65,'#d2d9d7');
     // Two underfloor bogies with small inset steel wheels and axles.
     for(const centre of [-2.9,2.9]){
       cube(centre,0,1.3,2.15,.08,.25,'#273740');
@@ -808,12 +819,11 @@
     groundOval(0,0,Island.radius+5,Island.radius+5,'#b3dcd9');
     groundOval(0,0,Island.radius+1,Island.radius+1,'#e8dab0');
     groundOval(0,0,Island.radius-5,Island.radius-5,'#a7c875');
-    const land=Island.continent;groundOval(land.x,land.y,land.radius+1,land.radius+1,'#e8dab0');groundOval(land.x,land.y,land.radius-5,land.radius-5,'#a7c875');groundRect(-565,40,140,130,'#a7c875');
+    const land=Island.continent;groundOval(land.x,land.y,land.radius+1,land.radius+1,'#e8dab0');groundOval(land.x,land.y,land.radius-5,land.radius-5,'#a7c875');groundRect(-565,60,140,170,'#a7c875');
     const luxury=Island.luxury;groundOval(luxury.x,luxury.y,luxury.radius+1,luxury.radius+1,'#e8dab0');groundOval(luxury.x,luxury.y,luxury.radius-5,luxury.radius-5,'#a7c875');
     for(const dock of Island.docks){groundRect(dock.x,dock.y,dock.w,dock.d,'#b58d64');for(let x=dock.x-dock.w/2;x<dock.x+dock.w/2;x++)groundRect(x,dock.y,.05,dock.d,'#957453');}
     for(const a of Island.airfields){groundRect(a.x,a.y,a.w,a.d,'#728589');for(let y=a.y-a.d/2+4;y<a.y+a.d/2;y+=8)groundRect(a.x,y,.3,4,'#f0edda');}
     drawBorder();
-    drawRailway();
     groundRect(Island.bridge.x,Island.bridge.y,Island.bridge.w,Island.bridge.d,'#b9bca9');
     const nearbyRoads=Island.roads.filter(r=>Math.abs(r.x-camera.x)<r.w/2+200&&Math.abs(r.y-camera.y)<r.d/2+200);
     for(const r of nearbyRoads)groundRect(r.x,r.y,r.w+1.3,r.d+1.3,'#d2cfba');
@@ -823,6 +833,7 @@
       const vertical=r.d>r.w,length=vertical?r.d:r.w;
       for(let n=Math.max(-length/2+2,Math.floor(((vertical?camera.y-r.y:camera.x-r.x)-180)/6)*6);n<Math.min(length/2,(vertical?camera.y-r.y:camera.x-r.x)+180);n+=6)groundRect(r.x+(vertical?0:n),r.y+(vertical?n:0),vertical?.13:2,vertical?2:.13,'#e5e5ce');
     }
+    drawRailway();
     groundOval(0,0,5.5,5.5,'#e9ddbd');
     const bridge=Island.bridge;
     for(const side of [-1,1]){
@@ -1385,7 +1396,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,trains:life.trains,railStations:Island.railStations,worldBorder:Island.border,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({crossings:life.crossings,busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,trains:life.trains,railStations:Island.railStations,worldBorder:Island.border,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
   let lastPaint=0;
   function soundEnvironment(){

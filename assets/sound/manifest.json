@@ -39,12 +39,56 @@
       "text": "Linie sieben."
     },
     {
+      "file": "line-8.mp3",
+      "text": "Linie acht."
+    },
+    {
+      "file": "line-9.mp3",
+      "text": "Linie neun."
+    },
+    {
+      "file": "line-10.mp3",
+      "text": "Linie zehn."
+    },
+    {
+      "file": "line-11.mp3",
+      "text": "Linie elf."
+    },
+    {
+      "file": "line-12.mp3",
+      "text": "Linie zwölf."
+    },
+    {
+      "file": "line-13.mp3",
+      "text": "Linie dreizehn."
+    },
+    {
+      "file": "line-14.mp3",
+      "text": "Linie vierzehn."
+    },
+    {
+      "file": "line-15.mp3",
+      "text": "Linie fünfzehn."
+    },
+    {
+      "file": "line-16.mp3",
+      "text": "Linie sechzehn."
+    },
+    {
       "file": "line-R1.mp3",
       "text": "Regionalzug eins."
     },
     {
       "file": "line-R2.mp3",
       "text": "Regionalzug zwei."
+    },
+    {
+      "file": "line-R3.mp3",
+      "text": "Regionalzug drei."
+    },
+    {
+      "file": "line-R4.mp3",
+      "text": "Regionalzug vier."
     },
     {
       "file": "station-nordstadt.mp3",
@@ -143,14 +187,6 @@
       "text": "Nächste Station: Stadteingang."
     },
     {
-      "file": "station-perlenhafen.mp3",
-      "text": "Station: Perlenhafen."
-    },
-    {
-      "file": "next-perlenhafen.mp3",
-      "text": "Nächste Station: Perlenhafen."
-    },
-    {
       "file": "station-perlenhafen-mitte.mp3",
       "text": "Station: Perlenhafen Mitte."
     },
@@ -247,28 +283,148 @@
       "text": "Nächste Station: Südstrand."
     },
     {
-      "file": "station-osthafen-bruecke.mp3",
-      "text": "Station: Osthafen Brücke."
-    },
-    {
-      "file": "next-osthafen-bruecke.mp3",
-      "text": "Nächste Station: Osthafen Brücke."
-    },
-    {
-      "file": "station-perlenhafen-bruecke.mp3",
-      "text": "Station: Perlenhafen Brücke."
-    },
-    {
-      "file": "next-perlenhafen-bruecke.mp3",
-      "text": "Nächste Station: Perlenhafen Brücke."
-    },
-    {
       "file": "station-mauz-hauptbahnhof.mp3",
       "text": "Station: Mauz Hauptbahnhof."
     },
     {
       "file": "next-mauz-hauptbahnhof.mp3",
       "text": "Nächste Station: Mauz Hauptbahnhof."
+    },
+    {
+      "file": "station-mauz-zentrum.mp3",
+      "text": "Station: Mauz Zentrum."
+    },
+    {
+      "file": "next-mauz-zentrum.mp3",
+      "text": "Nächste Station: Mauz Zentrum."
+    },
+    {
+      "file": "station-weststadt-bahnhof.mp3",
+      "text": "Station: Weststadt Bahnhof."
+    },
+    {
+      "file": "next-weststadt-bahnhof.mp3",
+      "text": "Nächste Station: Weststadt Bahnhof."
+    },
+    {
+      "file": "station-weststadt-zentrum.mp3",
+      "text": "Station: Weststadt Zentrum."
+    },
+    {
+      "file": "next-weststadt-zentrum.mp3",
+      "text": "Nächste Station: Weststadt Zentrum."
+    },
+    {
+      "file": "station-lindenau-bahnhof.mp3",
+      "text": "Station: Lindenau Bahnhof."
+    },
+    {
+      "file": "next-lindenau-bahnhof.mp3",
+      "text": "Nächste Station: Lindenau Bahnhof."
+    },
+    {
+      "file": "station-lindenau-zentrum.mp3",
+      "text": "Station: Lindenau Zentrum."
+    },
+    {
+      "file": "next-lindenau-zentrum.mp3",
+      "text": "Nächste Station: Lindenau Zentrum."
+    },
+    {
+      "file": "station-bergstadt-bahnhof.mp3",
+      "text": "Station: Bergstadt Bahnhof."
+    },
+    {
+      "file": "next-bergstadt-bahnhof.mp3",
+      "text": "Nächste Station: Bergstadt Bahnhof."
+    },
+    {
+      "file": "station-bergstadt-zentrum.mp3",
+      "text": "Station: Bergstadt Zentrum."
+    },
+    {
+      "file": "next-bergstadt-zentrum.mp3",
+      "text": "Nächste Station: Bergstadt Zentrum."
+    },
+    {
+      "file": "station-tannenheim-bahnhof.mp3",
+      "text": "Station: Tannenheim Bahnhof."
+    },
+    {
+      "file": "next-tannenheim-bahnhof.mp3",
+      "text": "Nächste Station: Tannenheim Bahnhof."
+    },
+    {
+      "file": "station-tannenheim-zentrum.mp3",
+      "text": "Station: Tannenheim Zentrum."
+    },
+    {
+      "file": "next-tannenheim-zentrum.mp3",
+      "text": "Nächste Station: Tannenheim Zentrum."
+    },
+    {
+      "file": "station-sonnenfeld-bahnhof.mp3",
+      "text": "Station: Sonnenfeld Bahnhof."
+    },
+    {
+      "file": "next-sonnenfeld-bahnhof.mp3",
+      "text": "Nächste Station: Sonnenfeld Bahnhof."
+    },
+    {
+      "file": "station-sonnenfeld-zentrum.mp3",
+      "text": "Station: Sonnenfeld Zentrum."
+    },
+    {
+      "file": "next-sonnenfeld-zentrum.mp3",
+      "text": "Nächste Station: Sonnenfeld Zentrum."
+    },
+    {
+      "file": "station-seestadt-bahnhof.mp3",
+      "text": "Station: Seestadt Bahnhof."
+    },
+    {
+      "file": "next-seestadt-bahnhof.mp3",
+      "text": "Nächste Station: Seestadt Bahnhof."
+    },
+    {
+      "file": "station-seestadt-zentrum.mp3",
+      "text": "Station: Seestadt Zentrum."
+    },
+    {
+      "file": "next-seestadt-zentrum.mp3",
+      "text": "Nächste Station: Seestadt Zentrum."
+    },
+    {
+      "file": "station-blumental-bahnhof.mp3",
+      "text": "Station: Blumental Bahnhof."
+    },
+    {
+      "file": "next-blumental-bahnhof.mp3",
+      "text": "Nächste Station: Blumental Bahnhof."
+    },
+    {
+      "file": "station-blumental-zentrum.mp3",
+      "text": "Station: Blumental Zentrum."
+    },
+    {
+      "file": "next-blumental-zentrum.mp3",
+      "text": "Nächste Station: Blumental Zentrum."
+    },
+    {
+      "file": "station-waldruh-bahnhof.mp3",
+      "text": "Station: Waldruh Bahnhof."
+    },
+    {
+      "file": "next-waldruh-bahnhof.mp3",
+      "text": "Nächste Station: Waldruh Bahnhof."
+    },
+    {
+      "file": "station-waldruh-zentrum.mp3",
+      "text": "Station: Waldruh Zentrum."
+    },
+    {
+      "file": "next-waldruh-zentrum.mp3",
+      "text": "Nächste Station: Waldruh Zentrum."
     },
     {
       "file": "station-weststadt.mp3",
@@ -301,14 +457,6 @@
     {
       "file": "next-tannenheim.mp3",
       "text": "Nächste Station: Tannenheim."
-    },
-    {
-      "file": "station-lindenau-sued.mp3",
-      "text": "Station: Lindenau Süd."
-    },
-    {
-      "file": "next-lindenau-sued.mp3",
-      "text": "Nächste Station: Lindenau Süd."
     },
     {
       "file": "station-sonnenfeld.mp3",

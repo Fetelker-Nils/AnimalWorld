@@ -19,9 +19,9 @@ const doorBus=simulation.buses[0];doorBus.wait=1.5;doorBus.doors=1;const obstruc
 const replica=sandbox.createCityLife(Island,[{id:'compact'}]);replica.accept(simulation.snapshot());assert.equal(replica.buses[0].x,simulation.buses[0].x);assert.equal(replica.buses[0].doors,simulation.buses[0].doors);
 console.log('PASS automatic bus loop, airport road, timed doors, walk-in boarding, carry, safe exit and network snapshot');
 
-const packet=simulation.snapshot();replica.accept({...packet,buses:[...packet.buses,packet.buses[0]]});assert.equal(replica.buses.length,9,'Snapshots cannot duplicate a bus');
+const packet=simulation.snapshot();replica.accept({...packet,buses:[...packet.buses,packet.buses[0]]});assert.equal(replica.buses.length,18,'Snapshots cannot duplicate a bus');
 let impacts=0;const driver={x:Island.booths[0].x,y:Island.booths[0].y,jump:0};const vehicle=sandbox.createVehicles(Island,()=>true,()=>{impacts++;},()=>false,busVehicleCollision);assert(vehicle.spawn('compact',Island.booths[0],driver));Object.assign(driver,{x:vehicle.car.x,y:vehicle.car.y});assert(vehicle.toggle(driver));Object.assign(bus,{x:0,y:20,heading:Math.PI/2});Object.assign(vehicle.car,{x:0,y:10,heading:Math.PI/2,speed:30});for(let i=0;i<120;i++)vehicle.step(1/120,1,0,false,driver);assert(vehicle.car);assert.equal(vehicle.car.speed,0);assert.equal(impacts,0,'Bus collision never calls explosion/impact handler');
-console.log('PASS all seven lines, unique bus replicas and non-explosive car/bus collision');
+console.log('PASS all sixteen lines, unique bus replicas and non-explosive car/bus collision');
 
 // The complete fleet must keep serving stops with NPC cars present.
 const trafficRun=sandbox.createCityLife(Island,[{id:"compact"}]);

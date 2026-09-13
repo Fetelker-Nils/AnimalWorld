@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 require('../world.js');require('../city-life.js');
 const world=AnimalIsland,life=createCityLife(world,[{id:'compact'}]),seen=new Set();
-assert.equal(life.commuters.length,9);
+assert.equal(life.commuters.length,18);
 const last=new Map(life.commuters.map(p=>[p.id,{x:p.x,y:p.y}]));
 for(let i=0;i<12000;i++){
  life.tick(.05,null,null);
@@ -15,5 +15,5 @@ for(let i=0;i<12000;i++){
 for(const stage of ['waiting','boarding','seated','exiting'])assert(seen.has(stage),stage);
 assert(life.commuters.every(p=>p.trips>0),'Every commuter completes a bus trip');
 const replica=createCityLife(world,[{id:'compact'}]);replica.accept(life.snapshot());replica.accept(life.snapshot());
-assert.equal(replica.commuters.length,9);assert.deepEqual(replica.commuters.map(p=>[p.id,p.x,p.y,p.stage,p.busId]),life.commuters.map(p=>[p.id,p.x,p.y,p.stage,p.busId]));
+assert.equal(replica.commuters.length,18);assert.deepEqual(replica.commuters.map(p=>[p.id,p.x,p.y,p.stage,p.busId]),life.commuters.map(p=>[p.id,p.x,p.y,p.stage,p.busId]));
 console.log('PASS NPC passengers: continuous boarding/riding/exiting, open doors, free seats, completed journeys and shared snapshots');

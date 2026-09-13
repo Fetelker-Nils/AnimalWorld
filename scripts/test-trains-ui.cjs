@@ -9,6 +9,7 @@ const {createServer}=require('./browser.cjs');
  await p.screenshot({path:'test-results/train-interior.png'});
  await p.evaluate(()=>{const t=window.__animalTest;t.boardBus(t.state().trains[0].id);});await p.click('#interact');assert(Number.isInteger((await p.evaluate(()=>window.__animalTest.state())).busRide.seat));
  await p.evaluate(()=>window.__animalTest.advance(45));const riding=await p.evaluate(()=>window.__animalTest.state());assert(riding.trains[0].speed>0);assert(Math.hypot(riding.x-riding.trains[0].x,riding.y-riding.trains[0].y)<12,'Ride follows train');
+ for(const coach of [0,1,2]){await p.evaluate(coach=>{const t=window.__animalTest;t.boardBus(t.state().trains[coach].id);},coach);await p.screenshot({path:'test-results/train-coach-'+coach+'.png'});}
  await p.evaluate(()=>{window.__animalTest.boardBus(null);window.__animalTest.visit(-2640,-10,Math.PI);});await p.screenshot({path:'test-results/rail-tunnel.png'});
  await p.evaluate(()=>window.__animalTest.visit(-4200,-28,Math.PI/2));await p.screenshot({path:'test-results/rail-bridge.png'});
  await p.evaluate(()=>window.__animalTest.visit(-1000,-45,-Math.PI/2));await p.screenshot({path:'test-results/weststadt.png'});

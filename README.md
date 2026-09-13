@@ -10,6 +10,14 @@ Spielstand und Ton-Einstellungen werden in diesem Browser gespeichert. Der bishe
 
 Ein Browser-Sandbox-Spiel mit Offline- und Online-Modus mit Mauz, niedrig geführter Folgekamera, kleiner Spieloberfläche, Jobs, Autos, Musik und kaufbaren Häusern.
 
+## Bahn- und Busnetz
+
+Vier Bahnlinien (R1 bis R4) bedienen die Bahnhöfe mit fünf Zügen und insgesamt 15 Wagen. Gemeinsame Bahnhöfe haben getrennte Gleise und nummerierte Bahnsteige. Bahnsteige liegen neben den Strassen auf freien Flächen. Gleise kreuzen Strassen nur an gesicherten Bahnübergängen; die animierten Schranken blockieren Fahrzeuge und lassen den NPC-Verkehr warten.
+
+16 Buslinien mit 18 Bussen verbinden die Inseln und die acht neuen Orte. Jeder Bahnhof hat einen Buszubringer. Eng benachbarte Hafenhalte wurden zusammengelegt und der Dorfhalt wurde versetzt. Alle Linien verwenden lokale MP3-Ansagen. Fahrzeuge und Schranken teilen sich im Online-Modus einen gemeinsamen Serverzustand.
+
+Gezielte Prüfungen: `node scripts/test-transport-layout.cjs`, `npm run test:trains` und `npm run test:online`.
+
 ## Neue Welt: mindestens fünfmal so gross
 
 Die begehbare Insel hat jetzt 1'120 Welteinheiten Durchmesser (vorher 480). Bei gleicher Kreisform sind das rund **5,44-mal so viel Fläche**. Zusätzliche Strassen verbinden Nordstadt, Obstgarten und neue Wohngebiete im Osten, Westen und Süden. Stadt, Dorf, Berg mit Gipfelweg, Farm, Werkstatt, Hafen, Wald und See bleiben erhalten. Insgesamt gibt es 56 mehrstöckige Stadtgebäude und zehn Telefonzellen.
