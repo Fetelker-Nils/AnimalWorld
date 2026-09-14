@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const assets = new Set(['assets/animal-world-logo.png','index.html','spielinfo.html','info.css','robots.txt','sitemap.xml','style.css','analytics.js','game.js','world.js','housing.js','navigation.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
+const assets = new Set(['assets/animal-world-logo.png','index.html','spielinfo.html','info.css','robots.txt','sitemap.xml','style.css','analytics.js','game.js','world.js','housing.js','navigation.js','save-worlds.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
 for(const clip of require('../assets/sound/manifest.json').clips)assets.add('assets/sound/'+clip.file);
 assets.add('assets/sound/manifest.json');
 function createServer(directory = root) {

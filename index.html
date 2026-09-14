@@ -35,15 +35,16 @@
 <p class="eyebrow">DEIN KLEINES ABENTEUER</p>
 <h1>animal<br><span>world.</span></h1>
 <p class="welcome">Dein kostenloses 3D-Tierabenteuer im Browser: Entdecke Inseln, erledige Jobs und finde dein eigenes Zuhause.</p>
+<section class="world-choice" aria-labelledby="world-choice-title"><h2 id="world-choice-title">Deine Welten</h2><p>Vier Speicherplätze. Jede Welt hat ihren eigenen Fortschritt – online und offline.</p><div id="world-slots" class="world-slots"></div><label for="world-name">Name der gewählten Welt</label><input id="world-name" maxlength="24" autocomplete="off"><p id="world-message" role="status"></p></section>
 <div class="character-choice"><label for="character-name">Dein Name</label><input id="character-name" maxlength="18" value="Mauz" autocomplete="off"><label for="character-species">Dein Tier</label><select id="character-species"><option value="cat">Katze</option><option value="rabbit">Hase</option><option value="bear">Bär</option><option value="fox">Fuchs</option></select></div>
-<button id="play" class="primary" autofocus>Offline spielen <span aria-hidden="true">→</span></button>
+<button id="play" class="primary">Offline spielen <span aria-hidden="true">→</span></button>
 <button id="play-online" class="primary online-play">Online spielen <span aria-hidden="true">→</span></button>
 <p id="online-message" class="offline-note" role="status">Offline für dich. Online mit allen auf einer gemeinsamen Insel.</p>
 <p class="start-info"><a href="/hilfe">Spiel entdecken &amp; Steuerung lernen</a></p>
+<button id="menu-audio" class="menu-audio">Musik einschalten</button>
 <noscript><p>Zum Spielen brauchst du JavaScript. <a href="/hilfe">Hier erfährst du mehr über Animal World.</a></p></noscript>
 </div>
 <span class="start-version">ANIMAL WORLD · 0.1</span>
-<button id="menu-audio" class="menu-audio">Musik einschalten</button>
 </main>
 <div id="game-ui" hidden>
 <div id="online-status" class="online-status" hidden></div><button id="wave" class="wave-button" hidden>Winken</button>
@@ -89,6 +90,7 @@
 <div class="home-card"><p class="eyebrow">EIN PLATZ FÜR MAUZ</p><div class="home-picture" aria-hidden="true"><span>⌂</span></div><h2 id="home-title"></h2><p id="home-status"></p><label id="home-unit-label" hidden>Etage und Wohnung <select id="home-unit"></select></label><p id="home-layout"></p><button id="home-lobby" class="secondary" hidden>Treppenhaus betreten</button><div class="home-numbers"><span>Kaufpreis<strong id="home-price"></strong></span><span>Dein Guthaben<strong id="home-balance"></strong></span></div><p>Dein Haus bleibt gespeichert. Als Zuhause festgelegt startest du beim nächsten Öffnen der App vor seiner Tür.</p><button id="home-buy" class="primary"></button><button id="home-enter" class="primary" hidden>Haus betreten</button><button id="home-set" class="primary" hidden>Als Zuhause festlegen</button><p id="home-message" role="status"></p><button id="home-close" class="secondary">Zurück zur Welt</button></div>
 </section>
 <script src="world.js"></script><script src="housing.js"></script><script src="navigation.js"></script>
+<script src="save-worlds.js"></script>
 <script src="delivery.js"></script>
 <script src="activities.js"></script>
 <script src="vehicles.js"></script>

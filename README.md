@@ -10,6 +10,14 @@ Spielstand und Ton-Einstellungen werden in diesem Browser gespeichert. Der bishe
 
 Ein Browser-Sandbox-Spiel mit Offline- und Online-Modus mit Mauz, niedrig geführter Folgekamera, kleiner Spieloberfläche, Jobs, Autos, Musik und kaufbaren Häusern.
 
+## Vier Spielwelten
+
+Im Startmenü gibt es vier Speicherplätze. Der bisherige Spielstand bleibt automatisch in Welt 1 erhalten. Leere Plätze erstellen eine neue Welt; Namen lassen sich bearbeiten. Nach der Auswahl kannst du online oder offline spielen. Geld, Lieferungen, Bankguthaben, Kleidung, Figur und Zuhause werden je Welt gespeichert. Online-Besitz hat je Welt eine eigene Identität; alle Online-Spieler treffen sich weiterhin auf der gemeinsamen Insel. Ton-Einstellungen gelten für alle Speicherplätze.
+
+Zum Wechseln im Pausenmenü zum Startbildschirm zurückkehren und eine andere Welt auswählen. Die Seite lädt dabei neu, damit keine laufenden Jobs oder Fahrzeuge aus der vorherigen Sitzung übernommen werden. Die Spielstände liegen lokal in diesem Browser.
+
+Prüfung: `npm run test:worlds`.
+
 ## Bahn- und Busnetz
 
 Vier Bahnlinien (R1 bis R4) bedienen die Bahnhöfe mit fünf Zügen und insgesamt 15 Wagen. Gemeinsame Bahnhöfe haben getrennte Gleise und nummerierte Bahnsteige. Bahnsteige liegen neben den Strassen auf freien Flächen. Gleise kreuzen Strassen nur an gesicherten Bahnübergängen; die animierten Schranken blockieren Fahrzeuge und lassen den NPC-Verkehr warten.

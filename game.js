@@ -14,6 +14,8 @@
   let mode = 'start';
   let storage;
   try { storage=window.localStorage; } catch { storage={getItem(){throw Error('Storage unavailable');},setItem(){throw Error('Storage unavailable');}}; }
+  const saveWorlds=typeof createSaveWorlds==='function'?createSaveWorlds(storage):null;
+  if(saveWorlds)storage=saveWorlds.storage;
   const adventure=createAdventure(storage);
   Object.assign(mauz,adventure.profile);
   const nameInput=document.querySelector('#character-name'),speciesInput=document.querySelector('#character-species');
@@ -1273,7 +1275,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     if(mode==='garage'){document.querySelector('#garage-message').textContent='';for(const b of document.querySelectorAll('[data-car]'))b.hidden=(VehicleModels.find(m=>m.id===b.dataset.car).kind||'car')!==(currentBooth.kind||'car');document.querySelector('[data-car]:not([hidden])')?.focus();}
     if(mode==='map'){drawMap();document.querySelector('#map-close').focus();}
     updateJobUI();
-    if(mode==='start')document.querySelector('#play').focus();
+    if(mode==='start'){renderWorldSlots();(saveWorlds?document.querySelector('.world-slot[aria-pressed="true"]'):document.querySelector('#play'))?.focus();}
     if(mode==='pause')document.querySelector('#resume').focus();
     if(mode==='playing')document.activeElement?.blur();
   }
@@ -1289,6 +1291,21 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   document.querySelector('#map-close').onclick=()=>setMode('playing');
   function cancelSleep(){if(sleeping?.online){network.sleep(false);sleeping=null;document.querySelector('#sleep-screen').hidden=true;setMode('playing');}}
   document.querySelector('#sleep-cancel').onclick=cancelSleep;
+  function renderWorldSlots(){
+    if(!saveWorlds)return;
+    const list=document.querySelector('#world-slots');list.replaceChildren();
+    saveWorlds.list().forEach((slot,i)=>{
+      const button=document.createElement('button');button.type='button';button.className='world-slot';button.dataset.slot=String(i);button.setAttribute('aria-pressed',String(saveWorlds.active===i));
+      const title=document.createElement('strong'),stats=document.createElement('small');title.textContent=slot?slot.name:'Neue Welt '+(i+1);stats.textContent=slot?slot.coins+' Münzen · '+slot.completed+' Lieferungen':'Welt erstellen';button.append(title,stats);
+      button.onclick=()=>{if(slot&&saveWorlds.active===i)return;try{if(slot)saveWorlds.select(i);else saveWorlds.create(i);network.stop();window.location.reload();}catch{document.querySelector('#world-message').textContent='Die Welt konnte nicht gespeichert werden. Bitte erlaube das Speichern im Browser.';}};list.append(button);
+    });
+    document.querySelector('#world-name').value=saveWorlds.list()[saveWorlds.active].name;
+    document.querySelector('#pause-title').textContent='Pause ? '+saveWorlds.list()[saveWorlds.active].name;
+  }
+  if(saveWorlds){
+    renderWorldSlots();
+    document.querySelector('#world-name').onchange=e=>{try{saveWorlds.rename(e.target.value);renderWorldSlots();}catch{document.querySelector('#world-message').textContent='Name konnte nicht gespeichert werden.';}};
+  }
   document.querySelector('#play').onclick=()=>{chooseCharacter();onlineMode=false;network.stop();dayCycle.stopShared();setMode('playing');};
   document.querySelector('#play-online').onclick=async()=>{
     chooseCharacter();
@@ -1396,7 +1413,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     advanceSleep,
     advance(seconds){if(mode==='playing')for(let i=0;i<Math.ceil(seconds*60);i++)step(1/60);},
     audio:()=>sound.unlock(),
-    state:()=>({crossings:life.crossings,busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,trains:life.trains,railStations:Island.railStations,worldBorder:Island.border,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
+    state:()=>({saveWorld:saveWorlds?.active??0,crossings:life.crossings,busMap:!!busMapStop,busMapLine,busRide,commuters:life.commuters,buses:life.buses,trains:life.trains,railStations:Island.railStations,worldBorder:Island.border,busStops:Island.busStops,elevation:mauz.elevation||0,floor:interior?.floor,networkId:network.id,route:plannedRoute,explosionParticles:motes.filter(p=>p.big).length,name:mauz.name,species:mauz.species,air:adventure.air,inWater:adventure.wet,riding:network.rideOwner,renderedFrames,carPosition:vehicles.car?{x:vehicles.car.x,y:vehicles.car.y,z:vehicles.car.z||0}:null,renderPixels:canvas.width*canvas.height,animal3D:true,viewFront,traffic:life.cars.map(c=>({x:c.x,y:c.y,speed:c.speed})),citizens:life.walkers.map(n=>({x:n.x,y:n.y,species:n.species,moving:n.moving})),fallen:damage.fallen,online:onlineMode,network:network.status,peers:network.players,bankBalance:job.bankBalance,meal:city.meal,therapy:city.therapy,outfitId:job.outfitId,ownedOutfits:job.ownedOutfits,minutes:dayCycle.minutes,clock:dayCycle.label,night:dayCycle.night,day:dayCycle.day,lamps:Island.lamps.length,sleeping:!!sleeping,jump:mauz.jump,stick:{x:stick.x,y:stick.y},challenge:activities.challenge,cameraDistance,cameraHeight,depthRenderer:!!indoorRenderer,transportDepthRenderer:!!transportRenderer,propertyReady:propertiesReady,soldHomes:network.sold,layout:homePlan()?{w:homePlan().w,d:homePlan().d,bed:homePlan().bed,exit:homePlan().exit,spawn:homePlan().spawn}:null,interior:interior?.id||null,room:interior?roomName():null,audioRunning:sound.running,ambience:sound.ambience,announcementPlaying:sound.announcementPlaying,theme:sound.scene,muted:sound.settings.muted,audioSettings:sound.settings,ownedHomes:ownedHomes(),homeId:job.homeId,mapZoom:mapView.zoom,active:job.active,coins:job.coins,completed:job.completed,activity:activities.active?.id||null,passenger:activities.passenger,done:activities.done.size,driving:vehicles.driving,car:vehicles.car?.model.id||null,speed:vehicles.car?.speed||0,x:mauz.x,y:mauz.y,mode,height:Island.heightAt(mauz.x,mauz.y)})
   };
   let lastPaint=0;
   function soundEnvironment(){
