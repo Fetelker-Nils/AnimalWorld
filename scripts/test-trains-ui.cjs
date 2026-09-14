@@ -13,5 +13,6 @@ const {createServer}=require('./browser.cjs');
  await p.evaluate(()=>{window.__animalTest.boardBus(null);window.__animalTest.visit(-2640,-10,Math.PI);});await p.screenshot({path:'test-results/rail-tunnel.png'});
  await p.evaluate(()=>window.__animalTest.visit(-4200,-28,Math.PI/2));await p.screenshot({path:'test-results/rail-bridge.png'});
  await p.evaluate(()=>window.__animalTest.visit(-1000,-45,-Math.PI/2));await p.screenshot({path:'test-results/weststadt.png'});
+ await p.evaluate(()=>window.__animalTest.visit(-150,-4,-Math.PI/2));await p.screenshot({path:'test-results/rail-house-clearance.png'});
  await p.click('#map-open');await p.screenshot({path:'test-results/rail-world-map.png'});assert.deepEqual(errors,[]);console.log('PASS train walk-in, MP3, sitting, travel, new city, tunnel, bridge and map');
  }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

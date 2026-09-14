@@ -14,6 +14,8 @@ Ein Browser-Sandbox-Spiel mit Offline- und Online-Modus mit Mauz, niedrig gefüh
 
 Vier Bahnlinien (R1 bis R4) bedienen die Bahnhöfe mit fünf Zügen und insgesamt 15 Wagen. Gemeinsame Bahnhöfe haben getrennte Gleise und nummerierte Bahnsteige. Bahnsteige liegen neben den Strassen auf freien Flächen. Gleise kreuzen Strassen nur an gesicherten Bahnübergängen; die animierten Schranken blockieren Fahrzeuge und lassen den NPC-Verkehr warten.
 
+R3 verbindet Bergstadt, Tannenheim, Waldruh und Seestadt auf einer westlichen Rundstrecke. R4 bedient Weststadt, Sonnenfeld, Blumental und Lindenau auf einer eigenen östlichen Schleife. Gebäude halten mindestens zehn Welteinheiten Abstand zur Gleismitte; versetzte Häuser behalten ihre Besitz-ID.
+
 16 Buslinien mit 18 Bussen verbinden die Inseln und die acht neuen Orte. Jeder Bahnhof hat einen Buszubringer. Eng benachbarte Hafenhalte wurden zusammengelegt und der Dorfhalt wurde versetzt. Alle Linien verwenden lokale MP3-Ansagen. Fahrzeuge und Schranken teilen sich im Online-Modus einen gemeinsamen Serverzustand.
 
 Gezielte Prüfungen: `node scripts/test-transport-layout.cjs`, `npm run test:trains` und `npm run test:online`.

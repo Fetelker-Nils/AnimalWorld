@@ -43,8 +43,17 @@ const Island = (() => {
     {x:-4110,y:1510,name:'Waldruh'},{x:-4110,y:1600},
     {x:-1880,y:1600,name:'Blumental',terminal:true},{x:-1690,y:1600},{x:-1690,y:170}
   ];
-  railLines.push({id:'R3',name:'Pfotenland Express',color:'#aa844a',starts:[0],route:railLines[0].route.map(p=>({...p,x:p.x<=-5350?p.x-50:p.x===-120?-90:p.x,y:p.y===-10?-36:p.y===90?116:p.y}))});
-  railLines.push({id:'R4',name:'Panoramabahn',color:'#8b65a6',starts:[0],route:railLines[1].route.map(p=>({...p,x:p.x===-2310?-2340:p.x===-4110?-4140:p.x===-1690?-1660:p.x,y:p.y===170?140:p.y===1200?1170:p.y===1600?1630:p.y}))});
+  railLines.push({id:'R3',name:'Pfotenland Express',color:'#aa844a',starts:[0],route:[
+    {x:-3580,y:-36,name:'Bergstadt',terminal:true},{x:-3750,y:-36},{x:-3750,y:-450},{x:-5200,y:-450},
+    {x:-5200,y:-80,name:'Tannenheim'},{x:-5200,y:1660},{x:-4080,y:1660,name:'Waldruh',terminal:true},
+    {x:-3890,y:1660},{x:-3890,y:1130,name:'Seestadt'},{x:-3890,y:300},{x:-3290,y:300},{x:-3290,y:-36}
+  ]});
+  railLines.push({id:'R4',name:'Panoramabahn',color:'#8b65a6',starts:[0],route:[
+    {x:-1080,y:-36,name:'Weststadt',terminal:true},{x:-1250,y:-36},{x:-1250,y:800},{x:-2070,y:800},
+    {x:-2070,y:1130,name:'Sonnenfeld'},{x:-2070,y:1740},{x:-1780,y:1740,name:'Blumental',terminal:true},
+    {x:-1500,y:1740},{x:-1500,y:210},{x:-2070,y:210,name:'Lindenau'},{x:-2450,y:210},{x:-2450,y:-380},
+    {x:-750,y:-380},{x:-750,y:-36}
+  ]});
   // Round bends into short quadratic segments; coaches follow the same track independently.
   for(const line of railLines){
     const raw=line.route,out=[];
@@ -62,9 +71,11 @@ const Island = (() => {
     p.stopId='rail-'+l.id+'-'+i;
     return [{id:p.stopId,line:l.id,name:p.name,heading,x:p.x-Math.cos(heading)*21-Math.sin(heading)*7,y:p.y-Math.sin(heading)*21+Math.cos(heading)*7,trackX:p.x,trackY:p.y,color:l.color}];
   }));
-  const railStructures=[{kind:'tunnel',x:-2800,y:-23,w:230,d:40},{kind:'tunnel',x:-2800,y:103,w:230,d:40},
-    {kind:'bridge',x:-4200,y:-23,w:190,d:40},{kind:'bridge',x:-4200,y:103,w:190,d:40},
-    {kind:'tunnel',x:-3000,y:1615,w:190,d:58},{kind:'bridge',x:-3000,y:1185,w:190,d:58}];
+  const railStructures=[{kind:'tunnel',x:-2800,y:-10,w:230,d:14},{kind:'tunnel',x:-2800,y:90,w:230,d:14},
+    {kind:'bridge',x:-4200,y:-10,w:190,d:12},{kind:'bridge',x:-4200,y:90,w:190,d:12},
+    {kind:'tunnel',x:-3000,y:1600,w:190,d:14},{kind:'bridge',x:-3000,y:1200,w:190,d:12},
+    {kind:'tunnel',x:-4500,y:-450,w:220,d:14},{kind:'bridge',x:-4650,y:1660,w:160,d:12},
+    {kind:'tunnel',x:-1800,y:-380,w:200,d:14},{kind:'bridge',x:-1600,y:1740,w:120,d:12}];
   const railReserved=(x,y,margin=9)=>railLines.some(l=>l.route.some((b,i)=>{const a=l.route[(i+l.route.length-1)%l.route.length],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a.x-t*dx,y-a.y-t*dy)<margin;}));
   const railWalls=railStructures.flatMap(r=>[-1,1].map(side=>({x:r.x,y:r.y+side*(r.kind==='tunnel'?r.d/2+12:r.d/2-.3),w:r.w,d:r.kind==='tunnel'?24:.6,h:r.kind==='tunnel'?12:1.2})));
   const railBlocked=(x,y)=>railWalls.some(b=>Math.abs(x-b.x)<b.w/2+.4&&Math.abs(y-b.y)<b.d/2+.4);
@@ -80,7 +91,7 @@ const Island = (() => {
   buildings.push({x:-10,y:-8,w:8,d:7,h:5.5,color:'#f2d99e',roof:'#d38c5e'});
   for(const y of [-130,-148,-166,-184])for(const x of [-36,-18,18,36])
     buildings.push({x,y,w:10,d:10,h:12+(Math.abs(x+y)%17),color:palette[Math.abs(x+y)%5],roof:'#839594',city:true});
-  buildings.push({x:-150,y:-17,w:16,d:10,h:6,color:'#e5cb9b',roof:'#b87657'},
+  buildings.push({x:-150,y:-34,w:16,d:10,h:6,color:'#e5cb9b',roof:'#b87657'},
     {x:160,y:-18,w:22,d:12,h:7,color:'#bfcad0',roof:'#708890'},
     {x:-16,y:182,w:12,d:10,h:8,color:'#e1d2b5',roof:'#879ba1'},
     {x:16,y:182,w:12,d:10,h:8,color:'#c8d8cf',roof:'#879ba1'});
@@ -115,7 +126,7 @@ const Island = (() => {
   for(const town of towns){const n=town.city?6:4;
     for(let row=0;row<n;row++)for(let col=0;col<n;col++){
       const x=town.x+(col-(n-1)/2)*22,y=town.y-row*23;
-      if(railReserved(x,y,18))continue;
+      if(railReserved(x,y,Math.hypot(town.city?13:10,town.city?12:9)/2+10))continue;
       buildings.push({x,y,w:town.city?13:10,d:town.city?12:9,h:town.city?12+(row+col)%4*4:5+(col%2),color:palette[(row+col)%palette.length],roof:town.city?'#839594':'#b58261',city:!!town.city,town:town.name});
     }
   }

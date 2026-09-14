@@ -3,7 +3,7 @@ const w=AnimalIsland,life=createCityLife(w,[{id:'compact'}]);
 for(const station of w.railStations){
  const vertical=Math.abs(Math.sin(station.heading))>.5,W=vertical?9:80,D=vertical?80:9;
  assert(![...w.roads,...w.buildings].some(o=>Math.abs(station.x-o.x)<(W+o.w)/2&&Math.abs(station.y-o.y)<(D+o.d)/2),'Clear platform '+station.name+' '+station.line);
- assert(station.lines.length>=2,'Shared station with separate tracks');
+ if(station.lines.length>1)assert(w.railStations.filter(s=>s.name===station.name).every((s,i,all)=>all.every(t=>s===t||Math.hypot(s.trackX-t.trackX,s.trackY-t.trackY)>5)),'Separate tracks at shared stations');
  const nearest=Math.min(...w.busStops.filter(s=>s.name.includes(station.name==='Mauz Hauptbahnhof'?'Mauz':station.name)).map(s=>Math.hypot(s.x-station.x,s.y-station.y)));
  assert(nearest<220,'Station bus connection '+station.name+' '+nearest);
 }
@@ -22,3 +22,14 @@ for(let i=0;i<2400;i++){life.tick(.5);for(const c of life.crossings){if(c.closed
 assert(closed&&opened,'Gates close and reopen after trains');
 const copy=createCityLife(w,[{id:'compact'}]);copy.accept(life.snapshot());assert.deepEqual(copy.crossings,life.crossings,'Shared crossing state');
 console.log('PASS clear platforms, shared tracks, station buses, separated rail corridors and synchronized collision gates');
+
+assert(w.railStations.some(s=>s.lines.length>1),'Interchanges remain available');
+function samples(line,step=3){return line.route.flatMap((a,i)=>{const b=line.route[(i+1)%line.route.length],d=Math.hypot(b.x-a.x,b.y-a.y);return Array.from({length:Math.ceil(d/step)},(_,i)=>({x:a.x+(b.x-a.x)*i*step/d,y:a.y+(b.y-a.y)*i*step/d}));});}
+const railPoints=w.railLines.flatMap(l=>samples(l));
+for(const b of w.buildings)assert(railPoints.every(p=>Math.hypot(Math.max(0,Math.abs(p.x-b.x)-b.w/2),Math.max(0,Math.abs(p.y-b.y)-b.d/2))>=10),'Safety strip beside '+b.homeId);
+for(const [id,other] of [['R3','R1'],['R4','R2']]){
+ const points=samples(w.railLines.find(l=>l.id===id),20),old=samples(w.railLines.find(l=>l.id===other),20);
+ assert(points.filter(p=>old.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<60)).length/points.length<.25,'Independent itinerary '+id);
+}
+assert.equal(w.homes.find(h=>h.id==='residence-43').building.y,-34,'Moved house keeps its saved ownership ID');
+console.log('PASS building clearance, stable house identity and distinct R3/R4 routes');
