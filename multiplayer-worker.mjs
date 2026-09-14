@@ -5,7 +5,7 @@ import './property-ledger.js';
 import { DurableObject } from 'cloudflare:workers';
 
 // One public island, including its public interiors. No accounts or chat data.
-const rooms = new Set(['world','clothes','restaurant','hospital','police','fire','bank','market']);
+const rooms = new Set(['world',...globalThis.AnimalIsland.venues.map(v=>v.id)]);
 const outfits = new Set(['street','ocean','ranger','sunny','police','fire','medic']);
 const terrain=(x,y)=>38*Math.max(0,1-Math.max(0,Math.hypot(x-88,y+40)-4)/30);
 const clock = () => 540 + (Date.now() - Date.UTC(2026,8,8)) / 1000 * 1.2;

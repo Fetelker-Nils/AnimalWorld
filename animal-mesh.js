@@ -69,12 +69,12 @@ function animalMesh(actor, outfit, ground=0, time=0, detail=1){
     const p=(i,j)=>grid[j][i%n];
     for(let j=0;j<m;j++)for(let i=0;i<n;i++)face([p(i,j),p(i+1,j),p(i+1,j+1),p(i,j+1)],color,.77+.2*(1-j/m)+.03*Math.sin(i/n*Math.PI*2));
   }
-  const stride=actor.moving?Math.sin(time*9+(actor.phase||0))*.13:0;
+  const stride=actor.working?Math.sin(time*12)*.2:actor.moving?Math.sin(time*9+(actor.phase||0))*.13:0;
   ball(-.18,stride,.18,.15,.23,.18,fur);ball(.18,-stride,.18,.15,.23,.18,fur);
   ball(0,0,.7,.32,.24,.48,outfit?.color||fur);
   ball(-.36,-stride,.76,.105,.13,.3,fur,6,4);
   const waving=actor.waving||Date.now()-(actor.wave||0)<2200;
-  ball(.36,waving?.04:stride,waving?1.13:.76,.105,.13,.3,fur,6,4);
+  ball(.36,waving?.04:stride,waving?1.13:actor.working?1.05:.76,.105,.13,.3,fur,6,4);
   ball(0,0,1.34,.45,.35,.39,fur,10,6);
   for(const side of [-1,1]){
     if(kind==='bear')ball(side*.34,-.02,1.64,.17,.13,.18,fur,6,4);

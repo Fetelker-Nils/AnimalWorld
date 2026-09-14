@@ -24,9 +24,10 @@ for(const venue of ['police','fire','market']){
     assert(!ctx.world.blocked(point.x,point.y),'Mission target accessible');
     if(spec.kind==='hold'){
       jobs.tick(.5,point,false,true);jobs.tick(.1,point,false,false);assert.equal(jobs.progress,0,'Release cancels unfinished work');
+      while(jobs.challenge?.kind==='choice')jobs.choose(jobs.challenge.answer,point);
       jobs.tick(spec.seconds+.1,point,false,true);
-      while(jobs.challenge){jobs.tick(.9,point,false,false);jobs.interact(point,false);}
-    }else jobs.interact(point,false);
+      while(jobs.challenge){jobs.tick(jobs.challenge.period*.56,point,false,false);jobs.interact(point,false);}
+    }else{jobs.interact(point,false);while(jobs.challenge)jobs.choose(jobs.challenge.answer,point);}
   }
   assert.equal(wallet.coins,cash);jobs.interact(spec,false);assert.equal(wallet.coins,cash,'Collect pay inside the building');
   assert.equal(jobs.finishVenue('clothes'),null);

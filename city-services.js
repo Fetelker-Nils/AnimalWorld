@@ -7,6 +7,9 @@ function createCityServices(world,wallet,activities){
   ];
   for(const spec of specs){const venue=world.venues.find(v=>v.id===spec.venue);Object.assign(spec,{x:venue.x,y:venue.y});world.jobs.push(spec);}
   function options(id){
+    const work=world.jobs.find(j=>j.workplace===id);
+    if(work){const running=activities.active?.id===work.id,finished=running&&activities.done.size===activities.active.points.length;return [{id:running?'work-finish':'work-start',label:running?(finished?'Lohn abholen':'Auftrag laeuft: '+activities.done.size+'/'+activities.active.points.length):work.name+' starten ? '+work.reward+' Muenzen',disabled:running?!finished:!!activities.active||wallet.active}];}
+
     if(id==='restaurant')return [{id:'meal',label:meal>0?'Satt! Laufbonus noch '+Math.ceil(meal)+' s':'Warme Mahlzeit · 20 Muenzen · 3 Min. schneller laufen',disabled:meal>0||wallet.coins<20}];
     if(id==='hospital')return [{id:'therapy',label:therapy>0?'Erholt! Sprungbonus noch '+Math.ceil(therapy)+' s':'Kostenlose Physiotherapie · 3 Min. hoeher huepfen',disabled:therapy>0}];
     if(id==='bank')return [{id:'deposit',label:'100 Muenzen einzahlen',disabled:wallet.coins<100},{id:'withdraw',label:'100 Muenzen abheben',disabled:wallet.bankBalance<100}];
@@ -16,6 +19,8 @@ function createCityServices(world,wallet,activities){
   }
   function use(venue,action){
     const option=options(venue).find(o=>o.id===action);if(!option||option.disabled)return 'Dieses Angebot ist gerade nicht verfuegbar.';
+    if(action==='work-start')return activities.startWorkplace(venue)?.message||'Beende zuerst deinen anderen Auftrag.';
+    if(action==='work-finish')return activities.finishWorkplace(venue)?.message||'Es fehlen noch Aufgaben.';
     if(action==='meal'){if(!wallet.spend(20))return 'Kauf konnte nicht gespeichert werden.';meal=180;return 'Guten Appetit! Drei Minuten lang 30% schneller laufen.';}
     if(action==='therapy'){therapy=180;return 'Gut erholt! Drei Minuten lang hoeher huepfen.';}
     if(action==='deposit'||action==='withdraw')return wallet.bankTransfer(action==='deposit'?100:-100)?'Gespeichert. Sparkonto: '+wallet.bankBalance+' Muenzen.':'Die Buchung konnte nicht gespeichert werden.';

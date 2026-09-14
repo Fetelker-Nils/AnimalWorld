@@ -353,6 +353,22 @@ const Island = (() => {
       crossings.push({id:'crossing-'+crossings.length,x,y,vertical,width:vertical?road.w:road.d});
     }
   }
+  // Public workplaces are real buildings, without replacing any purchased home.
+  const workplaceNames={clean:'Recyclinghof',garden:'Gaertnerei',repair:'Mauz Werkstatt',taxi:'Taxizentrale',fishing:'Anglerhaus',orchard:'Obsthof',electric:'Stadtwerke',trail:'Rangerstation'};
+  for(const job of jobs){
+    const id='work-'+job.id,w=12,d=10;let place=null;
+    for(let radius=16;radius<=112&&!place;radius+=8)for(let i=0;i<16;i++){
+      const x=Math.round(job.x+Math.cos(i*Math.PI/8)*radius),y=Math.round(job.y+Math.sin(i*Math.PI/8)*radius);
+      if(railReserved(x,y,20)||heightAt(x,y)>0||roads.some(r=>Math.abs(x-r.x)<(w+r.w)/2+2&&Math.abs(y-r.y)<(d+r.d)/2+2)||buildings.some(b=>Math.abs(x-b.x)<(w+b.w)/2+4&&Math.abs(y-b.y)<(d+b.d)/2+4))continue;
+      if([[-w/2,-d/2],[w/2,-d/2],[-w/2,d/2],[w/2,d/2],[0,d/2+2]].some(([dx,dy])=>inSea(x+dx,y+dy)||inPond(x+dx,y+dy,1)||railBlocked(x+dx,y+dy)))continue;
+      if(jobs.some(j=>[j,...j.points].some(p=>Math.abs(x-p.x)<w/2+3&&Math.abs(y-p.y)<d/2+3)))continue;
+      place={x,y};break;
+    }
+    if(!place)throw Error('Kein freier Bauplatz fuer '+job.id);
+    const building={...place,w,d,h:5.8,color:job.id==='repair'?'#b5cbd0':'#d9d7bc',roof:job.id==='garden'?'#78936b':'#aa775a',venueId:id,jobId:job.id};
+    buildings.push(building);job.workplace=id;
+    venues.push({id,jobId:job.id,name:workplaceNames[job.id],public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
+  }
   const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
   return {crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();

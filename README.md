@@ -36,6 +36,16 @@ Die Karte (M) lässt sich mit dem Mausrad oder +/− zoomen und durch Ziehen ver
 
 Bäume und Gras sind räumlich aufgeteilt: Es werden nur nahe Bereiche geprüft bzw. dargestellt. Dadurch muss die grössere Welt nicht in jedem Bild vollständig durchsucht werden.
 
+## Abwechslungsreiche Arbeit
+
+Acht begehbare Betriebe bieten Auftraege am Empfang: Recyclinghof, Gaertnerei, Werkstatt, Taxizentrale, Anglerhaus, Obsthof, Stadtwerke und Rangerstation. Die bisherigen Auftragsorte bleiben als Treffpunkte mit tierischen Mitarbeitern erhalten.
+
+Abfall wird zum Sortierplatz getragen und nach Material getrennt. Pflanzen brauchen je nach Zustand Wasser, Unkrautpflege oder Kompost. Fahrzeuge bekommen zuerst eine Diagnose und die passende Reparatur; Elektriker folgen wechselnden Schaltplaenen. Bei der Ernte werden reife Fruechte ausgewaehlt. Angeln umfasst Anbiss, Einholen und Keschern. Taxi-Schichten wechseln Ziele und enthalten auch Zwischenstopps. Auch Stadtauftraege haben zusaetzliche Entscheidungen.
+
+Aktionen mit 1, 2, 3 oder per Touch waehlen, anschliessend bei Arbeitsaufgaben E halten. Timing-Aufgaben verlangen Treffer im gruenen Bereich. Fehler lassen sich ohne verlorenen Auftrag korrigieren. Aufgabenvarianten werden getrennt je Spielwelt gespeichert.
+
+Pruefung: `node scripts/test-job-variety.cjs` und nach `npm run build` mit `node scripts/test-job-variety-ui.cjs`.
+
 ## Zwoelf Jobs
 
 Mit E an einer Station beginnen. Immer nur ein Auftrag gleichzeitig. In der Nähe erscheint der passende Hinweis. Bei Haltearbeiten E gedrückt halten; Loslassen oder Weggehen setzt nur den aktuellen Schritt zurück. Zum Schluss zur Station zurückkehren, ausser bei Paket- und Taxilieferungen.

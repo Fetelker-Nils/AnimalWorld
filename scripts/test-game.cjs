@@ -30,11 +30,13 @@ assert.equal(Island.heightAt(Island.mountain.x,Island.mountain.y),38);
 assert(!walkable(Island.pond.x,Island.pond.y));
 assert(walkable(561,0),'Sea can be entered on foot');assert(!walkable(Island.border+1,0));
 for(const building of Island.buildings)assert(!walkable(building.x,building.y));
+function prepareWork(){if(activities.active.id==='fishing')return;activities.interact(mauz,false);while(activities.challenge?.kind==='choice')activities.choose(activities.challenge.answer,mauz);}
+function finishCollect(){activities.interact(mauz,false);const p=activities.carrying!==null?activities.active:mauz;if(activities.carrying!==null)activities.interact(p,false);while(activities.challenge?.kind==='choice')activities.choose(activities.challenge.answer,p);}
 function finishTiming(){
   const before=activities.done.size;
   assert(activities.challenge);
   assert.equal(activities.interact(mauz,false).type,'miss');assert.equal(activities.done.size,before);
-  while(activities.challenge){activities.tick(.92,mauz,false,false);activities.interact(mauz,false);}
+  while(activities.challenge){activities.tick(activities.challenge.period*.56,mauz,false,false);activities.interact(mauz,false);}
   assert.equal(activities.done.size,before+1);
 }
 function walkRoute(waypoints){
@@ -90,12 +92,12 @@ for(const id of ['clean','garden','repair']){
   assert.equal(activities.start('taxi',mauz),null,'Only one contract at a time');
   for(const p of spec.points){
     walkRoute(id==='clean'?[[0,mauz.y],[0,p.y],[p.x,p.y]]:[[mauz.x,14],[p.x,14],[p.x,p.y]]);
-    if(spec.kind==='collect')activities.interact(mauz,false);
+    if(spec.kind==='collect')finishCollect();
     else{
       activities.tick(.5,mauz,false,true);
       activities.tick(.1,mauz,false,false);assert.equal(activities.progress,0,'Releasing E resets work');
       activities.tick(spec.seconds+.1,mauz,true,true);assert.equal(activities.progress,0,'Cannot work from a car');
-      assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();
+      prepareWork();assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();
     }
   }
   const before=job.coins;
@@ -153,8 +155,8 @@ for(const id of ['fishing','orchard','electric','trail']){
     if(id==='orchard')walkRoute([[mauz.x,-4],[p.x,-4],[p.x,p.y]]);
     else if(id==='electric')walkRoute([[mauz.x,100],[p.x,100],[p.x,p.y]]);
     else walkRoute([[p.x,p.y]]);
-    if(spec.kind==='hold'){assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();}
-    else assert(activities.interact(mauz,false));
+    if(spec.kind==='hold'){prepareWork();assert(activities.tick(spec.seconds+.1,mauz,false,true));if(spec.timing)finishTiming();}
+    else finishCollect();
   }
   assert.equal(activities.done.size,spec.points.length);
   if(id==='orchard')walkRoute([[mauz.x,-4],[-350,-4],[-350,8]]);
