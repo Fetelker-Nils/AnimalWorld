@@ -90,9 +90,13 @@ export class World extends DurableObject {
     }
     if(data.type==='buy-property'){
       if(!p.ownerToken)return;
-      const result=await globalThis.purchaseProperty(this.ctx.storage,globalThis.AnimalIsland.homes,p.ownerToken,data);
-      if(result.ok){this.properties.set('property:'+result.id,{id:result.id,owner:p.ownerToken});for(const client of this.sessions.keys())this.propertyState(client);}
-      this.send(ws,{type:'purchase-result',...result});return;
+      await this.ctx.blockConcurrencyWhile(async()=>{
+        const result=await globalThis.purchaseProperty(this.ctx.storage,globalThis.AnimalIsland.homes,p.ownerToken,data);
+        // Refresh from durable state even for an old receipt replayed after a sale.
+        this.properties=await this.ctx.storage.list({prefix:'property:'});
+        this.send(ws,{type:'purchase-result',...result});
+        for(const client of this.sessions.keys())this.propertyState(client);
+      });return;
     }
     if(data.type==='sleep'){
       const hour=(this.minutes()%1440)/60;

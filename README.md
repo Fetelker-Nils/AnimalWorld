@@ -237,3 +237,11 @@ Boote, Flugzeuge und Helikopter explodieren bei einem Zusammenstoss mit mehr als
 Auf der grossen Karte per Rechtsklick ein Ziel setzen. Eine orange Linie zeigt einen berechneten Weg, bevorzugt ueber Strassen und um Hindernisse herum. Bei Inselwechseln fuehrt sie ueber die Bootsstege; dort muss selbst ein Boot genommen werden. Gebaeudeziele werden an ihre Tuer gelegt. Die Linie ist auch auf der Minikarte sichtbar. Der naechste Rechtsklick entfernt die Route. Es ist eine Weganzeige, kein Autopilot; fuer ein neues Ziel die alte Linie entfernen und erneut rechtsklicken.
 
 `npm run test:housing` prueft konkurrierende Kaeufe mit zwei Browsern gegen eine isolierte Instanz des Servercodes, Besitz nach Wiederverbinden, Etagen und Innenraeume. Es werden dabei keine echten Online-Immobilien belegt. `npm run test:routes` prueft Rechtsklick, Umweg und Entfernen im Browser. `npm test` umfasst zusaetzlich Transaktions-, Rueckerstattungs-, Grundriss- und Wegsuchetests.
+
+
+### Gemeinsamer Immobilienbesitz
+Pro Speicherwelt gilt dieselbe Immobilienliste offline und online. Es gibt keine Begrenzung der Anzahl eigener Immobilien. Jede Wohnung hat eine eigene Kennung und kann online nur einem Besitzer gehoeren. Im Immobilienfenster kann der Besitzer fuer 80 % des Kaufpreises verkaufen; das Zuhause wechselt bei Bedarf zur naechsten eigenen Immobilie.
+
+Offline gekaufte Immobilien werden beim naechsten Onlinebeitritt reserviert. Ist eine davon bereits vergeben, wird sie entfernt und der volle Kaufpreis erstattet. Offline verkaufte Immobilien werden bei diesem Abgleich online freigegeben. Bis dahin bleibt ihre Reservierung bestehen. Onlineverkaeufe und -kaeufe werden vor dem Senden lokal vorgemerkt und serverseitig mit wiederholbaren Transaktionsbelegen bestaetigt. Der Besitz ist an die Browserdaten der jeweiligen Speicherwelt gebunden.
+
+Pruefung des Besitzabgleichs: `node scripts/test-property-sync.cjs`.

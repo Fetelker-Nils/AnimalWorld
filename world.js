@@ -362,6 +362,7 @@ const Island = (() => {
       if(railReserved(x,y,20)||heightAt(x,y)>0||roads.some(r=>Math.abs(x-r.x)<(w+r.w)/2+2&&Math.abs(y-r.y)<(d+r.d)/2+2)||buildings.some(b=>Math.abs(x-b.x)<(w+b.w)/2+4&&Math.abs(y-b.y)<(d+b.d)/2+4))continue;
       if([[-w/2,-d/2],[w/2,-d/2],[-w/2,d/2],[w/2,d/2],[0,d/2+2]].some(([dx,dy])=>inSea(x+dx,y+dy)||inPond(x+dx,y+dy,1)||railBlocked(x+dx,y+dy)))continue;
       if(jobs.some(j=>[j,...j.points].some(p=>Math.abs(x-p.x)<w/2+3&&Math.abs(y-p.y)<d/2+3)))continue;
+      if(booths.some(b=>[b,{x:b.sx,y:b.sy}].some(p=>Math.abs(x-p.x)<w/2+10&&Math.abs(y-p.y)<d/2+10)))continue;
       place={x,y};break;
     }
     if(!place)throw Error('Kein freier Bauplatz fuer '+job.id);
