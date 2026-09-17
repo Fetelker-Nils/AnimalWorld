@@ -3,7 +3,7 @@ const {createServer}=require('./browser.cjs');
 (async()=>{
  const root=path.resolve(__dirname,'..'),server=createServer(path.join(root,'dist'));await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const c=vm.createContext({Date,DurableObject:class{constructor(ctx){this.ctx=ctx;}},WebSocketRequestResponsePair:class{}});
- for(const f of ['city-life.js','world.js','housing.js','property-ledger.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),c);
+ for(const f of ['city-life.js','world.js','housing.js','property-ledger.js','chat-filter.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),c);
  vm.runInContext(fs.readFileSync(path.join(root,'multiplayer-worker.mjs'),'utf8').replace(/^import .*;\r?$/gm,'').replace('export default','const worker =').replace('export class World','class World')+'\nglobalThis.World=World;',c);
  const db=new Map();let tail=Promise.resolve();const store={async get(k){return db.get(k);},async put(k,v){db.set(k,v);},async list(){return new Map([...db].filter(([k])=>k.startsWith('property:')));},transaction(fn){const result=tail.then(()=>fn(store));tail=result.catch(()=>{});return result;}};
  const ctx={getWebSockets:()=>[],setWebSocketAutoResponse(){},storage:store,blockConcurrencyWhile(fn){this.ready=fn();}};

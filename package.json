@@ -27,7 +27,8 @@
     "test:bus:ui": "npm run build && node scripts/test-transport-depth.cjs && node scripts/test-bus-ui.cjs",
     "test:trains": "npm run build && node scripts/test-trains.cjs && node scripts/test-trains-ui.cjs",
     "test:properties": "node scripts/test-property-sync.cjs && npm run build && node scripts/test-property-sync-ui.cjs",
-    "test:jobs": "node scripts/test-job-variety.cjs && node scripts/test-workplace-access.cjs && npm run build && node scripts/test-job-variety-ui.cjs"
+    "test:jobs": "node scripts/test-job-variety.cjs && node scripts/test-workplace-access.cjs && npm run build && node scripts/test-job-variety-ui.cjs",
+    "test:chat": "node scripts/test-chat.cjs && node scripts/test-chat-input.cjs && npm run build && node scripts/test-chat-ui.cjs"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

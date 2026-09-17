@@ -3,7 +3,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
   let now=Date.UTC(2026,8,8)+600000;
   class Clock extends Date{static now(){return now;}}
   const c=vm.createContext({Date:Clock,DurableObject:class{constructor(ctx){this.ctx=ctx;}},WebSocketRequestResponsePair:class{}});
-  for(const f of ['city-life.js','world.js','housing.js','property-ledger.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../'+f),'utf8'),c);
+  for(const f of ['city-life.js','world.js','housing.js','property-ledger.js','chat-filter.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../'+f),'utf8'),c);
   const source=fs.readFileSync(path.join(__dirname,'../multiplayer-worker.mjs'),'utf8').replace(/^import .*;\r?$/gm,'').replace('export default','const worker =').replace('export class World','class World');
   vm.runInContext(source+'\nglobalThis.World=World;',c);
   const saved=new Map(),ctx={getWebSockets:()=>[],setWebSocketAutoResponse(){},blockConcurrencyWhile(fn){this.ready=fn();},storage:{async list(){return new Map();},async get(k){return saved.get(k);},async put(k,v){saved.set(k,v);}}};

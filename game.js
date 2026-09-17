@@ -33,9 +33,11 @@
   function ownsHome(id){return ownedHomes().includes(id)&&(!onlineMode||propertiesReady&&network.mine.includes(id));}
   function onlineIdentity(){try{let token=storage.getItem('animal-world-owner-key');if(!token||!/^[a-zA-Z0-9-]{32,80}$/.test(token)){token=crypto.randomUUID();storage.setItem('animal-world-owner-key',token);}return token;}catch{return null;}}
 
+  const onlinePanel=typeof createOnlinePanel==='function'?createOnlinePanel(text=>network.chat(text),()=>{keys.clear();resetStick();}):null;
   const network=createMultiplayer((status,count)=>{
+    onlinePanel?.status(status,network.id);onlinePanel?.show(onlineMode&&mode==='playing');
     const badge=document.querySelector('#online-status');badge.hidden=!onlineMode;
-    badge.textContent=status==='online'?'Online · '+count+' Mauz':status==='connecting'?'Verbinde ...':'Verbindung verloren – im Menü erneut verbinden';
+    badge.textContent=status==='online'?'Online · '+count+' Spieler':status==='connecting'?'Verbinde ...':'Verbindung verloren – im Menü erneut verbinden';
     document.querySelector('#wave').hidden=!onlineMode||status!=='online';
     if(onlineMode&&status==='disconnected'){sleeping=null;document.querySelector('#sleep-screen').hidden=true;setMode('pause');notify('Verbindung verloren. Zurueck ins Hauptmenue und erneut Online spielen.');}
   },minutes=>{if(onlineMode)dayCycle.set(minutes);},state=>life.accept(state),impact=>{const model=VehicleModels.find(m=>m.id===impact.model);if(model){damage.hit({...impact,model},impact.age||0);if(!impact.scenery&&!interior&&Math.hypot(mauz.x-impact.x,mauz.y-impact.y)<100)crashParticles(impact.x,impact.y,impact.z||0);}},handleSession);
@@ -1039,6 +1041,7 @@
   for(const event of ['pointerup','pointercancel','lostpointercapture'])interactButton.addEventListener(event,()=>keys.delete('e'));
   function nearbyRide(){return network.players.filter(p=>p.vehicle&&Math.hypot(p.vehicle.x-mauz.x,p.vehicle.y-mauz.y)<=4.5).sort((a,b)=>Math.hypot(a.vehicle.x-mauz.x,a.vehicle.y-mauz.y)-Math.hypot(b.vehicle.x-mauz.x,b.vehicle.y-mauz.y))[0];}
   function handleSession(data){
+    if(['roster','chat-history','chat-message','chat-error'].includes(data.type)){onlinePanel?.receive(data);return;}
     if(data.type==='bus-seat'){if(data.busId===busRide?.id){setBusSeat(data.seat);if(data.reason)notify(data.reason);}return;}
     if(data.type==='properties'){
       const first=!propertiesReady;propertiesReady=true;
@@ -1286,6 +1289,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   const pauseScreen=document.querySelector('#pause-screen');
   const gameUI=document.querySelector('#game-ui');
   function setMode(next){
+    onlinePanel?.show(onlineMode&&next==='playing');
     if(next==='map'&&interior)return;
     if(next==='playing'&&onlineMode&&network.status!=='online')next='pause';
     if(next!=='playing')dayCycle.save();
@@ -1355,6 +1359,7 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   document.querySelector('#resume').onclick=()=>setMode('playing');
   document.querySelector('#back').onclick=()=>{onlineMode=false;network.stop();dayCycle.stopShared();setMode('start');};
   window.addEventListener('keydown',e=>{
+    if(e.target?.closest?.('#online-panel')||e.target?.matches?.('input,textarea,select,[contenteditable=true]'))return;
     const key=e.key.toLowerCase();
     if(mode==='sleeping'){if(key==='escape'&&sleeping?.online)cancelSleep();e.preventDefault();return;}
     if(key==='v'&&!e.repeat&&mode==='playing'){viewFront=!viewFront;return;}

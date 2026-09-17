@@ -245,3 +245,9 @@ Pro Speicherwelt gilt dieselbe Immobilienliste offline und online. Es gibt keine
 Offline gekaufte Immobilien werden beim naechsten Onlinebeitritt reserviert. Ist eine davon bereits vergeben, wird sie entfernt und der volle Kaufpreis erstattet. Offline verkaufte Immobilien werden bei diesem Abgleich online freigegeben. Bis dahin bleibt ihre Reservierung bestehen. Onlineverkaeufe und -kaeufe werden vor dem Senden lokal vorgemerkt und serverseitig mit wiederholbaren Transaktionsbelegen bestaetigt. Der Besitz ist an die Browserdaten der jeweiligen Speicherwelt gebunden.
 
 Pruefung des Besitzabgleichs: `node scripts/test-property-sync.cjs`.
+
+
+### Online-Spielerliste und Chat
+Links oben stehen die verbundenen Spieler und daneben der gemeinsame Inselchat. Nachrichten (maximal 240 Zeichen) werden vom Server gefiltert; die letzten 100 Nachrichten bleiben gespeichert und erscheinen auch nach erneutem Beitritt. Zwischen Nachrichten liegen mindestens zwei Sekunden. Der Wortfilter erkennt gaengige deutsche/englische Schimpfwoerter und einfache Verschleierungen; er ist keine vollstaendige Inhaltsmoderation. Auch angezeigte Spielernamen werden gefiltert. Beim Schreiben bleiben Spieltasten inaktiv; Escape verlaesst das Textfeld. Die Tafel kann eingeklappt werden.
+
+Tests: `npm run test:chat`. Die UI-Pruefung verwendet isolierte Verbindungen und schreibt keine Testnachrichten in den oeffentlichen Chat.

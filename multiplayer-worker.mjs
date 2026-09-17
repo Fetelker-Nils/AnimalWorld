@@ -2,9 +2,10 @@ import './city-life.js';
 import './world.js';
 import './housing.js';
 import './property-ledger.js';
+import './chat-filter.js';
 import { DurableObject } from 'cloudflare:workers';
 
-// One public island, including its public interiors. No accounts or chat data.
+// One public island, including its public interiors. Chat keeps the last 100 filtered messages.
 const rooms = new Set(['world',...globalThis.AnimalIsland.venues.map(v=>v.id)]);
 const outfits = new Set(['street','ocean','ranger','sunny','police','fire','medic']);
 const terrain=(x,y)=>38*Math.max(0,1-Math.max(0,Math.hypot(x-88,y+40)-4)/30);
@@ -23,7 +24,7 @@ export class World extends DurableObject {
     super(ctx, env);
     this.life=globalThis.createCityLife(globalThis.AnimalIsland,[{id:'compact',width:2.1,length:3.8},{id:'roadster',width:2.2,length:4.3},{id:'pickup',width:2.5,length:4.8}]);this.lastWorld=Date.now();
     this.sessions = new Map(ctx.getWebSockets().map(ws => [ws,ws.deserializeAttachment()]));
-    this.clockOffset=0;this.properties=new Map();ctx.blockConcurrencyWhile(async()=>{this.clockOffset=await ctx.storage.get('clockOffset')||0;this.properties=await ctx.storage.list({prefix:'property:'});});
+    this.chat=[];this.clockOffset=0;this.properties=new Map();ctx.blockConcurrencyWhile(async()=>{this.chat=await ctx.storage.get('chat-history-v1')||[];this.clockOffset=await ctx.storage.get('clockOffset')||0;this.properties=await ctx.storage.list({prefix:'property:'});});
     this.impacts=[...this.sessions.values()].map(p=>p.impact).filter(Boolean);
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping','pong'));
   }
@@ -36,10 +37,12 @@ export class World extends DurableObject {
     if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+30000);
     ws.send(JSON.stringify({type:'welcome',id:player.id,minutes:this.minutes(),players:[...this.sessions.values()].map(p=>this.public(p))}));
     this.broadcast({type:'player',player:this.public(player)},ws);
+    this.send(ws,{type:'chat-history',messages:this.chat});this.roster();
     await this.checkSleep();
     for(const impact of this.impacts)if(Date.now()-impact.at<5000)ws.send(JSON.stringify({type:'crash',impact:{...impact,age:(Date.now()-impact.at)/1000}}));
     return new Response(null,{status:101,webSocket:client});
   }
+  roster(){this.broadcast({type:'roster',players:[...this.sessions.values()].map(p=>({id:p.id,name:globalThis.cleanChat(p.name||'Mauz',18),species:p.species||'cat'}))});}
   minutes(){return clock()+this.clockOffset;}
   send(ws,data){try{ws.send(JSON.stringify(data));}catch{}}
   playerSocket(id){return [...this.sessions.keys()].find(ws=>this.sessions.get(ws)?.id===id);}
@@ -59,7 +62,7 @@ export class World extends DurableObject {
     }else this.broadcast({type:'sleep',sleepers:count,total:players.length});
   }
   releaseRiders(owner){for(const [ws,p] of this.sessions)if(p.riding===owner){p.riding=null;ws.serializeAttachment(p);this.send(ws,{type:'ride',owner:null,reason:'Das Auto ist nicht mehr verfuegbar.'});}}
-  public(p) { const {last,impact,ownerToken,propertyAt,...state}=p; return state; }
+  public(p) { const {last,impact,ownerToken,propertyAt,chatAt,...state}=p; return state; }
   broadcast(data, except) {
     const message=JSON.stringify(data);
     for (const ws of this.sessions.keys()) if(ws!==except) {
@@ -71,6 +74,19 @@ export class World extends DurableObject {
     let data;try{data=JSON.parse(message);}catch{return;}
     const p=this.sessions.get(ws),now=Date.now();
     if(!p||!data)return;
+    if(data.type==='chat-send'){
+      if(!p.ownerToken){this.send(ws,{type:'chat-error',message:'Bitte zuerst mit deinem gespeicherten Spielstand verbinden.'});return;}
+      const text=globalThis.cleanChat(data.text);
+      if(!text){this.send(ws,{type:'chat-error',message:'Bitte eine Nachricht eingeben.'});return;}
+      if(now-(p.chatAt||0)<2000){this.send(ws,{type:'chat-error',message:'Bitte kurz warten, bevor du wieder schreibst.'});return;}
+      p.chatAt=now;ws.serializeAttachment(p);
+      const entry={id:crypto.randomUUID(),playerId:p.id,name:globalThis.cleanChat(p.name||'Mauz',18),text,at:now};
+      try{
+        this.chat=await this.ctx.storage.transaction(async tx=>{const history=await tx.get('chat-history-v1')||[];const next=[...history,entry].slice(-100);await tx.put('chat-history-v1',next);return next;});
+        this.broadcast({type:'chat-message',message:entry});
+      }catch{this.send(ws,{type:'chat-error',message:'Nachricht konnte nicht gespeichert werden. Bitte erneut versuchen.'});}
+      return;
+    }
     if(data.type==='bus-seat'){
       const b=[...this.life.buses,...this.life.trains].find(b=>b.id===p.busId&&b.id===data.busId);
       if(!b||p.room!=='world'||p.car||p.riding)return;
@@ -137,8 +153,10 @@ export class World extends DurableObject {
     p.busF=p.busId&&Number.isFinite(data.busF)&&Math.abs(data.busF)<4.7?data.busF:null;
     p.busS=p.busId&&Number.isFinite(data.busS)&&Math.abs(data.busS)<2.6?data.busS:null;
     if(!p.busId||p.room!=='world'||p.car||p.riding){p.busSeat=null;p.seated=false;}
+    const oldProfile=p.name+'|'+p.species;
     p.species=['cat','rabbit','bear','fox'].includes(data.species)?data.species:'cat';
-    p.name=typeof data.name==='string'?data.name.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,18)||'Mauz':'Mauz';
+    p.name=globalThis.cleanChat(data.name,18)||'Mauz';
+    if(oldProfile!==p.name+'|'+p.species)this.roster();
     if(p.riding){const car=this.vehicle(p.riding);p.x=car.x;p.y=car.y;p.heading=car.heading;p.room='world';p.car=null;}
     if(p.sleeping&&(!this.atBed(p))){p.sleeping=false;await this.checkSleep();}
     if(data.wave===true&&now-p.wave>2500)p.wave=now;
@@ -156,5 +174,5 @@ export class World extends DurableObject {
     for(const [ws,p] of this.sessions)if(Date.now()-p.last>60000){await this.remove(ws);try{ws.close(1001,'Inactive connection');}catch{}}
     if(this.sessions.size)await this.ctx.storage.setAlarm(Date.now()+30000);
   }
-  async remove(ws) {const p=this.sessions.get(ws);this.sessions.delete(ws);if(p){this.releaseRiders(p.id);this.broadcast({type:'leave',id:p.id});await this.checkSleep();}}
+  async remove(ws) {const p=this.sessions.get(ws);this.sessions.delete(ws);if(p){this.releaseRiders(p.id);this.broadcast({type:'leave',id:p.id});this.roster();await this.checkSleep();}}
 }
