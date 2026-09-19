@@ -19,7 +19,7 @@ function createOnlinePanel(send,stopMoving){
     pending=true;submit.disabled=true;feedback.textContent='Wird gesendet ...';
     timer=setTimeout(()=>{release();feedback.textContent='Keine Bestaetigung. Bitte den Verlauf vor erneutem Senden pruefen.';},10000);
   });
-  document.querySelector('#online-toggle').onclick=()=>{const body=document.querySelector('#online-body');body.hidden=!body.hidden;document.querySelector('#online-toggle').setAttribute('aria-expanded',String(!body.hidden));if(body.hidden)input.blur();};
+  document.querySelector('#online-toggle').onclick=()=>{const body=document.querySelector('#online-body');body.hidden=!body.hidden;const toggle=document.querySelector('#online-toggle');toggle.setAttribute('aria-expanded',String(!body.hidden));const label=body.hidden?'Chat aufklappen':'Chat einklappen';toggle.setAttribute('aria-label',label);toggle.title=label;if(body.hidden)input.blur();else log.scrollTop=log.scrollHeight;};
   return {
     show(visible){root.hidden=!visible;if(!visible)input.blur();},
     status(status,id){self=id;connected=status==='online';input.disabled=!connected;submit.disabled=!connected||pending;if(status==='offline'){messages=[];players=[];release();list.replaceChildren();renderMessages();feedback.textContent='';}else if(!connected){release();feedback.textContent='Chat ist nicht verbunden.';}},
