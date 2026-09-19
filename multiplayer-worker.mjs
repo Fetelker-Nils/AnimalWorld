@@ -5,7 +5,7 @@ import './property-ledger.js';
 import './chat-filter.js';
 import { DurableObject } from 'cloudflare:workers';
 
-// One public island, including its public interiors. Chat keeps the last 100 filtered messages.
+// One public island, including its public interiors. Chat keeps at most 100 filtered messages, cleared every 30 minutes.
 const rooms = new Set(['world',...globalThis.AnimalIsland.venues.map(v=>v.id)]);
 const outfits = new Set(['street','ocean','ranger','sunny','police','fire','medic']);
 const terrain=(x,y)=>38*Math.max(0,1-Math.max(0,Math.hypot(x-88,y+40)-4)/30);
@@ -24,23 +24,43 @@ export class World extends DurableObject {
     super(ctx, env);
     this.life=globalThis.createCityLife(globalThis.AnimalIsland,[{id:'compact',width:2.1,length:3.8},{id:'roadster',width:2.2,length:4.3},{id:'pickup',width:2.5,length:4.8}]);this.lastWorld=Date.now();
     this.sessions = new Map(ctx.getWebSockets().map(ws => [ws,ws.deserializeAttachment()]));
-    this.chat=[];this.clockOffset=0;this.properties=new Map();ctx.blockConcurrencyWhile(async()=>{this.chat=await ctx.storage.get('chat-history-v1')||[];this.clockOffset=await ctx.storage.get('clockOffset')||0;this.properties=await ctx.storage.list({prefix:'property:'});});
+    this.chat=[];this.clockOffset=0;this.properties=new Map();ctx.blockConcurrencyWhile(async()=>{await this.refreshChat();await this.scheduleAlarm();this.clockOffset=await ctx.storage.get('clockOffset')||0;this.properties=await ctx.storage.list({prefix:'property:'});});
     this.impacts=[...this.sessions.values()].map(p=>p.impact).filter(Boolean);
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping','pong'));
   }
   async fetch() {
+    await this.refreshChat();
     if (this.sessions.size >= 128) return new Response('Island temporarily full',{status:503});
     const [client, ws] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(ws);
     const player = {id:crypto.randomUUID(),x:0,y:0,heading:-Math.PI/2,jump:0,moving:false,room:'world',outfit:null,car:null,wave:0,last:Date.now()-100};
     this.sessions.set(ws,player); ws.serializeAttachment(player);
-    if(await this.ctx.storage.getAlarm()===null)await this.ctx.storage.setAlarm(Date.now()+30000);
+    await this.scheduleAlarm();
     ws.send(JSON.stringify({type:'welcome',id:player.id,minutes:this.minutes(),players:[...this.sessions.values()].map(p=>this.public(p))}));
     this.broadcast({type:'player',player:this.public(player)},ws);
     this.send(ws,{type:'chat-history',messages:this.chat});this.roster();
     await this.checkSleep();
     for(const impact of this.impacts)if(Date.now()-impact.at<5000)ws.send(JSON.stringify({type:'crash',impact:{...impact,age:(Date.now()-impact.at)/1000}}));
     return new Response(null,{status:101,webSocket:client});
+  }
+  async refreshChat(entry=null){
+    const interval=30*60*1000;
+    const result=await this.ctx.storage.transaction(async tx=>{
+      const now=Date.now(),savedDeadline=await tx.get('chat-clear-at-v1');
+      let deadline=savedDeadline|| (Math.floor(now/interval)+1)*interval;
+      const reset=deadline<=now;
+      let history=reset?[]:await tx.get('chat-history-v1')||[];
+      if(reset)deadline=(Math.floor(now/interval)+1)*interval;
+      if(entry)history=[...history,entry].slice(-100);
+      if(reset||entry)await tx.put('chat-history-v1',history);
+      if(reset||!savedDeadline)await tx.put('chat-clear-at-v1',deadline);
+      return {history,deadline,reset};
+    });
+    this.chat=result.history;this.chatClearAt=result.deadline;
+    if(result.reset)this.broadcast({type:'chat-history',messages:[]});
+  }
+  async scheduleAlarm(){
+    await this.ctx.storage.setAlarm(this.sessions.size?Math.min(Date.now()+30000,this.chatClearAt):this.chatClearAt);
   }
   roster(){this.broadcast({type:'roster',players:[...this.sessions.values()].map(p=>({id:p.id,name:globalThis.cleanChat(p.name||'Mauz',18),species:p.species||'cat'}))});}
   minutes(){return clock()+this.clockOffset;}
@@ -82,7 +102,7 @@ export class World extends DurableObject {
       p.chatAt=now;ws.serializeAttachment(p);
       const entry={id:crypto.randomUUID(),playerId:p.id,name:globalThis.cleanChat(p.name||'Mauz',18),text,at:now};
       try{
-        this.chat=await this.ctx.storage.transaction(async tx=>{const history=await tx.get('chat-history-v1')||[];const next=[...history,entry].slice(-100);await tx.put('chat-history-v1',next);return next;});
+        await this.refreshChat(entry);
         this.broadcast({type:'chat-message',message:entry});
       }catch{this.send(ws,{type:'chat-error',message:'Nachricht konnte nicht gespeichert werden. Bitte erneut versuchen.'});}
       return;
@@ -171,8 +191,9 @@ export class World extends DurableObject {
   async webSocketClose(ws, code) { await this.remove(ws); try{ws.close(code===1005?1000:code);}catch{} }
   async webSocketError(ws) { await this.remove(ws); }
   async alarm() {
+    await this.refreshChat();
     for(const [ws,p] of this.sessions)if(Date.now()-p.last>60000){await this.remove(ws);try{ws.close(1001,'Inactive connection');}catch{}}
-    if(this.sessions.size)await this.ctx.storage.setAlarm(Date.now()+30000);
+    await this.scheduleAlarm();
   }
   async remove(ws) {const p=this.sessions.get(ws);this.sessions.delete(ws);if(p){this.releaseRiders(p.id);this.broadcast({type:'leave',id:p.id});this.roster();await this.checkSleep();}}
 }

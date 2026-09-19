@@ -251,3 +251,5 @@ Pruefung des Besitzabgleichs: `node scripts/test-property-sync.cjs`.
 Links oben stehen die verbundenen Spieler und daneben der gemeinsame Inselchat. Nachrichten (maximal 240 Zeichen) werden vom Server gefiltert; die letzten 100 Nachrichten bleiben gespeichert und erscheinen auch nach erneutem Beitritt. Zwischen Nachrichten liegen mindestens zwei Sekunden. Der Wortfilter erkennt gaengige deutsche/englische Schimpfwoerter und einfache Verschleierungen; er ist keine vollstaendige Inhaltsmoderation. Auch angezeigte Spielernamen werden gefiltert. Beim Schreiben bleiben Spieltasten inaktiv; Escape verlaesst das Textfeld. Die Tafel kann eingeklappt werden.
 
 Tests: `npm run test:chat`. Die UI-Pruefung verwendet isolierte Verbindungen und schreibt keine Testnachrichten in den oeffentlichen Chat.
+
+Der gesamte Online-Chat wird zur vollen und halben Stunde serverseitig geleert, auch ohne verbundene Spieler. Offene Chatfenster erhalten sofort den leeren Verlauf. Der Loeschzeitpunkt bleibt bei Serverneustarts erhalten.
