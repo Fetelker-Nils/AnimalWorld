@@ -280,7 +280,19 @@ const Island = (() => {
   ];
   const pond={x:-65,y:58,rx:17,ry:12};
   const mountain={x:88,y:-40,radius:34,height:38};
-  const heightAt=(x,y)=>mountain.height*Math.max(0,1-Math.max(0,Math.hypot(x-mountain.x,y-mountain.y)-4)/(mountain.radius-4));
+  const terrain=[];
+  const originalMountainHeight=(x,y)=>mountain.height*Math.max(0,1-Math.max(0,Math.hypot(x-mountain.x,y-mountain.y)-4)/(mountain.radius-4));
+  function heightAt(x,y){
+    const original=originalMountainHeight(x,y);if(original>0)return original;
+    for(const t of terrain){
+      const u=(x-t.x+t.radius)/t.step,v=(y-t.y+t.radius)/t.step;
+      if(u<0||v<0||u>=t.cells||v>=t.cells)continue;
+      const ix=Math.floor(u),iy=Math.floor(v),a=u-ix,b=v-iy,k=iy*(t.cells+1)+ix;
+      const h00=t.heights[k],h10=t.heights[k+1],h01=t.heights[k+t.cells+1],h11=t.heights[k+t.cells+2];
+      return a+b<=1?h00+(h10-h00)*a+(h01-h00)*b:h11+(h01-h11)*(1-a)+(h10-h11)*(1-b);
+    }
+    return 0;
+  }
   const inPond=(x,y,pad=0)=>((x-pond.x)/(pond.rx+pad))**2+((y-pond.y)/(pond.ry+pad))**2<1;
   const onRoad=(x,y,pad=1)=>roads.some(r=>Math.abs(x-r.x)<r.w/2+pad&&Math.abs(y-r.y)<r.d/2+pad);
   const blocked=(x,y)=>railBlocked(x,y)||bridgeBarrier(x,y)||(!inBounds(x,y)||inSea(x,y))||inPond(x,y,.45)||buildings.some(b=>Math.abs(x-b.x)<b.w/2+.45&&Math.abs(y-b.y)<b.d/2+.45);
@@ -385,6 +397,23 @@ const Island = (() => {
     buildings.push(building);job.workplace=id;
     venues.push({id,jobId:job.id,name:workplaceNames[job.type||job.id]+(job.settlement?' '+job.settlement:''),public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
   }
+  // Deterministic terrain patches stay completely clear of established infrastructure.
+  const terrainTargets=[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...venues,...homes,...booths,...busStops,...railStations];
+  for(const region of [{x:0,y:0,r:480,gap:95,size:34},{x:900,y:0,r:205,gap:85,size:27},{x:continent.x,y:continent.y,r:2550,gap:420,size:145}]){
+    for(let gx=-region.r;gx<=region.r;gx+=region.gap)for(let gy=-region.r;gy<=region.r;gy+=region.gap){
+      const x=region.x+gx,y=region.y+gy,r=region.size;
+      if(Math.hypot(gx,gy)>region.r-r||Math.hypot(x-mountain.x,y-mountain.y)<r+mountain.radius+12)continue;
+      if(railReserved(x,y,r*1.42+20)||terrainTargets.some(p=>Math.abs(p.x-x)<r+15&&Math.abs(p.y-y)<r+15))continue;
+      if([...buildings,...roads,...airfields,...docks].some(b=>Math.abs(b.x-x)<r+b.w/2+12&&Math.abs(b.y-y)<r+b.d/2+12))continue;
+      if([[-r,-r],[r,-r],[-r,r],[r,r],[0,0]].some(([dx,dy])=>inSea(x+dx,y+dy)||inPond(x+dx,y+dy,10)))continue;
+      const seed=Math.abs(Math.sin(x*.017+y*.031)),height=r*(.18+seed*.6),cells=12,step=2*r/cells,heights=[];
+      for(let iy=0;iy<=cells;iy++)for(let ix=0;ix<=cells;ix++){
+        const nx=(ix/cells*2-1),ny=(iy/cells*2-1),edge=Math.max(0,1-nx*nx-ny*ny);
+        heights.push(height*edge*edge*(.65+.35*Math.sin(nx*5+seed*8)*Math.cos(ny*4)));
+      }
+      terrain.push({x,y,radius:r,height,cells,step,heights});
+    }
+  }
   // Immutable scenery-placement targets: build once, not for every grass/tree candidate.
   const reservedTargets=[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))];
   function nearbyPoints(items,radius){
@@ -394,7 +423,7 @@ const Island = (() => {
   }
   const nearReservedTarget=nearbyPoints(reservedTargets,6),nearReservedBuilding=nearbyPoints(buildings,14),nearReservedLamp=nearbyPoints(lamps,1.5);
   const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||nearReservedLamp(x,y)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||nearReservedTarget(x,y)||nearReservedBuilding(x,y);
-  return {crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  return {terrain,crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;
