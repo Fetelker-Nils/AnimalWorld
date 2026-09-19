@@ -761,8 +761,8 @@
     if(!busRide){const front=busPoint(b,{f:4.6,s:0}),p=point(front.x,front.y,2.62);if(p.depth>1&&p.depth<28){const size=Math.max(8,Math.min(16,scale/p.depth*.25));ctx.font='600 '+size+'px Segoe UI';ctx.textAlign='center';ctx.fillStyle='#fff1bb';ctx.fillText(b.line+' '+(b.nextStop||b.stop),p.x,p.y);}}
   }
   function carDrawing(car){
-    const m=car.model,z=car.z||Island.heightAt(car.x,car.y),faces=[];
-    const p=(side,forward,h)=>point(car.x+Math.cos(car.heading)*forward-Math.sin(car.heading)*side,car.y+Math.sin(car.heading)*forward+Math.cos(car.heading)*side,z+h);
+    const m=car.model,pose=!m.kind?vehicleGroundPose(Island,car):null,z=pose?pose.z:car.z||Island.heightAt(car.x,car.y),faces=[];
+    const p=(side,forward,h)=>pose?point(car.x+pose.forward[0]*forward+pose.side[0]*side+pose.up[0]*h,car.y+pose.forward[1]*forward+pose.side[1]*side+pose.up[1]*h,z+pose.forward[2]*forward+pose.side[2]*side+pose.up[2]*h):point(car.x+Math.cos(car.heading)*forward-Math.sin(car.heading)*side,car.y+Math.sin(car.heading)*forward+Math.cos(car.heading)*side,z+h);
     function part(s0,s1,f0,f1,h0,h1,color,top){
       const bottom=[[s0,f0,h0],[s1,f0,h0],[s1,f1,h0],[s0,f1,h0]],upper=bottom.map(v=>[v[0],v[1],h1]);
       const polygons=bottom.map((a,i)=>[a,bottom[(i+1)%4],upper[(i+1)%4],upper[i]]);polygons.push(upper);

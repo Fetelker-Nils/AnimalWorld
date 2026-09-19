@@ -6,6 +6,20 @@ const VehicleModels=[
   {id:'helicopter',kind:'air',name:'Helikopter',color:'#d68161',top:'#edb39b',speed:36,acceleration:12,steer:1.5,width:4,length:7,slope:.5,description:'Senkrecht starten und landen: Q / R'},
   {id:'boat',kind:'boat',name:'Motorboot',color:'#e4e4d6',top:'#86bfc7',speed:30,acceleration:10,steer:1.4,width:2.8,length:5,slope:.5,description:'Ueber das Meer zur Perleninsel'}
 ];
+// A shared wheel-contact frame also aligns parked and remote cars with terrain.
+function vehicleGroundPose(world,car){
+  const m=car.model,c=Math.cos(car.heading),s=Math.sin(car.heading),f=m.length*.32,w=m.width*.5;
+  const samples=[];
+  for(const side of [-w,w])for(const forward of [-f,f])samples.push({side,forward,z:world.heightAt(car.x+c*forward-s*side,car.y+s*forward+c*side)});
+  const front=(samples[1].z+samples[3].z)/2,rear=(samples[0].z+samples[2].z)/2;
+  const right=(samples[2].z+samples[3].z)/2,left=(samples[0].z+samples[1].z)/2;
+  const grade=(front-rear)/(2*f),bank=(right-left)/(2*w),normal=Math.hypot(grade,bank,1);
+  const up=[(-grade*c+bank*s)/normal,(-grade*s-bank*c)/normal,1/normal];
+  const fl=Math.hypot(1,grade),forward=[c/fl,s/fl,grade/fl];
+  const side=[up[1]*forward[2]-up[2]*forward[1],up[2]*forward[0]-up[0]*forward[2],up[0]*forward[1]-up[1]*forward[0]];
+  const z=Math.max(world.heightAt(car.x,car.y),...samples.map(p=>p.z-grade*p.forward-bank*p.side));
+  return {z,forward,side,up,grade,bank};
+}
 function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false,trafficBlocked=()=>false){
   let car=null,driving=false;
   function clearAt(x,y,heading,model){
@@ -15,7 +29,7 @@ function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false,traf
       const px=x+Math.cos(heading)*forward*model.length/2-Math.sin(heading)*side*model.width/2;
       const py=y+Math.sin(heading)*forward*model.length/2+Math.cos(heading)*side*model.width/2;
       if(model.kind==='boat'){if(!world.inBounds(px,py)||!world.inSea(px,py))return false;continue;}
-      if(!walkable(px,py)||Math.abs(world.heightAt(px,py)-z)>model.slope)return false;
+      if(!walkable(px,py)||Math.abs(world.heightAt(px,py)-z)>(model.kind?model.slope:Math.hypot(px-x,py-y)*(model.id==='pickup'?1.6:model.id==='roadster'?1:1.25)+.12))return false;
       if(world.booths.some(b=>Math.hypot(px-b.x,py-b.y)<.85))return false;
     }
     return true;
@@ -77,6 +91,7 @@ function createVehicles(world,walkable,onImpact=()=>{},airBlocked=()=>false,traf
     for(let i=0;i<count;i++){
       const x=car.x+Math.cos(car.heading)*car.speed*dt/count,y=car.y+Math.sin(car.heading)*car.speed*dt/count;
       if(trafficBlocked(x,y,car.heading,m)){car.speed=0;break;}
+      if(!m.kind){const pose=vehicleGroundPose(world,{...car,x,y}),limit=m.id==='pickup'?1.6:m.id==='roadster'?1:1.25;if(Math.hypot(pose.grade,pose.bank)>limit){car.speed=0;break;}}
       if(!clearAt(x,y,car.heading,m)){
         const impact={x,y,heading:car.heading,speed:Math.abs(car.speed),model:m,carX:car.x,carY:car.y};
         car.speed=0;
