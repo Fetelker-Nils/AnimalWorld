@@ -1131,6 +1131,17 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     for(const train of life.trains.filter(t=>t.coach===0)){const [x,y]=p(train.x,train.y);c.fillStyle=train.color;c.beginPath();c.arc(x,y,mini?4:5,0,Math.PI*2);c.fill();}
     if(!mini){c.font='bold 12px sans-serif';c.fillStyle='#38594d';for(const town of Island.towns)c.fillText(town.name,...p(town.x,town.y-170));}
   }
+  function drawPlayerArrow(c,p,actor,self=false){
+    if(!Number.isFinite(actor.x)||!Number.isFinite(actor.y))return;
+    c.save();c.translate(...p(actor.x,actor.y));c.rotate(actor.heading||0);
+    c.fillStyle=self?'#f7fcff':'#e8ddff';c.strokeStyle=self?'#225e8a':'#6e59bd';c.lineWidth=2;
+    c.beginPath();c.moveTo(8,0);c.lineTo(-5,-5);c.lineTo(-3,0);c.lineTo(-5,5);c.closePath();c.fill();c.stroke();c.restore();
+  }
+  function worldMapActor(actor,room){
+    if(!room||room==='world')return {...actor,x:actor.renderX??actor.x,y:actor.renderY??actor.y};
+    const location=room.startsWith('home:')?Island.homes.find(h=>h.id===room.slice(5)):Island.venues.find(v=>v.id===room);
+    return location?{...actor,x:location.x,y:location.y}:null;
+  }
   function drawMiniMap(){
     if(mode!=='playing'||time-miniUpdated<.18)return;miniUpdated=time;
     const c=document.querySelector('#minimap').getContext('2d'),size=180;
@@ -1158,8 +1169,8 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
       const target=navigationTarget(),q=p(target.x,target.y),dx=q[0]-90,dy=q[1]-90,d=Math.hypot(dx,dy),ratio=d>77?77/d:1;
       c.fillStyle='#ffca64';c.strokeStyle='#82552c';c.lineWidth=1.5;c.beginPath();c.arc(90+dx*ratio,90+dy*ratio,5,0,Math.PI*2);c.fill();c.stroke();
     }
-    c.fillStyle='#6e59bd';for(const peer of peers()){c.beginPath();c.arc(...p(peer.x,peer.y),4,0,Math.PI*2);c.fill();}
-    c.save();c.translate(...p(mauz.x,mauz.y));c.rotate(mauz.heading);c.fillStyle='#f7fcff';c.strokeStyle='#225e8a';c.lineWidth=2;c.beginPath();c.moveTo(8,0);c.lineTo(-5,-5);c.lineTo(-3,0);c.lineTo(-5,5);c.closePath();c.fill();c.stroke();c.restore();
+    for(const peer of peers())drawPlayerArrow(c,p,peer);
+    drawPlayerArrow(c,p,mauz,true);
     c.fillStyle='#f9fbef';c.fillRect(78,3,24,16);c.fillStyle='#42634c';c.font='bold 11px Segoe UI';c.textAlign='center';c.fillText('N',90,15);c.restore();
   }
   function openBusMap(stop){
@@ -1208,8 +1219,9 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     drawRoute(c,p);
     if(busMapStop)drawBusNetwork(c,p);else drawBusStops(c,p);
     const t=navigationTarget();c.fillStyle='#e8a44f';c.beginPath();c.arc(...p(t.x,t.y),6,0,Math.PI*2);c.fill();
-    c.fillStyle='#2476a5';c.beginPath();c.arc(...p(mauz.x,mauz.y),5,0,Math.PI*2);c.fill();
-    c.strokeStyle='#2476a5';c.lineWidth=3;c.beginPath();c.moveTo(...p(mauz.x,mauz.y));c.lineTo(...p(mauz.x+Math.cos(mauz.heading)*7,mauz.y+Math.sin(mauz.heading)*7));c.stroke();
+    if(onlineMode)for(const peer of network.players){const actor=worldMapActor(peer,peer.room);if(actor)drawPlayerArrow(c,p,actor);}
+    const self=worldMapActor(mauz,interior?(interior.public?interior.id:'home:'+interior.id):'world');
+    if(self)drawPlayerArrow(c,p,self,true);
   }
   function updateHomeUI(){
     if(!currentHome)return;
@@ -1485,5 +1497,5 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
     const coast=sea?1:Math.max(0,1-shore/55),nature=coast>.4?0:Math.min(1,treeIndex.near(mauz.x,mauz.y,18).length/8);
     return {sea:coast,wind:.5+Math.min(.5,Island.heightAt(mauz.x,mauz.y)/40),nature,traffic,night:dayCycle.night,paved:Island.onRoad(mauz.x,mauz.y),water:sea&&!busRide&&!vehicles.driving};
   }
-  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busF:busRide?.f,busS:busRide?.s,busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);if(mode==='map'&&busMapStop){if(!onlineMode){let remaining=Math.min(elapsed,1);while(remaining>0){const part=Math.min(remaining,.05);life.tick(part,mauz,vehicles.car);remaining-=part;}}if(now-busMapUpdated>200){drawMap();busMapUpdated=now;}}if(now-lastSoundUpdate>=100){lastSoundUpdate=now;sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{environment:mode==='playing'?soundEnvironment():{},buses:transit(),listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});}if(renderDirty||mode==='playing'&&now-lastPaint>=(touchDevice?1000/60-1:0)||mode==='sleeping'&&now-lastPaint>100){draw();renderDirty=false;lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
+  function frame(now){if(onlineMode)carryBus();if(onlineMode)network.update({busF:busRide?.f,busS:busRide?.s,busId:busRide?.id||null,elevation:mauz.elevation||0,x:mauz.x,y:mauz.y,heading:mauz.heading,jump:mauz.jump,moving:mauz.moving,room:interior?(interior.public?interior.id:'home:'+interior.id):'world',outfit:job.outfitId,car:vehicles.driving?vehicles.car.model.id:null,name:mauz.name,species:mauz.species,vehicle:vehicles.car?{model:vehicles.car.model.id,x:vehicles.car.x,y:vehicles.car.y,heading:vehicles.car.heading,speed:vehicles.car.speed,z:vehicles.car.z||0}:null});const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(elapsed,.04);last=now;network.smooth(dt);if(onlineMode)damage.tick(elapsed);if(mode==='playing')step(dt);else if(mode==='sleeping')advanceSleep(dt);if(mode==='map'&&(busMapStop||onlineMode)){if(busMapStop&&!onlineMode){let remaining=Math.min(elapsed,1);while(remaining>0){const part=Math.min(remaining,.05);life.tick(part,mauz,vehicles.car);remaining-=part;}}if(now-busMapUpdated>200){drawMap();busMapUpdated=now;}}if(now-lastSoundUpdate>=100){lastSoundUpdate=now;sound.update(mode==='start'?'menu':job.active?'delivery':activities.active?.id||'explore',{environment:mode==='playing'?soundEnvironment():{},buses:transit(),listener:mode==='playing'&&!interior?mauz:null,busId:busRide?.id,paused:mode!=='playing'&&mode!=='start',moving:mauz.moving,driving:vehicles.driving,speed:vehicles.car?.speed||0,running:keys.has('shift'),working:activities.progress>0,braking:keys.has(' ')});}if(renderDirty||mode==='playing'&&now-lastPaint>=(touchDevice?1000/60-1:0)||mode==='sleeping'&&now-lastPaint>100){draw();renderDirty=false;lastPaint=now;}requestAnimationFrame(frame);}requestAnimationFrame(frame);
 })();
