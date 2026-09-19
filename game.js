@@ -34,7 +34,7 @@
   function ownsHome(id){return ownedHomes().includes(id)&&(!onlineMode||propertiesReady&&network.mine.includes(id));}
   function onlineIdentity(){try{let token=storage.getItem('animal-world-owner-key');if(!token||!/^[a-zA-Z0-9-]{32,80}$/.test(token)){token=crypto.randomUUID();storage.setItem('animal-world-owner-key',token);}return token;}catch{return null;}}
 
-  const onlinePanel=typeof createOnlinePanel==='function'?createOnlinePanel(text=>network.chat(text),()=>{keys.clear();resetStick();}):null;
+  const onlinePanel=typeof createOnlinePanel==='function'?createOnlinePanel(text=>network.chat(text),()=>{keys.clear();resetStick();},()=>sound.effect('chat')):null;
   const network=createMultiplayer((status,count)=>{
     onlinePanel?.status(status,network.id);onlinePanel?.show(onlineMode&&mode==='playing');
     const badge=document.querySelector('#online-status');badge.hidden=!onlineMode;

@@ -48,7 +48,7 @@
 </main>
 <div id="game-ui" hidden>
 <section id="online-panel" aria-label="Online-Spieler und Chat" hidden>
-<header><button id="online-toggle" type="button" aria-expanded="true" aria-controls="online-body" aria-label="Chat einklappen" title="Chat einklappen"><i class="chat-chevron" aria-hidden="true"></i><strong id="online-count">Online</strong> <span>Spieler &amp; Chat</span></button><button id="wave" class="wave-button" hidden>Winken</button></header>
+<header><button id="online-toggle" type="button" aria-expanded="true" aria-controls="online-body" aria-label="Chat einklappen" title="Chat einklappen"><i class="chat-chevron" aria-hidden="true"></i><strong id="online-count">Online</strong> <span>Spieler &amp; Chat</span><b id="chat-unread" role="status" aria-live="polite" hidden></b></button><button id="wave" class="wave-button" hidden>Winken</button></header>
 <div id="online-body"><div id="online-status" class="online-status" hidden></div><div class="online-columns"><div><h2>Spieler</h2><ul id="online-players" aria-label="Anwesende Spieler"></ul></div><div><h2>Chat <small>Leerung alle 30 Min.</small></h2><div id="chat-log" role="log" aria-label="Chatverlauf" aria-live="polite" aria-relevant="additions"></div></div></div>
 <form id="chat-form"><input id="chat-input" aria-label="Nachricht an alle Online-Spieler" placeholder="Nachricht an alle ..." maxlength="240" autocomplete="off" disabled><button id="chat-send" type="submit" disabled>Senden</button></form><p id="chat-feedback" role="status"></p></div></section>
 <button id="menu" class="menu-button" aria-label="Spielmenü öffnen" title="Menü (Esc)">☰</button>

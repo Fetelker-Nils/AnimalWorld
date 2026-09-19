@@ -49,3 +49,5 @@
 @media(max-width:700px) and (min-height:501px){#online-panel{width:calc(100vw - 144px);min-width:170px}.online-columns{grid-template-columns:64px minmax(0,1fr);gap:6px}#online-toggle span{display:none}#chat-send{padding:6px;font-size:11px}#chat-input{padding:6px}}
 
 #online-panel #online-toggle{display:flex;align-items:center;gap:7px;min-height:36px;flex:1;border-radius:8px}#online-toggle .chat-chevron{display:inline-block;flex:none;width:8px;height:8px;margin:4px 5px 0 7px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(-45deg)}#online-toggle[aria-expanded="false"] .chat-chevron{transform:rotate(135deg);margin-top:-4px}#online-toggle:hover{background:#ffffff30}@media(any-pointer:coarse){#online-panel #online-toggle{min-height:44px}}
+
+#chat-unread{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#b33d45;color:#fff;font-size:11px;line-height:1;flex:none}

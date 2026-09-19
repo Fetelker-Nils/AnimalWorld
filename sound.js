@@ -64,7 +64,8 @@ function createSound(storage){
   function effect(type,volume=1){
     if(!ctx||ctx.state!=='running'||settings.muted||settings.effects===0)return;
     const t=ctx.currentTime;
-    if(type==='bus-open'){noise(.55,.12*volume,1800);tone(190,t,.45,.035*volume,'triangle',fx,100);}
+    if(type==='chat'){tone(660,t,.12,.07*volume);tone(880,t+.1,.18,.06*volume);}
+    else if(type==='bus-open'){noise(.55,.12*volume,1800);tone(190,t,.45,.035*volume,'triangle',fx,100);}
     else if(type==='bus-close'){tone(760,t,.1,.055*volume);tone(760,t+.18,.1,.055*volume);noise(.5,.1*volume,1300);tone(100,t+.45,.1,.05*volume);}
     else if(type==='bus-stop'){noise(.65,.14*volume,2200);tone(160,t,.25,.025*volume,'sine',fx,65);}
     else if(type==='reward'){for(const [i,f] of [523.25,659.25,783.99,1046.5].entries())tone(f,t+i*.08,.28,.12,'triangle');}
