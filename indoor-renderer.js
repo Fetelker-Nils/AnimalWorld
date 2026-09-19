@@ -1,7 +1,7 @@
 ﻿// Indoor geometry uses a depth buffer: walls occlude furniture and Mauz per pixel.
-function createIndoorRenderer({transparent=false}={}){
+function createIndoorRenderer({transparent=false,lowDetail=false}={}){
   const surface=document.createElement('canvas');
-  const gl=surface.getContext('webgl',{alpha:transparent,antialias:true,preserveDrawingBuffer:true});
+  const gl=surface.getContext('webgl',{alpha:transparent,antialias:!lowDetail,preserveDrawingBuffer:false});
   if(!gl)throw Error('Die Innenraum-Grafik konnte nicht gestartet werden.');
   const program=gl.createProgram();
   for(const [type,source] of [[gl.VERTEX_SHADER,`attribute vec4 position;attribute vec3 color;attribute vec2 uv;varying vec3 tint;varying vec2 tex;void main(){gl_Position=position;tint=color;tex=uv;}`],[gl.FRAGMENT_SHADER,`precision mediump float;varying vec3 tint;varying vec2 tex;uniform sampler2D sprite;uniform bool textured;uniform float opacity;void main(){if(textured){vec4 c=texture2D(sprite,tex);if(c.a<0.05)discard;gl_FragColor=c;}else gl_FragColor=vec4(tint,opacity);}`]]){

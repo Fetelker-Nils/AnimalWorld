@@ -370,7 +370,15 @@ const Island = (() => {
     buildings.push(building);job.workplace=id;
     venues.push({id,jobId:job.id,name:workplaceNames[job.id],public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
   }
-  const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||lamps.some(l=>Math.hypot(l.x-x,l.y-y)<1.5)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))].some(t=>Math.hypot(x-t.x,y-t.y)<6)||buildings.some(b=>Math.hypot(x-b.x,y-b.y)<14);
+  // Immutable scenery-placement targets: build once, not for every grass/tree candidate.
+  const reservedTargets=[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))];
+  function nearbyPoints(items,radius){
+    const cells=new Map(),size=32;
+    for(const p of items){const key=Math.floor(p.x/size)+','+Math.floor(p.y/size);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(p);}
+    return (x,y)=>{for(let ix=Math.floor((x-radius)/size);ix<=Math.floor((x+radius)/size);ix++)for(let iy=Math.floor((y-radius)/size);iy<=Math.floor((y+radius)/size);iy++)for(const p of cells.get(ix+','+iy)||[])if((p.x-x)**2+(p.y-y)**2<radius*radius)return true;return false;};
+  }
+  const nearReservedTarget=nearbyPoints(reservedTargets,6),nearReservedBuilding=nearbyPoints(buildings,14),nearReservedLamp=nearbyPoints(lamps,1.5);
+  const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||nearReservedLamp(x,y)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||nearReservedTarget(x,y)||nearReservedBuilding(x,y);
   return {crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 

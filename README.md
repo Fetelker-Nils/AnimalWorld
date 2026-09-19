@@ -253,3 +253,11 @@ Links oben stehen die verbundenen Spieler und daneben der gemeinsame Inselchat. 
 Tests: `npm run test:chat`. Die UI-Pruefung verwendet isolierte Verbindungen und schreibt keine Testnachrichten in den oeffentlichen Chat.
 
 Der gesamte Online-Chat wird zur vollen und halben Stunde serverseitig geleert, auch ohne verbundene Spieler. Offene Chatfenster erhalten sofort den leeren Verlauf. Der Loeschzeitpunkt bleibt bei Serverneustarts erhalten.
+
+
+### Tablet-Leistung
+Touchgeraete rendern die Spielgrafik mit maximal 589824 Pixeln und bis zu 60 Bildern pro Sekunde, weniger Grasdetails und kuerzerer Sichtweite. Die HTML-Bedienung behaelt ihre volle Aufloesung. Kamera-Projektion nutzt zwischengespeicherte Winkel; unbewegte Menues werden nur bei Aenderungen gezeichnet. UI und Umgebungsgeraeusche werden seltener aktualisiert, interaktive Timing-Aufgaben weiterhin pro Simulationsschritt. Die Weltvorbereitung nutzt einen raeumlichen Index mit unveraenderten Platzierungsregeln. Skripte laden mit defer.
+
+Lokale Chromium-Messung, Touch-Simulation 1024x768/DPR 2: vorher ca. 8,3 FPS und 3,84 s bis Spielbereitschaft; nachher ca. 21,3 FPS und 1,32 s. Dies ist kein Ergebnis auf einem echten Tablet und kein neuer Lighthouse-Score. Profile liegen unter test-results/performance-*.json. Reproduzieren: `node scripts/profile-tablet.cjs vergleich`. Gezielte Funktionspruefung: `npm run test:performance`.
+
+Zweite Grafikoptimierung: bis zu 512 nahe, unveraenderte Landschaftsmodelle werden wiederverwendet; der begrenzte Cache verhindert wachsenden Speicherverbrauch bei langen Ausfluegen. Vollstaendig ausserhalb des Bildes liegende Flaechen und abgewandte Seiten von Quadern werden nicht gezeichnet. Innenraeume sparen eine unnoetige Vollbild-Texturkopie. Weitere lokale Touch-Simulation beim Laufen: ca. 28 FPS bei gleicher Aufloesung (567240 Renderpixel); reale Geraete koennen abweichen. Bewegungsmessung: `node scripts/profile-tablet.cjs laufend --moving`.
