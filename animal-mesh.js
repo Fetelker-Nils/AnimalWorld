@@ -1,7 +1,7 @@
 // Cached world geometry: every face has world-space vertices, never billboard sprites.
 const sceneryTemplates=new Map();
 function sceneryMesh(kind,item,ground=0,options={}){
-  const detail=options.detail===false?4:7,key=kind+':'+detail+':'+(item.color||'')+':'+!!options.lit+':'+(item.colors||[]).join(',');
+  const detail=options.detail===12?12:options.detail===false?4:7,key=kind+':'+detail+':'+(item.color||'')+':'+!!options.lit+':'+(item.colors||[]).join(',');
   let template=sceneryTemplates.get(key);
   if(!template){
     template=[];
@@ -11,7 +11,7 @@ function sceneryMesh(kind,item,ground=0,options={}){
       [[0,3,2,1],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]].forEach((f,i)=>face(f.map(j=>v[j]),color,[.7,.85,.7,.8,.95,1][i]));
     }
     function ball(x,y,z,rx,ry,rz,color,n=detail){
-      const m=3,v=Array.from({length:m+1},(_,j)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+Math.cos(a)*Math.sin(b)*rx,y+Math.sin(a)*Math.sin(b)*ry,z+Math.cos(b)*rz];}));
+      const m=detail===12?5:3,v=Array.from({length:m+1},(_,j)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+Math.cos(a)*Math.sin(b)*rx,y+Math.sin(a)*Math.sin(b)*ry,z+Math.cos(b)*rz];}));
       for(let j=0;j<m;j++)for(let i=0;i<n;i++)face([v[j][i],v[j][(i+1)%n],v[j+1][(i+1)%n],v[j+1][i]],color,.72+.19*(1-j/m)+.09*Math.cos(i/n*Math.PI*2));
     }
     if(kind==='tree'){

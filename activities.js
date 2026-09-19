@@ -13,10 +13,10 @@ function createActivities(world,wallet,storage=null){
     'market-route':[['Die Bestellung braucht etwas Frisches.','Obstkorb abgeben','Werkzeug abgeben','Altpapier abgeben']]
   };
   function openChoice(index,mode){
-    const list=cards[active.id]||[['Den richtigen Schalter einstellen.','Rot','Gelb','Blau']],card=list[(round+index)%list.length],offset=(round+index)%3;
+    const list=cards[active.type||active.id]||[['Den richtigen Schalter einstellen.','Rot','Gelb','Blau']],card=list[(round+index)%list.length],offset=(round+index)%3;
     const options=card.slice(1),rotated=options.slice(offset).concat(options.slice(0,offset));
     challenge={kind:'choice',index,mode,prompt:card[0],options:rotated,answer:(3-offset)%3,elapsed:0,hits:0};
-    if(active.id==='electric'){challenge.sequence=[(round+index)%3,(round+index+2)%3,(round+index+1)%3];challenge.prompt='Schaltplan: '+challenge.sequence.map(i=>rotated[i]).join(' > ');challenge.answer=challenge.sequence[0];}
+    if((active.type||active.id)==='electric'){challenge.sequence=[(round+index)%3,(round+index+2)%3,(round+index+1)%3];challenge.prompt='Schaltplan: '+challenge.sequence.map(i=>rotated[i]).join(' > ');challenge.answer=challenge.sequence[0];}
     return {message:challenge.prompt+' Waehle mit 1, 2, 3 oder tippe auf ein Werkzeug.'};
   }
   function choose(option,player,driving=false){
@@ -67,14 +67,14 @@ function createActivities(world,wallet,storage=null){
     if(challenge){
       if(distance(player,active.points[challenge.index])>2.6){challenge=null;progress=0;return null;}
       const marker=(challenge.elapsed%challenge.period)/challenge.period;
-      if(marker<.45||marker>.7){challenge.elapsed=0;return {type:'miss',message:active.id==='fishing'?'Der Fisch zappelt! Warte auf den grünen Bereich.':'Knapp daneben! Tippe im grünen Bereich.'};}
+      if(marker<.45||marker>.7){challenge.elapsed=0;return {type:'miss',message:(active.type||active.id)==='fishing'?'Der Fisch zappelt! Warte auf den grünen Bereich.':'Knapp daneben! Tippe im grünen Bereich.'};}
       challenge.hits++;
       if(challenge.hits<challenge.required){challenge.elapsed=0;return {type:'hit',message:'Gut getroffen! Noch ein Treffer.'};}
       done.add(challenge.index);challenge=null;progress=0;
       return {type:'success',message:(active.doneText||'Motor repariert')+' ('+done.size+'/'+active.points.length+')'};
     }
-    if(active.kind==='collect'){const index=active.points.indexOf(t);if(active.id==='clean'){carrying=index;return {message:cards.clean[(round+index)%3][0]+' aufgehoben. Bring den Abfall zum Sortierplatz.'};}return openChoice(index,'finish');}
-    if(active.id!=='fishing'&&!prepared.has(active.points.indexOf(t)))return openChoice(active.points.indexOf(t),'prepare');
+    if(active.kind==='collect'){const index=active.points.indexOf(t);if((active.type||active.id)==='clean'){carrying=index;return {message:cards.clean[(round+index)%3][0]+' aufgehoben. Bring den Abfall zum Sortierplatz.'};}return openChoice(index,'finish');}
+    if((active.type||active.id)!=='fishing'&&!prepared.has(active.points.indexOf(t)))return openChoice(active.points.indexOf(t),'prepare');
     return null;
   }
   function tick(dt,player,driving,held){
@@ -84,9 +84,9 @@ function createActivities(world,wallet,storage=null){
     if(driving||distance(player,t)>2.6){progress=0;challenge=null;return null;}
     if(challenge){challenge.elapsed+=dt;return null;}
     if(!held){progress=0;return null;}
-    if(active.id!=='fishing'&&!prepared.has(active.points.indexOf(t)))return openChoice(active.points.indexOf(t),'prepare');
+    if((active.type||active.id)!=='fishing'&&!prepared.has(active.points.indexOf(t)))return openChoice(active.points.indexOf(t),'prepare');
     progress+=dt;
-    if(progress>=active.seconds){if(active.timing){challenge={kind:'timing',index:active.points.indexOf(t),elapsed:0,hits:0,period:1.4+((round+active.points.indexOf(t))%3)*.2,required:active.id==='fishing'?3:2};progress=0;return {type:'ready',message:active.id==='fishing'?'Es beisst! Tippe im grünen Bereich, um den Fisch zu landen.':'Jetzt präzise arbeiten: zweimal im grünen Bereich tippen.'};}done.add(active.points.indexOf(t));progress=0;return {message:(active.doneText||(active.id==='garden'?'Beet gepflegt':'Motor repariert'))+' ('+done.size+'/'+active.points.length+')'};}
+    if(progress>=active.seconds){if(active.timing){challenge={kind:'timing',index:active.points.indexOf(t),elapsed:0,hits:0,period:1.4+((round+active.points.indexOf(t))%3)*.2,required:(active.type||active.id)==='fishing'?3:2};progress=0;return {type:'ready',message:(active.type||active.id)==='fishing'?'Es beisst! Tippe im grünen Bereich, um den Fisch zu landen.':'Jetzt präzise arbeiten: zweimal im grünen Bereich tippen.'};}done.add(active.points.indexOf(t));progress=0;return {message:(active.doneText||((active.type||active.id)==='garden'?'Beet gepflegt':'Motor repariert'))+' ('+done.size+'/'+active.points.length+')'};}
     return null;
   }
   return {workAction(player){return active?(preparedLabels.get(active.points.indexOf(target(player)))||active.action):'';},choose,get carrying(){return carrying;},startWorkplace(id){const spec=world.jobs.find(j=>j.workplace===id);return spec?start(spec.id,null,id):null;},finishWorkplace(id){return active?.workplace===id&&done.size===active.points.length?complete():null;},startVenue(venue){const spec=world.jobs.find(j=>j.venue===venue);return spec?start(spec.id,null,venue):null;},finishVenue(venue){return active?.venue===venue&&done.size===active.points.length?complete():null;},start,target,interact,tick,get challenge(){return challenge;},get active(){return active;},get done(){return done;},get passenger(){return passenger;},get progress(){return progress;}};

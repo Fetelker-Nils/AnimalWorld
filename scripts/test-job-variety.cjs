@@ -10,5 +10,5 @@ for(const spec of c.world.jobs){
 }
 const taxi=c.world.jobs.find(j=>j.id==='taxi');jobs.start('taxi',taxi);assert.equal(jobs.active.points.length,3,'Next taxi shift has an intermediate stop');const stops=jobs.active.points.slice();jobs.interact(stops[0],true);jobs.interact(stops[1],true);assert(jobs.active,'Intermediate stop does not finish trip');jobs.interact(stops[2],true);assert.equal(jobs.active,null);
 const a=c.createActivities(c.world,wallet,storage);a.start('garden',c.world.jobs.find(j=>j.id==='garden'));a.interact(a.active.points[0],false);assert(a.challenge.prompt.includes('Unkraut'),'Next shift changes assignment');
-assert.equal(c.world.venues.filter(v=>v.jobId).length,8);for(const v of c.world.venues.filter(v=>v.jobId)){assert(!c.world.blocked(v.x,v.y));assert(v.building.w>=10&&v.building.h>=5);}
-console.log('PASS all jobs: decisions, wrong answers, carrying/sorting, preparation, timing, multi-stop taxi, rotating saved shifts, payouts and eight workplaces');
+assert.equal(c.world.venues.filter(v=>v.jobId).length,c.world.jobs.filter(j=>!j.venue).length);for(const v of c.world.venues.filter(v=>v.jobId)){assert(!c.world.blocked(v.x,v.y));assert(v.building.w>=10&&v.building.h>=5);}
+console.log('PASS all jobs: decisions, wrong answers, carrying/sorting, preparation, timing, multi-stop taxi, rotating saved shifts, payouts and all workplaces');

@@ -318,7 +318,7 @@ const Island = (() => {
       route.splice(2,0,{x:left+1.8,y:-23,name:(town.main?name:name+' Bahnhof'),terminal:true});
       route.splice(-1,0,{x:right-1.8,y:102,name:(town.main?name:name+' Bahnhof')});
     }
-    busLines.push({id,name:town.name+' Bahnhofslinie',color:['#638fba','#b97762','#809a52'][index%3],starts:[route.findIndex(p=>p.name)],route});
+    busLines.push({id,name:town.name+' Bahnhofslinie',color:['#638fba','#b97762','#809a52'][index%3],starts:[route.findIndex(p=>p.name),route.findIndex(p=>p.name?.endsWith("Zentrum"))],route});
   }
   // Keep complete platform footprints off buildings and streets, moving the stop along its track.
   for(const station of railStations){
@@ -353,6 +353,21 @@ const Island = (() => {
       crossings.push({id:'crossing-'+crossings.length,x,y,vertical,width:vertical?road.w:road.d});
     }
   }
+  // Local contracts use independent IDs and the existing interactive job rules.
+  const jobSettlements=[...towns,{name:'Dorf',x:0,y:110},{name:'Perleninsel',x:900,y:0}];
+  const localTypes=['garden','repair','clean','orchard','electric','trail'];
+  for(const [index,town] of jobSettlements.entries())for(let slot=0;slot<2;slot++){
+    const type=localTypes[(index*2+slot)%localTypes.length],base=jobs.find(j=>j.id===type),spots=[];
+    for(let ring=20;ring<=180&&spots.length<5;ring+=12)for(let a=0;a<24&&spots.length<5;a++){
+      const x=Math.round(town.x+Math.cos(a*Math.PI/12)*ring),y=Math.round(town.y+Math.sin(a*Math.PI/12)*ring);
+      if(blocked(x,y)||onRoad(x,y,4)||railReserved(x,y,12)||heightAt(x,y)>0||inPond(x,y,4))continue;
+      if(buildings.some(b=>Math.abs(x-b.x)<b.w/2+5&&Math.abs(y-b.y)<b.d/2+5)||lamps.some(l=>Math.hypot(x-l.x,y-l.y)<5)||booths.some(b=>Math.hypot(x-b.x,y-b.y)<8))continue;
+      if([...spots,...jobs.flatMap(j=>[j,...j.points])].some(p=>Math.hypot(x-p.x,y-p.y)<12))continue;
+      spots.push({x,y});
+    }
+    if(spots.length<5)throw Error('Zu wenig Arbeitsplaetze in '+town.name);
+    jobs.push({...base,...spots[0],id:'local-'+index+'-'+type,type,settlement:town.name,name:base.name+' - '+town.name,points:spots.slice(1),reward:base.reward+30});
+  }
   // Public workplaces are real buildings, without replacing any purchased home.
   const workplaceNames={clean:'Recyclinghof',garden:'Gaertnerei',repair:'Mauz Werkstatt',taxi:'Taxizentrale',fishing:'Anglerhaus',orchard:'Obsthof',electric:'Stadtwerke',trail:'Rangerstation'};
   for(const job of jobs){
@@ -368,7 +383,7 @@ const Island = (() => {
     if(!place)throw Error('Kein freier Bauplatz fuer '+job.id);
     const building={...place,w,d,h:5.8,color:job.id==='repair'?'#b5cbd0':'#d9d7bc',roof:job.id==='garden'?'#78936b':'#aa775a',venueId:id,jobId:job.id};
     buildings.push(building);job.workplace=id;
-    venues.push({id,jobId:job.id,name:workplaceNames[job.id],public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
+    venues.push({id,jobId:job.id,name:workplaceNames[job.type||job.id]+(job.settlement?' '+job.settlement:''),public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
   }
   // Immutable scenery-placement targets: build once, not for every grass/tree candidate.
   const reservedTargets=[depot,...deliveries,...venues,...jobs,...jobs.flatMap(j=>j.points),...homes,...booths,...booths.map(b=>({x:b.sx,y:b.sy}))];

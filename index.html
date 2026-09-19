@@ -66,6 +66,7 @@
 <div id="skill-game" class="skill-game" hidden><strong id="skill-title"></strong><div id="skill-track" class="skill-track"><span class="skill-zone"></span><i id="skill-needle"></i></div><div id="skill-choices" hidden><button data-work-choice="0"></button><button data-work-choice="1"></button><button data-work-choice="2"></button></div><small id="skill-help">Im gruenen Bereich: E oder Aktion antippen</small></div>
 </div>
 <div id="sleep-screen" class="sleep-screen" role="status" hidden><span>Z z z</span><p id="sleep-message">Mauz schläft bis 07:00 Uhr ...</p><button id="sleep-cancel" hidden>Aufstehen</button></div>
+<output id="fps-counter" hidden></output>
 <section id="pause-screen" class="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
 <div class="pause-card">
 <p class="eyebrow">KURZ DURCHATMEN</p>
@@ -75,6 +76,23 @@
 <button id="view-toggle">Kamera vorne / hinten (V)</button>
 <button id="resume" class="primary">Weiterspielen</button>
 <button id="back" class="secondary">Zum Startbildschirm</button>
+<details class="graphics-settings" open><summary>Einstellungen: Grafik &amp; Leistung</summary>
+<label>Grafikqualit?t <select id="graphics-quality"><option value="low">Niedrig (schneller)</option><option value="medium">Mittel</option><option value="high">Hoch (sch?rfer)</option></select></label>
+<label>Sichtweite <select id="graphics-distance"><option value="100">Kurz</option><option value="150">Mittel</option><option value="260">Weit</option><option value="350">Sehr weit</option></select></label>
+<label>FPS-Limit <select id="graphics-fps"><option value="30">30 (sparsam)</option><option value="60">60</option><option value="120">120</option><option value="0">Unbegrenzt</option></select></label>
+<label>Realismus (Optik) <select id="graphics-realism"><option value="simple">Einfach</option><option value="normal">Normal</option><option value="detailed">Detailreich</option><option value="ultra">Ultra</option></select></label>
+<p>Realismus steuert Pflanzen, Modelldetails und Lichtschein. Der Comicstil bleibt erhalten. Niedrige Grafik und kurze Sichtweite entlasten dein Ger?t. Das FPS-Limit ist eine Obergrenze.</p>
+<p>Detailreich und Ultra bringen animierte Wasserlinien und tageszeitabh?ngige Bodenschatten. Ultra erg?nzt rundere 3D-Modelle, Sonnenlicht und ziehende Wolken. Diese Effekte brauchen mehr Leistung.</p>
+<label>Bodenschatten <input id="graphics-shadows" type="checkbox"></label>
+<label>Wasseranimation <input id="graphics-water" type="checkbox"></label>
+<label>Partikeleffekte <input id="graphics-particles" type="checkbox"></label>
+<label>Gras und Blumen <input id="graphics-vegetation" type="checkbox"></label>
+<label>Lichtschein <input id="graphics-glow" type="checkbox"></label>
+<label>Helligkeit <select id="graphics-brightness"><option value="80">80 %</option><option value="100">100 %</option><option value="120">120 %</option></select></label>
+<label>Kamera-Bildausschnitt <select id="graphics-zoom"><option value="80">Weitwinkel</option><option value="100">Normal</option><option value="120">N?her</option></select></label>
+<label>FPS anzeigen <input id="graphics-show-fps" type="checkbox"></label>
+<button id="graphics-reset" type="button">Empfohlene Werte wiederherstellen</button>
+</details>
 <div class="audio-settings"><button id="mute-audio" class="secondary">Ton ausschalten</button><label>Musik <input id="music-volume" type="range" min="0" max="100" value="30"></label><label>Geräusche <input id="effects-volume" type="range" min="0" max="100" value="55"></label></div>
 </div>
 </section>
