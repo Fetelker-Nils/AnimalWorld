@@ -75,6 +75,86 @@
       "text": "Linie sechzehn."
     },
     {
+      "file": "line-17.mp3",
+      "text": "Linie siebzehn."
+    },
+    {
+      "file": "line-18.mp3",
+      "text": "Linie achtzehn."
+    },
+    {
+      "file": "line-19.mp3",
+      "text": "Linie neunzehn."
+    },
+    {
+      "file": "line-20.mp3",
+      "text": "Linie zwanzig."
+    },
+    {
+      "file": "line-21.mp3",
+      "text": "Linie einundzwanzig."
+    },
+    {
+      "file": "line-22.mp3",
+      "text": "Linie zweiundzwanzig."
+    },
+    {
+      "file": "line-23.mp3",
+      "text": "Linie dreiundzwanzig."
+    },
+    {
+      "file": "line-24.mp3",
+      "text": "Linie vierundzwanzig."
+    },
+    {
+      "file": "line-25.mp3",
+      "text": "Linie fünfundzwanzig."
+    },
+    {
+      "file": "line-26.mp3",
+      "text": "Linie sechsundzwanzig."
+    },
+    {
+      "file": "line-27.mp3",
+      "text": "Linie siebenundzwanzig."
+    },
+    {
+      "file": "line-28.mp3",
+      "text": "Linie achtundzwanzig."
+    },
+    {
+      "file": "line-29.mp3",
+      "text": "Linie neunundzwanzig."
+    },
+    {
+      "file": "line-30.mp3",
+      "text": "Linie dreissig."
+    },
+    {
+      "file": "line-31.mp3",
+      "text": "Linie einunddreissig."
+    },
+    {
+      "file": "line-32.mp3",
+      "text": "Linie zweiunddreissig."
+    },
+    {
+      "file": "line-33.mp3",
+      "text": "Linie dreiunddreissig."
+    },
+    {
+      "file": "line-34.mp3",
+      "text": "Linie vierunddreissig."
+    },
+    {
+      "file": "line-35.mp3",
+      "text": "Linie fünfunddreissig."
+    },
+    {
+      "file": "line-36.mp3",
+      "text": "Linie sechsunddreissig."
+    },
+    {
       "file": "line-R1.mp3",
       "text": "Regionalzug eins."
     },
@@ -89,6 +169,86 @@
     {
       "file": "line-R4.mp3",
       "text": "Regionalzug vier."
+    },
+    {
+      "file": "line-R5.mp3",
+      "text": "Regionalzug fünf."
+    },
+    {
+      "file": "line-R6.mp3",
+      "text": "Regionalzug sechs."
+    },
+    {
+      "file": "line-R7.mp3",
+      "text": "Regionalzug sieben."
+    },
+    {
+      "file": "line-R8.mp3",
+      "text": "Regionalzug acht."
+    },
+    {
+      "file": "line-R9.mp3",
+      "text": "Regionalzug neun."
+    },
+    {
+      "file": "line-R10.mp3",
+      "text": "Regionalzug zehn."
+    },
+    {
+      "file": "line-R11.mp3",
+      "text": "Regionalzug elf."
+    },
+    {
+      "file": "line-R12.mp3",
+      "text": "Regionalzug zwölf."
+    },
+    {
+      "file": "line-R13.mp3",
+      "text": "Regionalzug dreizehn."
+    },
+    {
+      "file": "line-R14.mp3",
+      "text": "Regionalzug vierzehn."
+    },
+    {
+      "file": "line-R15.mp3",
+      "text": "Regionalzug fünfzehn."
+    },
+    {
+      "file": "line-R16.mp3",
+      "text": "Regionalzug sechzehn."
+    },
+    {
+      "file": "line-R17.mp3",
+      "text": "Regionalzug siebzehn."
+    },
+    {
+      "file": "line-R18.mp3",
+      "text": "Regionalzug achtzehn."
+    },
+    {
+      "file": "line-R19.mp3",
+      "text": "Regionalzug neunzehn."
+    },
+    {
+      "file": "line-R20.mp3",
+      "text": "Regionalzug zwanzig."
+    },
+    {
+      "file": "line-R21.mp3",
+      "text": "Regionalzug einundzwanzig."
+    },
+    {
+      "file": "line-R22.mp3",
+      "text": "Regionalzug zweiundzwanzig."
+    },
+    {
+      "file": "line-R23.mp3",
+      "text": "Regionalzug dreiundzwanzig."
+    },
+    {
+      "file": "line-R24.mp3",
+      "text": "Regionalzug vierundzwanzig."
     },
     {
       "file": "station-nordstadt.mp3",
@@ -427,6 +587,326 @@
       "text": "Nächste Station: Waldruh Zentrum."
     },
     {
+      "file": "station-auenstadt-bahnhof.mp3",
+      "text": "Station: Auenstadt Bahnhof."
+    },
+    {
+      "file": "next-auenstadt-bahnhof.mp3",
+      "text": "Nächste Station: Auenstadt Bahnhof."
+    },
+    {
+      "file": "station-auenstadt-zentrum.mp3",
+      "text": "Station: Auenstadt Zentrum."
+    },
+    {
+      "file": "next-auenstadt-zentrum.mp3",
+      "text": "Nächste Station: Auenstadt Zentrum."
+    },
+    {
+      "file": "station-birkenhain-bahnhof.mp3",
+      "text": "Station: Birkenhain Bahnhof."
+    },
+    {
+      "file": "next-birkenhain-bahnhof.mp3",
+      "text": "Nächste Station: Birkenhain Bahnhof."
+    },
+    {
+      "file": "station-birkenhain-zentrum.mp3",
+      "text": "Station: Birkenhain Zentrum."
+    },
+    {
+      "file": "next-birkenhain-zentrum.mp3",
+      "text": "Nächste Station: Birkenhain Zentrum."
+    },
+    {
+      "file": "station-felsenburg-bahnhof.mp3",
+      "text": "Station: Felsenburg Bahnhof."
+    },
+    {
+      "file": "next-felsenburg-bahnhof.mp3",
+      "text": "Nächste Station: Felsenburg Bahnhof."
+    },
+    {
+      "file": "station-felsenburg-zentrum.mp3",
+      "text": "Station: Felsenburg Zentrum."
+    },
+    {
+      "file": "next-felsenburg-zentrum.mp3",
+      "text": "Nächste Station: Felsenburg Zentrum."
+    },
+    {
+      "file": "station-moosdorf-bahnhof.mp3",
+      "text": "Station: Moosdorf Bahnhof."
+    },
+    {
+      "file": "next-moosdorf-bahnhof.mp3",
+      "text": "Nächste Station: Moosdorf Bahnhof."
+    },
+    {
+      "file": "station-moosdorf-zentrum.mp3",
+      "text": "Station: Moosdorf Zentrum."
+    },
+    {
+      "file": "next-moosdorf-zentrum.mp3",
+      "text": "Nächste Station: Moosdorf Zentrum."
+    },
+    {
+      "file": "station-silberstadt-bahnhof.mp3",
+      "text": "Station: Silberstadt Bahnhof."
+    },
+    {
+      "file": "next-silberstadt-bahnhof.mp3",
+      "text": "Nächste Station: Silberstadt Bahnhof."
+    },
+    {
+      "file": "station-silberstadt-zentrum.mp3",
+      "text": "Station: Silberstadt Zentrum."
+    },
+    {
+      "file": "next-silberstadt-zentrum.mp3",
+      "text": "Nächste Station: Silberstadt Zentrum."
+    },
+    {
+      "file": "station-eichental-bahnhof.mp3",
+      "text": "Station: Eichental Bahnhof."
+    },
+    {
+      "file": "next-eichental-bahnhof.mp3",
+      "text": "Nächste Station: Eichental Bahnhof."
+    },
+    {
+      "file": "station-eichental-zentrum.mp3",
+      "text": "Station: Eichental Zentrum."
+    },
+    {
+      "file": "next-eichental-zentrum.mp3",
+      "text": "Nächste Station: Eichental Zentrum."
+    },
+    {
+      "file": "station-wiesenburg-bahnhof.mp3",
+      "text": "Station: Wiesenburg Bahnhof."
+    },
+    {
+      "file": "next-wiesenburg-bahnhof.mp3",
+      "text": "Nächste Station: Wiesenburg Bahnhof."
+    },
+    {
+      "file": "station-wiesenburg-zentrum.mp3",
+      "text": "Station: Wiesenburg Zentrum."
+    },
+    {
+      "file": "next-wiesenburg-zentrum.mp3",
+      "text": "Nächste Station: Wiesenburg Zentrum."
+    },
+    {
+      "file": "station-kieselbach-bahnhof.mp3",
+      "text": "Station: Kieselbach Bahnhof."
+    },
+    {
+      "file": "next-kieselbach-bahnhof.mp3",
+      "text": "Nächste Station: Kieselbach Bahnhof."
+    },
+    {
+      "file": "station-kieselbach-zentrum.mp3",
+      "text": "Station: Kieselbach Zentrum."
+    },
+    {
+      "file": "next-kieselbach-zentrum.mp3",
+      "text": "Nächste Station: Kieselbach Zentrum."
+    },
+    {
+      "file": "station-wolkenstadt-bahnhof.mp3",
+      "text": "Station: Wolkenstadt Bahnhof."
+    },
+    {
+      "file": "next-wolkenstadt-bahnhof.mp3",
+      "text": "Nächste Station: Wolkenstadt Bahnhof."
+    },
+    {
+      "file": "station-wolkenstadt-zentrum.mp3",
+      "text": "Station: Wolkenstadt Zentrum."
+    },
+    {
+      "file": "next-wolkenstadt-zentrum.mp3",
+      "text": "Nächste Station: Wolkenstadt Zentrum."
+    },
+    {
+      "file": "station-rotbuchen-bahnhof.mp3",
+      "text": "Station: Rotbuchen Bahnhof."
+    },
+    {
+      "file": "next-rotbuchen-bahnhof.mp3",
+      "text": "Nächste Station: Rotbuchen Bahnhof."
+    },
+    {
+      "file": "station-rotbuchen-zentrum.mp3",
+      "text": "Station: Rotbuchen Zentrum."
+    },
+    {
+      "file": "next-rotbuchen-zentrum.mp3",
+      "text": "Nächste Station: Rotbuchen Zentrum."
+    },
+    {
+      "file": "station-kristallstadt-bahnhof.mp3",
+      "text": "Station: Kristallstadt Bahnhof."
+    },
+    {
+      "file": "next-kristallstadt-bahnhof.mp3",
+      "text": "Nächste Station: Kristallstadt Bahnhof."
+    },
+    {
+      "file": "station-kristallstadt-zentrum.mp3",
+      "text": "Station: Kristallstadt Zentrum."
+    },
+    {
+      "file": "next-kristallstadt-zentrum.mp3",
+      "text": "Nächste Station: Kristallstadt Zentrum."
+    },
+    {
+      "file": "station-fuchsdorf-bahnhof.mp3",
+      "text": "Station: Fuchsdorf Bahnhof."
+    },
+    {
+      "file": "next-fuchsdorf-bahnhof.mp3",
+      "text": "Nächste Station: Fuchsdorf Bahnhof."
+    },
+    {
+      "file": "station-fuchsdorf-zentrum.mp3",
+      "text": "Station: Fuchsdorf Zentrum."
+    },
+    {
+      "file": "next-fuchsdorf-zentrum.mp3",
+      "text": "Nächste Station: Fuchsdorf Zentrum."
+    },
+    {
+      "file": "station-morgenstadt-bahnhof.mp3",
+      "text": "Station: Morgenstadt Bahnhof."
+    },
+    {
+      "file": "next-morgenstadt-bahnhof.mp3",
+      "text": "Nächste Station: Morgenstadt Bahnhof."
+    },
+    {
+      "file": "station-morgenstadt-zentrum.mp3",
+      "text": "Station: Morgenstadt Zentrum."
+    },
+    {
+      "file": "next-morgenstadt-zentrum.mp3",
+      "text": "Nächste Station: Morgenstadt Zentrum."
+    },
+    {
+      "file": "station-blaubeertal-bahnhof.mp3",
+      "text": "Station: Blaubeertal Bahnhof."
+    },
+    {
+      "file": "next-blaubeertal-bahnhof.mp3",
+      "text": "Nächste Station: Blaubeertal Bahnhof."
+    },
+    {
+      "file": "station-blaubeertal-zentrum.mp3",
+      "text": "Station: Blaubeertal Zentrum."
+    },
+    {
+      "file": "next-blaubeertal-zentrum.mp3",
+      "text": "Nächste Station: Blaubeertal Zentrum."
+    },
+    {
+      "file": "station-edelstadt-bahnhof.mp3",
+      "text": "Station: Edelstadt Bahnhof."
+    },
+    {
+      "file": "next-edelstadt-bahnhof.mp3",
+      "text": "Nächste Station: Edelstadt Bahnhof."
+    },
+    {
+      "file": "station-edelstadt-zentrum.mp3",
+      "text": "Station: Edelstadt Zentrum."
+    },
+    {
+      "file": "next-edelstadt-zentrum.mp3",
+      "text": "Nächste Station: Edelstadt Zentrum."
+    },
+    {
+      "file": "station-hasenau-bahnhof.mp3",
+      "text": "Station: Hasenau Bahnhof."
+    },
+    {
+      "file": "next-hasenau-bahnhof.mp3",
+      "text": "Nächste Station: Hasenau Bahnhof."
+    },
+    {
+      "file": "station-hasenau-zentrum.mp3",
+      "text": "Station: Hasenau Zentrum."
+    },
+    {
+      "file": "next-hasenau-zentrum.mp3",
+      "text": "Nächste Station: Hasenau Zentrum."
+    },
+    {
+      "file": "station-abendstadt-bahnhof.mp3",
+      "text": "Station: Abendstadt Bahnhof."
+    },
+    {
+      "file": "next-abendstadt-bahnhof.mp3",
+      "text": "Nächste Station: Abendstadt Bahnhof."
+    },
+    {
+      "file": "station-abendstadt-zentrum.mp3",
+      "text": "Station: Abendstadt Zentrum."
+    },
+    {
+      "file": "next-abendstadt-zentrum.mp3",
+      "text": "Nächste Station: Abendstadt Zentrum."
+    },
+    {
+      "file": "station-tannengrund-bahnhof.mp3",
+      "text": "Station: Tannengrund Bahnhof."
+    },
+    {
+      "file": "next-tannengrund-bahnhof.mp3",
+      "text": "Nächste Station: Tannengrund Bahnhof."
+    },
+    {
+      "file": "station-tannengrund-zentrum.mp3",
+      "text": "Station: Tannengrund Zentrum."
+    },
+    {
+      "file": "next-tannengrund-zentrum.mp3",
+      "text": "Nächste Station: Tannengrund Zentrum."
+    },
+    {
+      "file": "station-kronenstadt-bahnhof.mp3",
+      "text": "Station: Kronenstadt Bahnhof."
+    },
+    {
+      "file": "next-kronenstadt-bahnhof.mp3",
+      "text": "Nächste Station: Kronenstadt Bahnhof."
+    },
+    {
+      "file": "station-kronenstadt-zentrum.mp3",
+      "text": "Station: Kronenstadt Zentrum."
+    },
+    {
+      "file": "next-kronenstadt-zentrum.mp3",
+      "text": "Nächste Station: Kronenstadt Zentrum."
+    },
+    {
+      "file": "station-rehweiler-bahnhof.mp3",
+      "text": "Station: Rehweiler Bahnhof."
+    },
+    {
+      "file": "next-rehweiler-bahnhof.mp3",
+      "text": "Nächste Station: Rehweiler Bahnhof."
+    },
+    {
+      "file": "station-rehweiler-zentrum.mp3",
+      "text": "Station: Rehweiler Zentrum."
+    },
+    {
+      "file": "next-rehweiler-zentrum.mp3",
+      "text": "Nächste Station: Rehweiler Zentrum."
+    },
+    {
       "file": "station-weststadt.mp3",
       "text": "Station: Weststadt."
     },
@@ -489,6 +969,166 @@
     {
       "file": "next-blumental.mp3",
       "text": "Nächste Station: Blumental."
+    },
+    {
+      "file": "station-auenstadt.mp3",
+      "text": "Station: Auenstadt."
+    },
+    {
+      "file": "next-auenstadt.mp3",
+      "text": "Nächste Station: Auenstadt."
+    },
+    {
+      "file": "station-birkenhain.mp3",
+      "text": "Station: Birkenhain."
+    },
+    {
+      "file": "next-birkenhain.mp3",
+      "text": "Nächste Station: Birkenhain."
+    },
+    {
+      "file": "station-felsenburg.mp3",
+      "text": "Station: Felsenburg."
+    },
+    {
+      "file": "next-felsenburg.mp3",
+      "text": "Nächste Station: Felsenburg."
+    },
+    {
+      "file": "station-moosdorf.mp3",
+      "text": "Station: Moosdorf."
+    },
+    {
+      "file": "next-moosdorf.mp3",
+      "text": "Nächste Station: Moosdorf."
+    },
+    {
+      "file": "station-silberstadt.mp3",
+      "text": "Station: Silberstadt."
+    },
+    {
+      "file": "next-silberstadt.mp3",
+      "text": "Nächste Station: Silberstadt."
+    },
+    {
+      "file": "station-eichental.mp3",
+      "text": "Station: Eichental."
+    },
+    {
+      "file": "next-eichental.mp3",
+      "text": "Nächste Station: Eichental."
+    },
+    {
+      "file": "station-wiesenburg.mp3",
+      "text": "Station: Wiesenburg."
+    },
+    {
+      "file": "next-wiesenburg.mp3",
+      "text": "Nächste Station: Wiesenburg."
+    },
+    {
+      "file": "station-kieselbach.mp3",
+      "text": "Station: Kieselbach."
+    },
+    {
+      "file": "next-kieselbach.mp3",
+      "text": "Nächste Station: Kieselbach."
+    },
+    {
+      "file": "station-wolkenstadt.mp3",
+      "text": "Station: Wolkenstadt."
+    },
+    {
+      "file": "next-wolkenstadt.mp3",
+      "text": "Nächste Station: Wolkenstadt."
+    },
+    {
+      "file": "station-rotbuchen.mp3",
+      "text": "Station: Rotbuchen."
+    },
+    {
+      "file": "next-rotbuchen.mp3",
+      "text": "Nächste Station: Rotbuchen."
+    },
+    {
+      "file": "station-kristallstadt.mp3",
+      "text": "Station: Kristallstadt."
+    },
+    {
+      "file": "next-kristallstadt.mp3",
+      "text": "Nächste Station: Kristallstadt."
+    },
+    {
+      "file": "station-fuchsdorf.mp3",
+      "text": "Station: Fuchsdorf."
+    },
+    {
+      "file": "next-fuchsdorf.mp3",
+      "text": "Nächste Station: Fuchsdorf."
+    },
+    {
+      "file": "station-morgenstadt.mp3",
+      "text": "Station: Morgenstadt."
+    },
+    {
+      "file": "next-morgenstadt.mp3",
+      "text": "Nächste Station: Morgenstadt."
+    },
+    {
+      "file": "station-blaubeertal.mp3",
+      "text": "Station: Blaubeertal."
+    },
+    {
+      "file": "next-blaubeertal.mp3",
+      "text": "Nächste Station: Blaubeertal."
+    },
+    {
+      "file": "station-edelstadt.mp3",
+      "text": "Station: Edelstadt."
+    },
+    {
+      "file": "next-edelstadt.mp3",
+      "text": "Nächste Station: Edelstadt."
+    },
+    {
+      "file": "station-hasenau.mp3",
+      "text": "Station: Hasenau."
+    },
+    {
+      "file": "next-hasenau.mp3",
+      "text": "Nächste Station: Hasenau."
+    },
+    {
+      "file": "station-abendstadt.mp3",
+      "text": "Station: Abendstadt."
+    },
+    {
+      "file": "next-abendstadt.mp3",
+      "text": "Nächste Station: Abendstadt."
+    },
+    {
+      "file": "station-tannengrund.mp3",
+      "text": "Station: Tannengrund."
+    },
+    {
+      "file": "next-tannengrund.mp3",
+      "text": "Nächste Station: Tannengrund."
+    },
+    {
+      "file": "station-kronenstadt.mp3",
+      "text": "Station: Kronenstadt."
+    },
+    {
+      "file": "next-kronenstadt.mp3",
+      "text": "Nächste Station: Kronenstadt."
+    },
+    {
+      "file": "station-rehweiler.mp3",
+      "text": "Station: Rehweiler."
+    },
+    {
+      "file": "next-rehweiler.mp3",
+      "text": "Nächste Station: Rehweiler."
     }
   ]
 }

@@ -23,7 +23,16 @@ async def main():
         "require('./world.js');console.log(JSON.stringify({lines:[...AnimalIsland.busLines,...AnimalIsland.railLines].map(l=>l.id),stops:[...new Set([...AnimalIsland.busStops,...AnimalIsland.railStations].map(s=>s.name))]}));"], cwd=ROOT))
     clips = [{'file':'terminal-next.mp3','text':'Diese Fahrt endet an der nächsten Station.'},{'file':'terminal-arrival.mp3','text':'Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!'}]
     for line in world['lines']:
-        word = ['null','eins','zwei','drei','vier','f\u00fcnf','sechs','sieben','acht','neun','zehn','elf','zw\u00f6lf','dreizehn','vierzehn','f\u00fcnfzehn','sechzehn'][int(line.lstrip('R'))]
+        number = int(line.lstrip('R'))
+        ones = ['null','eins','zwei','drei','vier','f\u00fcnf','sechs','sieben','acht','neun','zehn','elf','zw\u00f6lf','dreizehn','vierzehn','f\u00fcnfzehn','sechzehn','siebzehn','achtzehn','neunzehn']
+        tens = {20:'zwanzig',30:'dreissig',40:'vierzig',50:'f\u00fcnfzig',60:'sechzig',70:'siebzig',80:'achtzig',90:'neunzig'}
+        if number < 20:
+            word = ones[number]
+        elif number < 100:
+            unit = number % 10
+            word = (('ein' if unit == 1 else ones[unit])+'und' if unit else '') + tens[number-unit]
+        else:
+            raise ValueError(f'Add spoken number for line {line}')
         clips.append({'file':f'line-{line}.mp3', 'text':f'Regionalzug {word}.' if line.startswith('R') else f'Linie {word}.'})
     for name in world['stops']:
         spoken = name.replace('Sued', 'Süd').replace('Bruecke', 'Brücke').replace('Hafenstrasse', 'Hafenstraße')
