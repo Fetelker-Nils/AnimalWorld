@@ -209,7 +209,7 @@
     return {near(x,y,r){const result=[];for(let ix=Math.floor((x-r)/size);ix<=Math.floor((x+r)/size);ix++)for(let iy=Math.floor((y-r)/size);iy<=Math.floor((y+r)/size);iy++){const cell=cells.get(ix+','+iy);if(cell)result.push(...cell);}return result;}};
   }
   for(let i=0;i<220;i++){const x=Island.luxury.x+(random()-.5)*480,y=(random()-.5)*480;if(!Island.blocked(x,y)&&!Island.reserved(x,y))trees.push({x,y,size:1.4+random()*.8});}
-  for(let i=0;i<22000;i++){const x=Island.continent.x+(random()-.5)*5700,y=(random()-.5)*5700;if(!Island.inSea(x,y)&&!Island.blocked(x,y)&&!Island.reserved(x,y)){trees.push({x,y,size:1.3+random()*1.1});grass.push({x:x+2,y:y+2,size:2,color:random()});}}
+  for(let i=0;i<22000;i++){const x=Island.continent.x+(random()-.5)*Island.continent.radius*2,y=(random()-.5)*Island.continent.radius*2;if(!Island.inSea(x,y)&&!Island.blocked(x,y)&&!Island.reserved(x,y)){trees.push({x,y,size:1.3+random()*1.1});grass.push({x:x+2,y:y+2,size:2,color:random()});}}
   const treeIndex=spatialIndex(trees),grassIndex=spatialIndex(grass),lampIndex=spatialIndex(Island.lamps);
   trees.forEach((t,i)=>t.damageId=i);Island.lamps.forEach((l,i)=>l.damageId=i);
   const damage=createSceneryDamage(trees,Island.lamps);
@@ -647,7 +647,8 @@
       const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:80,d=vertical?80:9;
       railBox(station.x,station.y,w,d,0,.3,'#cec7b2');
       for(const f of [-22,0,22]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,.4,.4,.3,4,'#466b76');}
-      railBox(station.x,station.y,vertical?5:75,vertical?75:5,4.3,.25,'#617d85');
+      railBox(station.x,station.y,vertical?8:78,vertical?78:8,4.3,.25,'#617d85');
+      if(station.lines.length>1){for(const f of [-30,-10,10,30]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,vertical?7:1,vertical?1:7,4.55,1.3,'#aecdd0');}railBox(station.x,station.y,vertical?8.5:80,vertical?80:8.5,5.85,.18,'#d7ddd4');}
       for(const f of [-16,16]){const x=station.x+Math.cos(station.heading)*f,y=station.y+Math.sin(station.heading)*f;railBox(x,y,vertical?1:3,vertical?3:1,.3,.6,'#9f7854');}
       marker(station,station.line+' - '+station.name+' | Gleis '+station.platform,'#3a738b');
     }
