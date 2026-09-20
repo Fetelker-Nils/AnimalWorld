@@ -41,7 +41,21 @@ function createCityLife(world, models){
   const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',line:t.path.id,color:t.path.color,scaleF:2.1,scaleS:1.35,scaleZ:1.35})));
   function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*21),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}
   syncTrains();
-  function tickTrains(dt,people){
+  function tickTrains(dt,people,obstacles=[]){
+    const brake=8,nose=10,safety=2;
+    function clearance(t){
+      const look=nose+safety+t.speed*t.speed/(2*brake)+t.speed*.3+5,origin=railAt(t.path,t.distance);
+      const ownCoaches=new Set(trains.filter(b=>b.service===t.id).map(b=>b.id));
+      const candidates=obstacles.filter(p=>p.service!==t.id&&!ownCoaches.has(p.busId)&&(!p.room||p.room==='world')&&(p.z||p.jump||0)<5&&Math.hypot(p.x-origin.x,p.y-origin.y)<look+25);
+      for(let d=0;d<=look;d+=2){const q=railAt(t.path,t.distance+d);
+        for(const p of candidates){const heading=p.heading||0,dx=q.x-p.x,dy=q.y-p.y,f=dx*Math.cos(heading)+dy*Math.sin(heading),side=-dx*Math.sin(heading)+dy*Math.cos(heading);
+          const length=p.kind==='train'?20:p.line?10:(p.model?.length||(p.vehicle?5:1));
+          const width=p.kind==='train'?4.4:p.line?3.5:(p.model?.width||(p.vehicle?2.5:1));
+          if(Math.abs(f)<length/2+2.6&&Math.abs(side)<width/2+2.6)return Math.max(0,d-nose-safety);
+        }
+      }return Infinity;
+    }
+
     for(const t of railServices){
       if(t.wait>0){
         const blocked=people.some(p=>{const b=trains.find(b=>b.service===t.id&&b.id===p.busId);if(!b)return false;const dx=p.x-b.x,dy=p.y-b.y,f=(dx*Math.cos(b.heading)+dy*Math.sin(b.heading))/b.scaleF,s=(-dx*Math.sin(b.heading)+dy*Math.cos(b.heading))/b.scaleS;return f>1.7&&f<3.6&&s>.9&&s<2.8;});
@@ -49,8 +63,10 @@ function createCityLife(world, models){
       }
       t.doors=Math.max(0,t.doors-dt*2);if(t.doors>0)continue;
       const remaining=(t.next.distance-t.distance+t.path.length)%t.path.length;
-      t.speed=Math.min(48,t.speed+dt*3,Math.sqrt(3*remaining));
-      const move=Math.min(remaining,t.speed*dt);t.distance=(t.distance+move)%t.path.length;
+      const free=clearance(t),safeSpeed=Math.sqrt(2*brake*free);
+      t.speed=Math.min(48,t.speed+dt*3,Math.sqrt(3*remaining),safeSpeed);
+      if(free<.1)t.speed=0;
+      const move=Math.min(remaining,free,t.speed*dt);t.distance=(t.distance+move)%t.path.length;
       if(remaining<.05||move===remaining){t.distance=t.next.distance;t.stop=t.next.name;t.stopId=t.next.stopId;t.terminal=!!t.next.terminal;t.wait=24;t.speed=0;t.departure++;
         const stops=t.path.points.filter(p=>p.name);t.next=stops[(stops.indexOf(t.next)+1)%stops.length];}
     }
@@ -124,7 +140,7 @@ function createCityLife(world, models){
     const hazards=[...crossingHazards(),...onlinePlayers.flatMap(p=>[{...p,r:p.car?3:1},...(['compact','roadster','pickup'].includes(p.vehicle?.model)?[{...p.vehicle,id:'vehicle-'+p.id,vehicle:true,r:3}]:[])]),...(player?[{...player,r:1}]:[]),...(playerCar?[{...playerCar,r:3}]:[])];
     for(const b of buses)if(commuters.some(p=>p.busId===b.id&&(p.stage==='boarding'||p.stage==='exiting')))b.wait=Math.max(b.wait,2.5);
     tickBuses(dt,[...hazards,...buses,...cars]);
-    tickTrains(dt,[...onlinePlayers,...(player?[player]:[])]);
+    tickTrains(dt,[...onlinePlayers,...(player?[player]:[])],[...onlinePlayers,...onlinePlayers.filter(p=>p.vehicle).map(p=>({...p.vehicle,vehicle:true})),...(player?[player]:[]),...(playerCar?[playerCar]:[]),...cars,...walkers,...commuters,...buses,...trains]);
     tickCommuters(dt,[...onlinePlayers,...(player?[player]:[])]);
     for(const car of cars){
       const ahead={x:car.x+Math.cos(car.heading)*5,y:car.y+Math.sin(car.heading)*5};

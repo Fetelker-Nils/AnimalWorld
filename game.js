@@ -245,12 +245,12 @@
   }
   function carryBus(){if(!busRide){mauz.seated=false;mauz.busSeat=null;return;}const b=transit().find(b=>b.id===busRide.id);if(!b){busRide=null;mauz.busId=null;return;}mauz.heading+=Math.atan2(Math.sin(b.heading-busRide.heading),Math.cos(b.heading-busRide.heading));busRide.heading=b.heading;Object.assign(mauz,busPoint(b,busRide));}
   function busWalkable(x,y){
-    for(const b of transit()){const p=busLocal(b,x,y),old=busLocal(b,mauz.x,mauz.y),inside=Math.abs(p.f)<4.7&&Math.abs(p.s)<1.85;
+    for(const b of transit()){const p=busLocal(b,x,y),old=busLocal(b,mauz.x,mauz.y),inside=Math.abs(p.f)<(b.kind==='train'?4.85:4.7)&&Math.abs(p.s)<(b.kind==='train'?2.05:1.85);
       if(busRide?.id===b.id){
         if(p.f>(b.kind==='train'?3.15:4.15)||p.f< -4.15)return false;
         if(Math.abs(p.s)>.5&&[-3,-1,1].some(f=>Math.abs(p.f-f)<.6))return false;
         if(Math.abs(p.s)>1.3&&!(b.doors>.9&&p.s>0&&p.f>1.7&&p.f<3.6))return false;
-      }else if(inside&&!(b.doors>.9&&p.s>0&&p.f>1.7&&p.f<3.6&&old.s>0))return false;
+      }else if(inside&&!(b.doors>.9&&Math.abs(b.speed)<.1&&p.s>0&&p.f>1.7&&p.f<3.6&&old.s>1.3))return false;
     }return true;
   }
   function railPlatformHeight(x,y){return Island.railStations.some(s=>{const p=busLocal(s,x,y);return Math.abs(p.f)<40&&Math.abs(p.s)<4.5;})?.3:0;}

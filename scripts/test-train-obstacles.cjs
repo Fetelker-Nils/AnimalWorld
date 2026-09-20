@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');require('../world.js');require('../city-life.js');const w=AnimalIsland;
+const life=createCityLife(w,[{id:'compact',length:3.8,width:2.1}]);life.cars.length=0;life.walkers.length=0;life.buses.length=0;life.commuters.length=0;
+const train=life.trains.find(t=>t.coach===0),start={x:train.x,y:train.y},heading=train.heading;
+const obstacle={x:start.x+Math.cos(heading)*40,y:start.y+Math.sin(heading)*40,room:'world'};
+for(let i=0;i<900;i++)life.tick(.05,obstacle,null);
+assert.equal(train.speed,0,'Stops for player');assert(Math.hypot(train.x-obstacle.x,train.y-obstacle.y)>10,'Nose stays clear');assert(Math.hypot(train.x-start.x,train.y-start.y)>1,'Approaches obstacle');const stopped={x:train.x,y:train.y};
+for(let i=0;i<100;i++)life.tick(.05,{x:obstacle.x+Math.sin(heading)*30,y:obstacle.y-Math.cos(heading)*30},null);
+assert(Math.hypot(train.x-stopped.x,train.y-stopped.y)>3,'Resumes when clear');
+const car={x:train.x+Math.cos(train.heading)*35,y:train.y+Math.sin(train.heading)*35,heading:train.heading,model:{length:4,width:2}};
+for(let i=0;i<350;i++)life.tick(.05,null,car);
+assert.equal(train.speed,0,'Stops for parked car');assert(Math.hypot(train.x-car.x,train.y-car.y)>10);
+const snapshot=life.snapshot(),replica=createCityLife(w,[{id:'compact'}]);replica.accept(snapshot);assert.equal(replica.trains[0].speed,0);
+console.log('PASS train stops before pedestrians and parked cars, resumes and synchronizes stop');
