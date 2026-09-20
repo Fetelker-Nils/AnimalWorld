@@ -14,7 +14,9 @@ function sceneryMesh(kind,item,ground=0,options={}){
       const m=detail===12?5:3,v=Array.from({length:m+1},(_,j)=>Array.from({length:n},(_,i)=>{const a=i/n*Math.PI*2,b=j/m*Math.PI;return [x+Math.cos(a)*Math.sin(b)*rx,y+Math.sin(a)*Math.sin(b)*ry,z+Math.cos(b)*rz];}));
       for(let j=0;j<m;j++)for(let i=0;i<n;i++)face([v[j][i],v[j][(i+1)%n],v[j+1][(i+1)%n],v[j+1][i]],color,.72+.19*(1-j/m)+.09*Math.cos(i/n*Math.PI*2));
     }
-    if(kind==='tree'){
+    if(kind==='cloud'){
+      ball(0,0,0,27,16,10,'#e7edf0');ball(-20,0,-2,18,13,8,'#e7edf0');ball(19,3,-1,21,15,9,'#edf1f2');ball(0,2,7,17,13,12,'#f7f8f5');
+    }else if(kind==='tree'){
       cuboid(0,0,0,.34,.34,2.3,'#987551');cuboid(.3,0,1.5,.7,.18,.2,'#987551');
       ball(0,0,2.7,1.05,.95,1.25,'#759c50');
       if(detail>4){ball(-.65,.2,2.35,.65,.7,.8,'#648c46');ball(.55,-.2,2.65,.65,.75,.9,'#83a957');}
@@ -41,6 +43,23 @@ function sceneryMesh(kind,item,ground=0,options={}){
       for(const x of [-1.15,1.15])cuboid(x,0,.9,.09,.09,1.5,'#81674e');
       for(let i=0;i<6;i++)cuboid(-1.05+i*.42,0,2.4,.42,1.9,.16,i%2?'#f0dfba':'#719993');
       for(const x of [-.8,0,.8])for(const y of [-.3,.3])ball(x,y,1.02,.2,.18,.17,x?'#d99a52':'#92b559',5);
+    }else if(kind==='parcel'){
+      cuboid(0,0,0,.85,.7,.65,'#c69760');cuboid(0,0,.65,.13,.71,.012,'#ead7a7');cuboid(0,0,.66,.86,.11,.012,'#ead7a7');
+      cuboid(0,-.356,.4,.34,.012,.16,'#f3ead4');for(let i=0;i<5;i++)cuboid(-.12+i*.05,-.365,.43,.018,.012,.09,'#695c49');
+    }else if(kind==='garden-bed'){
+      cuboid(0,0,0,3,2,.12,'#71523d');
+      for(const y of [-1,1])cuboid(0,y,0,3.2,.12,.2,'#c6bca4');for(const x of [-1.55,1.55])cuboid(x,0,0,.12,2,.2,'#c6bca4');
+      for(const x of [-1,-.5,0,.5,1])for(const y of [-.5,.5]){cuboid(x,y,.12,.04,.04,.3,'#628746');ball(x-.09,y,.32,.14,.07,.06,'#8eaf55',4);ball(x+.09,y,.4,.14,.07,.06,'#719948',4);if(options.lit)ball(x,y,.48,.09,.09,.08,'#edc279',5);}
+    }else if(kind==='toolbox'){
+      cuboid(0,0,0,.8,.45,.4,'#b55745');cuboid(0,0,.4,.84,.48,.07,'#d67857');for(const x of [-.18,.18])cuboid(x,0,.47,.04,.04,.14,'#586568');cuboid(0,0,.61,.4,.04,.04,'#586568');cuboid(0,-.24,.3,.1,.025,.12,'#e6ce96');
+    }else if(kind==='work-facade'){
+      cuboid(0,0,0,3.2,.08,2.7,'#526f74');
+      for(const x of [-.78,.78])cuboid(x,.055,.12,1.42,.025,2.4,'#a7c9cd');
+      for(const x of [-1.6,0,1.6])cuboid(x,.09,0,.08,.08,2.7,'#e2e5d9');
+      for(const x of [-.15,.15])cuboid(x,.14,1,.04,.07,.42,'#647879');
+      cuboid(0,.18,2.75,4.2,.7,.14,item.color||'#cfaa65');cuboid(0,.04,3.05,3.8,.12,.65,item.color||'#cfaa65');
+      // Envelope emblem, built from narrow solid bars.
+      cuboid(0,.12,3.18,.7,.04,.36,'#f4e7bc');cuboid(0,.15,3.3,.5,.02,.04,'#8a704e');
     }else if(kind==='stone')ball(0,0,.23,.5,.4,.35,'#a6ac91',5);
     else if(kind==='ball'||kind==='fruit')ball(0,0,.4,.4,.4,.4,item.color||'#cf7760');
     else if(kind==='flower'){
