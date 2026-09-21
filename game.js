@@ -1,3 +1,22 @@
+function createGamePhone({open,close,capture,storageKey,clock}){
+ const dialog=document.createElement('dialog');dialog.id='game-phone';dialog.setAttribute('aria-label','Mauz Handy');document.body.append(dialog);
+ let screen='home',pending='',timer=null,turn=0;
+ const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;};
+ const content=document.createElement('div'),status=document.createElement('p');status.setAttribute('role','status');
+ function photos(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]').filter(p=>typeof p.src==='string'&&p.src.startsWith('data:image/jpeg')).slice(0,12);}catch{return [];}}
+ function save(items){try{localStorage.setItem(storageKey(),JSON.stringify(items));return true;}catch{status.textContent='Speicher voll. Bitte zuerst ein Foto entfernen.';return false;}}
+ function shell(title){clearTimeout(timer);turn++;dialog.replaceChildren();const head=document.createElement('header');head.append(button('Zur\u00fcck',()=>home()),button('Schliessen',()=>hide()));const h=document.createElement('h2');h.textContent=title;content.replaceChildren();status.textContent='';dialog.append(head,h,content,status);}
+ function home(){screen='home';shell('Mauz Handy');const p=document.createElement('p');p.textContent=clock()+' · Deine kleine Pause';const apps=document.createElement('div');apps.className='phone-apps';apps.append(button('Kamera',camera),button('Galerie',gallery),button('Tier-Memory',memory),button('Drei gewinnt',tic));content.append(p,apps);dialog.querySelector('button').focus();}
+ function camera(){screen='camera';shell('Kamera');pending=capture();const img=document.createElement('img');img.src=pending;img.alt='Vorschau deiner Spielwelt';content.append(img,button('Foto aufnehmen',()=>{const all=photos();if(all.length>=12){status.textContent='Galerie voll (12 Fotos). Entferne zuerst ein Foto.';return;}if(save([{src:pending,date:new Date().toLocaleString('de-CH')},...all]))status.textContent='Foto in deiner Galerie gespeichert.';}));status.textContent='Fotografiert die Spielwelt, nicht deine Ger\u00e4tekamera.';}
+ function gallery(){screen='gallery';shell('Galerie');const all=photos();status.textContent=all.length+' / 12 Fotos · Lokal in dieser Spielwelt gespeichert.';if(!all.length){const p=document.createElement('p');p.textContent='Noch keine Fotos. Halte mit der Kamera deinen Lieblingsort fest!';content.append(p);}for(const [i,p] of all.entries()){const fig=document.createElement('figure'),img=document.createElement('img'),cap=document.createElement('figcaption'),a=document.createElement('a');img.src=p.src;img.alt='Spielaufnahme vom '+p.date;cap.textContent=p.date;a.href=p.src;a.download='animal-world-'+(i+1)+'.jpg';a.textContent='Herunterladen';fig.append(img,cap,a,button('Foto entfernen',()=>{if(save(all.filter((_,j)=>j!==i)))gallery();}));content.append(fig);}}
+ function memory(){screen='memory';shell('Tier-Memory');let values=['Katze','Hase','Fuchs','B\u00e4r','Katze','Hase','Fuchs','B\u00e4r'];for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}let first=null,busy=false,pairs=0,moves=0;const grid=document.createElement('div');grid.className='phone-board memory';values.forEach((v,i)=>{const b=button('?',()=>{if(busy||b.disabled||first===b)return;b.textContent=v;b.setAttribute('aria-label',v);if(!first){first=b;return;}moves++;if(first.textContent===v){first.disabled=b.disabled=true;first=null;pairs++;status.textContent=pairs===4?'Geschafft! '+moves+' Versuche.':pairs+' / 4 Paare · '+moves+' Versuche';}else{busy=true;const old=first,token=turn;timer=setTimeout(()=>{if(token!==turn)return;old.textContent=b.textContent='?';old.setAttribute('aria-label','Verdeckte Karte');b.setAttribute('aria-label','Verdeckte Karte');first=null;busy=false;},800);}});b.setAttribute('aria-label','Verdeckte Karte '+(i+1));grid.append(b);});content.append(grid,button('Neue Runde',memory));status.textContent='Finde vier Tierpaare.';}
+ function tic(){screen='tic';shell('Drei gewinnt');let cells=Array(9).fill(''),done=false;const grid=document.createElement('div');grid.className='phone-board';const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];function result(){const winner=wins.map(line=>line.every(i=>cells[i]&&cells[i]===cells[line[0]])?cells[line[0]]:null).find(Boolean);if(winner||cells.every(Boolean)){done=true;status.textContent=winner?(winner==='X'?'Du gewinnst!':'Mauz gewinnt!'):'Unentschieden!';}return done;}const buttons=cells.map((_,i)=>button('',()=>{if(done||cells[i])return;cells[i]='X';buttons[i].textContent='X';buttons[i].disabled=true;if(result())return;let pick;for(const symbol of ['O','X']){pick=cells.findIndex((v,j)=>{if(v)return false;cells[j]=symbol;const win=wins.some(l=>l.every(k=>cells[k]===symbol));cells[j]='';return win;});if(pick>=0)break;}if(pick<0)pick=!cells[4]?4:cells.findIndex(v=>!v);cells[pick]='O';buttons[pick].textContent='O';buttons[pick].disabled=true;result();}));buttons.forEach((b,i)=>{b.setAttribute('aria-label','Feld '+(i+1));grid.append(b);});content.append(grid,button('Neue Runde',tic));status.textContent='Du bist X. Spiele gegen Mauz (O).';}
+ function hide(){clearTimeout(timer);turn++;dialog.close();close();}
+ dialog.addEventListener('cancel',e=>{e.preventDefault();hide();});dialog.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'||e.key.toLowerCase()==='p'){e.preventDefault();hide();}});
+ return {show(){open();home();dialog.showModal();},hide};
+}
+
+
 (() => {
   'use strict';
   const canvas = document.querySelector('#world'), ctx = canvas.getContext('2d');
@@ -1518,12 +1537,23 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   document.querySelectorAll('[data-work-choice]').forEach(button=>button.onclick=()=>chooseWork(Number(button.dataset.workChoice)));
   document.querySelector('#wave').onclick=()=>{if(mode==='playing'&&network.status==='online'){network.wave();celebration=.9;}};
   document.querySelector('#menu').onclick=()=>setMode('pause');
+  let phone;
+  function openPhone(){
+    if(mode!=='playing')return;
+    if(typeof createGamePhone!=='function'){notify('Handy konnte nicht geladen werden. Bitte die Seite neu laden.');return;}
+    phone??=createGamePhone({open:()=>setMode('phone'),close:()=>{setMode('playing');document.querySelector('#phone-open').focus();},clock:()=>dayCycle.label,storageKey:()=> 'animal-world-photos-v1-'+saveWorlds.active,capture:()=>{draw();const photo=document.createElement('canvas');photo.width=Math.min(960,canvas.width);photo.height=Math.round(canvas.height*photo.width/canvas.width);photo.getContext('2d').drawImage(canvas,0,0,photo.width,photo.height);return photo.toDataURL('image/jpeg',.8);}});
+    phone.show();
+  }
+  document.querySelector('#phone-open').onclick=openPhone;
+
   document.querySelector('#view-toggle').onclick=()=>{viewFront=!viewFront;setMode('playing');};
   document.querySelector('#resume').onclick=()=>setMode('playing');
   document.querySelector('#back').onclick=()=>{onlineMode=false;network.stop();dayCycle.stopShared();setMode('start');};
   window.addEventListener('keydown',e=>{
     if(e.target?.closest?.('#online-panel')||e.target?.matches?.('input,textarea,select,[contenteditable=true]'))return;
     const key=e.key.toLowerCase();
+    if(mode==='phone'){if((key==='escape'||key==='p')&&!e.repeat){e.preventDefault();phone?.hide();}return;}
+    if(key==='p'&&!e.repeat&&mode==='playing'){e.preventDefault();openPhone();return;}
     if(mode==='sleeping'){if(key==='escape'&&sleeping?.online)cancelSleep();e.preventDefault();return;}
     if(key==='v'&&!e.repeat&&mode==='playing'){viewFront=!viewFront;return;}
     if(key==='m'&&!e.repeat&&(mode==='playing'||mode==='map')){e.preventDefault();setMode(mode==='map'?'playing':'map');return;}

@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const assets = new Set(['assets/animal-world-logo.png','index.html','spielinfo.html','info.css','robots.txt','sitemap.xml','style.css','analytics.js','game.js','world.js','housing.js','navigation.js','save-worlds.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','online-panel.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
+const assets = new Set(['assets/animal-world-logo.png','index.html','spielinfo.html','welt.html','fahrplan.html','neuigkeiten.html','website.js','info.css','robots.txt','sitemap.xml','style.css','analytics.js','game.js','world.js','housing.js','navigation.js','save-worlds.js','delivery.js','activities.js','vehicles.js','sound.js','indoor-renderer.js','day-cycle.js','multiplayer.js','online-panel.js','city-services.js','animal-mesh.js','city-life.js','collisions.js','adventure.js']);
 for(const clip of require('../assets/sound/manifest.json').clips)assets.add('assets/sound/'+clip.file);
 assets.add('assets/sound/manifest.json');
 function createServer(directory = root) {
@@ -12,7 +12,9 @@ function createServer(directory = root) {
     const pathname = new URL(request.url, 'http://localhost').pathname;
     if (pathname === '/animal-world-health') { response.writeHead(200, {'Content-Type':'text/plain'}); response.end('animal-world-browser-v1'); return; }
     if(['/spielinfo.html','/spielhilfe.html','/spielinfo','/spielhilfe','/hilfe/'].includes(pathname)){response.writeHead(308,{Location:'/hilfe'+new URL(request.url,'http://localhost').search});response.end();return;}
-    const file = pathname === '/' ? 'index.html' : pathname === '/hilfe' ? 'spielinfo.html' : pathname.slice(1);
+    const pageRoute=pathname.match(/^\/(welt|fahrplan|neuigkeiten)(?:\.html|\/)?$/);
+    if(pageRoute&&pathname!=='/'+pageRoute[1]){response.writeHead(308,{Location:'/'+pageRoute[1]});response.end();return;}
+    const file = pathname === '/' ? 'index.html' : pathname === '/hilfe' ? 'spielinfo.html' : pageRoute ? pageRoute[1]+'.html' : pathname.slice(1);
     if (!assets.has(file)) { response.writeHead(404); response.end('Nicht gefunden'); return; }
     try {
       const body = await fs.readFile(path.join(directory, file));

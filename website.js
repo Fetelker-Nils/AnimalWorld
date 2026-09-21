@@ -1,0 +1,3 @@
+const search=document.getElementById('route-search'),kind=document.getElementById('route-kind');
+if(search&&kind){const cards=[...document.querySelectorAll('.route-card')];function filter(){const query=search.value.trim().toLocaleLowerCase('de');let count=0;for(const card of cards){card.hidden=!(card.dataset.search.includes(query)&&(kind.value==='all'||card.dataset.kind===kind.value));if(!card.hidden)count++;}document.getElementById('route-count').textContent=count+' Verbindungen';document.getElementById('route-empty').hidden=count>0;}search.addEventListener('input',filter);kind.addEventListener('change',filter);}
+for(const link of document.querySelectorAll('.site-nav a'))if(link.getAttribute('href')===location.pathname)link.setAttribute('aria-current','page');

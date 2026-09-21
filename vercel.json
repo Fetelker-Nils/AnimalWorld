@@ -43,12 +43,54 @@
       "source": "/hilfe/",
       "destination": "/hilfe",
       "permanent": true
+    },
+    {
+      "source": "/welt.html",
+      "destination": "/welt",
+      "permanent": true
+    },
+    {
+      "source": "/welt/",
+      "destination": "/welt",
+      "permanent": true
+    },
+    {
+      "source": "/fahrplan.html",
+      "destination": "/fahrplan",
+      "permanent": true
+    },
+    {
+      "source": "/fahrplan/",
+      "destination": "/fahrplan",
+      "permanent": true
+    },
+    {
+      "source": "/neuigkeiten.html",
+      "destination": "/neuigkeiten",
+      "permanent": true
+    },
+    {
+      "source": "/neuigkeiten/",
+      "destination": "/neuigkeiten",
+      "permanent": true
     }
   ],
   "rewrites": [
     {
       "source": "/hilfe",
       "destination": "/spielinfo.html"
+    },
+    {
+      "source": "/welt",
+      "destination": "/welt.html"
+    },
+    {
+      "source": "/fahrplan",
+      "destination": "/fahrplan.html"
+    },
+    {
+      "source": "/neuigkeiten",
+      "destination": "/neuigkeiten.html"
     }
   ]
 }
