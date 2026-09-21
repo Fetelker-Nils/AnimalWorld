@@ -210,6 +210,7 @@
   }
   for(let i=0;i<220;i++){const x=Island.luxury.x+(random()-.5)*480,y=(random()-.5)*480;if(!Island.blocked(x,y)&&!Island.reserved(x,y))trees.push({x,y,size:1.4+random()*.8});}
   for(let i=0;i<22000;i++){const x=Island.continent.x+(random()-.5)*Island.continent.radius*2,y=(random()-.5)*Island.continent.radius*2;if(!Island.inSea(x,y)&&!Island.blocked(x,y)&&!Island.reserved(x,y)){trees.push({x,y,size:1.3+random()*1.1});grass.push({x:x+2,y:y+2,size:2,color:random()});}}
+  for(const island of Island.outerIslands||[])for(let i=0;i<3000;i++){const x=island.x+(random()-.5)*island.radius*2,y=island.y+(random()-.5)*island.radius*2;if(!Island.blocked(x,y)&&!Island.reserved(x,y)){trees.push({x,y,size:1.2+random()});grass.push({x:x+2,y:y+2,size:2,color:random()});}}
   const treeIndex=spatialIndex(trees),grassIndex=spatialIndex(grass),lampIndex=spatialIndex(Island.lamps);
   trees.forEach((t,i)=>t.damageId=i);Island.lamps.forEach((l,i)=>l.damageId=i);
   const damage=createSceneryDamage(trees,Island.lamps);
@@ -643,6 +644,7 @@
         railBox(x,y,.65,.25,1.7,.35,gate.closed&&Math.floor(time*3)%2?'#ff453a':'#502f2c');
       }
     }
+    drawCentralStation();
     for(const station of Island.railStations){if(Math.hypot(station.x-camera.x,station.y-camera.y)>180)continue;
       const vertical=Math.abs(Math.sin(station.heading))>.5,w=vertical?9:80,d=vertical?80:9;
       railBox(station.x,station.y,w,d,0,.3,'#cec7b2');
@@ -653,12 +655,30 @@
       marker(station,station.line+' - '+station.name+' | Gleis '+station.platform,'#3a738b');
     }
   }
+  function drawCentralStation(){
+    const h=Island.centralStation;if(!h||Math.hypot(h.x-camera.x,h.y-camera.y)>230)return;
+    railBox(h.x,h.y+28,h.w,18,0,.04,'#c4c2ad');
+    railBox(h.x,h.y,h.w,h.d,0,.12,'#d3cbb8');
+    if(transportFrame){
+      for(const side of [-1,1])transportFrame.mesh.push({color:'#a8ccd2',opacity:.35,points:[[h.x+side*(h.w/2-1),h.y-18,.3],[h.x+side*(h.w/2-1),h.y+18,.3],[h.x+side*(h.w/2-1),h.y+18,8.8],[h.x+side*(h.w/2-1),h.y-18,8.8]]});
+      let sign=busSigns.get('main-hall');if(!sign){const surface=document.createElement('canvas');surface.width=1024;surface.height=128;const c=surface.getContext('2d');c.fillStyle='#294e60';c.fillRect(0,0,1024,128);c.fillStyle='#fff5d7';c.font='bold 52px sans-serif';c.textAlign='center';c.fillText('MAUZ HAUPTBAHNHOF',512,60);c.font='26px sans-serif';c.fillText('REGIONAL | RE | IC | ICE | ULTRA EXPRESS',512,105);sign={surface};busSigns.set('main-hall',sign);}
+      transportFrame.labels.push({surface:sign.surface,points:[[h.x-20,h.y+21,5],[h.x+20,h.y+21,5],[h.x+20,h.y+21,8.5],[h.x-20,h.y+21,8.5]]});
+    }
+    for(const side of [-1,1])for(let x=h.x-h.w/2+4;x<h.x+h.w/2;x+=20){railBox(x,h.y+side*18,.8,.8,.12,9,'#607b82');railBox(x,h.y+side*18,2,2,0,.6,'#a8b5ad');}
+    railBox(h.x,h.y,h.w+4,h.d+4,9.1,.45,'#718d95');
+    for(let x=h.x-h.w/2;x<=h.x+h.w/2;x+=15)railBox(x,h.y,1,h.d+4,9.6,2.2,'#d6e4df');
+    railBox(h.x,h.y,h.w+4,14,11.8,.25,'#b0d1d6');
+    for(const side of [-1,1])for(const x of [-40,-20,20,40])railBox(h.x+x,h.y+side*12,5,1,.12,.6,'#a7805a');
+    for(const x of [-42,42]){railBox(h.x+x,h.y,2,1,.12,2.6,'#476f81');railBox(h.x+x,h.y+.52,1.5,.06,1.2,1,'#b7d9db');}
+    marker(h,'MAUZ HAUPTBAHNHOF - IC / ICE / UE / RE','#47788b');
+  }
   function trainDrawing(b){
     if(!transportFrame)return;
     const mesh=[],v=(f,s,z)=>{const p=busPoint(b,{f,s});return [p.x,p.y,z*(b.scaleZ||1)];};
     const face=(points,color,opacity)=>mesh.push({points:points.map(p=>v(...p)),color,...(opacity?{opacity}: {})});
     const cube=(f,s,d,w,z,h,color)=>{const p=[[f-d/2,s-w/2],[f+d/2,s-w/2],[f+d/2,s+w/2],[f-d/2,s+w/2]];face(p.map(q=>[...q,z+h]),color);face(p.map(q=>[...q,z]),color);for(let i=0;i<4;i++)face([[...p[i],z],[...p[(i+1)%4],z],[...p[(i+1)%4],z+h],[...p[i],z+h]],color);};
-    const cab=b.coach===0,front=cab?3.35:4.45,paint=b.color||'#b65349';
+    const cab=b.coach===0,express=['ICE','UE'].includes(b.trainType),front=cab?(express?3:3.35):4.45,paint=b.color||'#b65349';
+    if(b.trainType&&b.trainType!=='R'){cube(-.2,0,7.8,2.8,3.05,.2,b.trainType==='UE'?'#d5c9ec':'#dce3e1');for(const f of [-2,1])cube(f,0,1.2,1,3.25,.2,'#566e79');}
     cube(-.05,0,8.9,2.95,.12,.33,'#34434d');
     cube(-.05,0,8.9,2.95,.45,.08,'#c8c6bc');
     for(const side of [-1,1]){
@@ -953,6 +973,8 @@
     groundOval(0,0,Island.radius-5,Island.radius-5,'#a7c875');
     const land=Island.continent;groundOval(land.x,land.y,land.radius+1,land.radius+1,'#e8dab0');groundOval(land.x,land.y,land.radius-5,land.radius-5,'#a7c875');groundRect(-565,60,140,170,'#a7c875');
     const luxury=Island.luxury;groundOval(luxury.x,luxury.y,luxury.radius+1,luxury.radius+1,'#e8dab0');groundOval(luxury.x,luxury.y,luxury.radius-5,luxury.radius-5,'#a7c875');
+    for(const island of Island.outerIslands||[]){groundOval(island.x,island.y,island.radius+1,island.radius+1,'#e8dab0');groundOval(island.x,island.y,island.radius-5,island.radius-5,island.y<0?'#a9bfac':'#a7c875');}
+    for(const link of Island.seaLinks||[])groundRect(link.x,link.y,link.w,link.d,'#a7b4ab');
     for(const dock of Island.docks){groundRect(dock.x,dock.y,dock.w,dock.d,'#b58d64');for(let x=dock.x-dock.w/2;x<dock.x+dock.w/2;x++)groundRect(x,dock.y,.05,dock.d,'#957453');}
     for(const a of Island.airfields){groundRect(a.x,a.y,a.w,a.d,'#728589');for(let y=a.y-a.d/2+4;y<a.y+a.d/2;y+=8)groundRect(a.x,y,.3,4,'#f0edda');}
     drawBorder();
@@ -1074,6 +1096,7 @@
     if(nearBed())return {type:'sleep',label:dayCycle.night?(touchDevice?'Bis 07:00 schlafen':'E - Bis 07:00 schlafen'):'Bett - Schlafen ab 20:00'};
     if(interior)return Math.hypot(mauz.x-exitPoint().x,mauz.y-exitPoint().y)<2?{type:'exit',label:'E - Haus verlassen'}:null;
     const candidates=[];
+    if(!vehicles.driving&&Island.centralStation)candidates.push({type:'bus-plan',target:{...Island.centralStation,stop:{...Island.centralStation,id:'rail-main-hall'}},label:'E - Hauptbahnhof: alle Verbindungen',range:12});
     if(!vehicles.driving)for(const stop of Island.railStations)candidates.push({type:'bus-plan',target:{...stop,stop},label:'E - Bahnfahrplan ansehen',range:5});
     if(!vehicles.driving)for(const stop of Island.busStops){const c=Math.cos(stop.heading),s=Math.sin(stop.heading);candidates.push({type:'bus-plan',target:{x:stop.x-1.4*c-2*s,y:stop.y-1.4*s+2*c,stop},label:'E - Fahrplan ansehen',range:2.8});}
     if(!vehicles.driving)for(const v of Island.venues)candidates.push({target:v,type:'venue',label:'E - '+v.name+' betreten'});
@@ -1192,7 +1215,8 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   vehicleButton.onclick=toggleCar;
   let miniUpdated=-Infinity;
   function mapIslands(c,p,factor){
-    for(const island of [{x:0,y:0,radius:Island.radius},Island.luxury,Island.continent]){c.fillStyle='#e4d5a8';c.beginPath();c.arc(...p(island.x,island.y),island.radius*factor,0,Math.PI*2);c.fill();c.fillStyle='#aec58a';c.beginPath();c.arc(...p(island.x,island.y),(island.radius-5)*factor,0,Math.PI*2);c.fill();}
+    c.fillStyle='#a7b4ab';for(const b of Island.seaLinks||[])c.fillRect(...p(b.x-b.w/2,b.y-b.d/2),b.w*factor,b.d*factor);
+    for(const island of [{x:0,y:0,radius:Island.radius},Island.luxury,Island.continent,...(Island.outerIslands||[])]){c.fillStyle='#e4d5a8';c.beginPath();c.arc(...p(island.x,island.y),island.radius*factor,0,Math.PI*2);c.fill();c.fillStyle='#aec58a';c.beginPath();c.arc(...p(island.x,island.y),(island.radius-5)*factor,0,Math.PI*2);c.fill();}
     c.strokeStyle='#946fbe';c.lineWidth=2;c.setLineDash([5,4]);c.beginPath();c.arc(...p(0,0),Island.border*factor,0,Math.PI*2);c.stroke();c.setLineDash([]);
     c.fillStyle='#b49570';for(const d of Island.docks)c.fillRect(...p(d.x-d.w/2,d.y-d.d/2),d.w*factor,d.d*factor);
     c.fillStyle='#657e8b';for(const a of Island.airfields)c.fillRect(...p(a.x-a.w/2,a.y-a.d/2),a.w*factor,a.d*factor);
@@ -1281,9 +1305,9 @@ if(!vehicles.toggle(mauz))notify('Zum Aussteigen anhalten und landen oder an ein
   function openBusMap(stop){
     busMapStop=stop;busMapLine='all';busMapUpdated=-Infinity;
     mapView.x=380;mapView.y=60;mapView.zoom=1.65;
-    if(stop.id?.startsWith('rail-')){mapView.x=-2700;mapView.y=700;mapView.zoom=2;}else mapView.zoom=8;
+    if(stop.id?.startsWith('rail-')){mapView.x=stop.x;mapView.y=stop.y;mapView.zoom=12;}else mapView.zoom=8;
     const select=document.querySelector('#bus-map-line');select.replaceChildren();
-    for(const line of [{id:'all',name:'Alle Linien'},...Island.busLines,...Island.railLines]){const option=document.createElement('option');option.value=line.id;option.textContent=(line.id==='all'?'':'Linie '+line.id+' - ')+line.name;select.append(option);}
+    for(const line of [{id:'all',name:'Alle Linien'},...Island.busLines,...Island.railLines]){const option=document.createElement('option');option.value=line.id;option.textContent=(line.id==='all'?'':'Linie '+line.id+' - ')+line.name+(line.speed?' | '+Math.round(line.speed*3.6)+' km/h':'');select.append(option);}
     select.value='all';setMode('map');
   }
   function drawBusNetwork(c,p){

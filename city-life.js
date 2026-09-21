@@ -14,7 +14,7 @@ function createCityLife(world, models){
       const t=routePoints[b.target],dx=t.x-b.x,dy=t.y-b.y,d=Math.hypot(dx,dy),heading=Math.atan2(dy,dx);
       const turn=Math.atan2(Math.sin(heading-b.heading),Math.cos(heading-b.heading));
       if(Math.abs(turn)>.02){b.heading+=Math.sign(turn)*Math.min(Math.abs(turn),dt*1.3);b.speed=0;continue;}
-      const blocked=aheadBlocked(b,hazards,10.5+b.speed*.5);
+      const blocked=aheadBlocked(b,roadHazards(b,hazards),10.5+b.speed*.5);
       const desired=blocked?0:Math.min(13,Math.sqrt(4*d));b.speed=Math.max(0,Math.min(desired,b.speed+dt*2));
       const move=Math.min(d,b.speed*dt);if(d>.001){b.x+=dx/d*move;b.y+=dy/d*move;b.heading=heading;}
       if(d<.07||move===d){b.x=t.x;b.y=t.y;b.target=(b.target+1)%routePoints.length;b.speed=0;if(t.name){b.wait=14;b.stop=t.name;b.stopId=t.stopId;b.terminal=!!t.terminal;b.departure++;}b.nextStop=Array.from({length:routePoints.length},(_,i)=>routePoints[(b.target+i)%routePoints.length]).find(p=>p.name).name;b.nextTerminal=nextTerminal(b);}
@@ -36,9 +36,9 @@ function createCityLife(world, models){
   }
   const railServices=railPaths.flatMap(path=>path.starts.map((start,i)=>{
     const point=path.points[start],stops=path.points.filter(p=>p.name),index=stops.indexOf(point);
-    return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:24,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
+    return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:path.dwell||24,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
   }));
-  const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',line:t.path.id,color:t.path.color,scaleF:2.1,scaleS:1.35,scaleZ:1.35})));
+  const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',trainType:t.path.type||'R',line:t.path.id,color:t.path.color,scaleF:2.1,scaleS:1.35,scaleZ:1.35})));
   function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*21),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}
   syncTrains();
   function tickTrains(dt,people,obstacles=[]){
@@ -64,10 +64,10 @@ function createCityLife(world, models){
       t.doors=Math.max(0,t.doors-dt*2);if(t.doors>0)continue;
       const remaining=(t.next.distance-t.distance+t.path.length)%t.path.length;
       const free=clearance(t),safeSpeed=Math.sqrt(2*brake*free);
-      t.speed=Math.min(48,t.speed+dt*3,Math.sqrt(3*remaining),safeSpeed);
+      t.speed=Math.min(t.path.speed||48,t.speed+dt*(t.path.acceleration||3),Math.sqrt(3*remaining),safeSpeed);
       if(free<.1)t.speed=0;
       const move=Math.min(remaining,free,t.speed*dt);t.distance=(t.distance+move)%t.path.length;
-      if(remaining<.05||move===remaining){t.distance=t.next.distance;t.stop=t.next.name;t.stopId=t.next.stopId;t.terminal=!!t.next.terminal;t.wait=24;t.speed=0;t.departure++;
+      if(remaining<.05||move===remaining){t.distance=t.next.distance;t.stop=t.next.name;t.stopId=t.next.stopId;t.terminal=!!t.next.terminal;t.wait=t.path.dwell||24;t.speed=0;t.departure++;
         const stops=t.path.points.filter(p=>p.name);t.next=stops[(stops.indexOf(t.next)+1)%stops.length];}
     }
     syncTrains();
@@ -77,6 +77,21 @@ function createCityLife(world, models){
     const b=path.points[(i+1)%path.points.length],dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy),t=((c.x-a.x)*dx+(c.y-a.y)*dy)/(length*length||1);
     return t>=0&&t<=1&&Math.hypot(c.x-a.x-dx*t,c.y-a.y-dy*t)<4?[{path:path.id,distance:a.distance+t*length}]:[];
   }))]));
+  // Nearby gates on the same road form one crossing area. Once inside,
+  // road traffic must be able to clear its exit instead of stopping on rails.
+  const crossingGroups=[];
+  for(const c of [...crossings].sort((a,b)=>(a.vertical?a.y:a.x)-(b.vertical?b.y:b.x))){
+    const axis=c.vertical?c.y:c.x,lane=c.vertical?c.x:c.y;
+    let group=crossingGroups.find(g=>g.vertical===c.vertical&&Math.abs(g.lane-lane)<3&&axis-g.max<40&&axis>=g.min-40);
+    if(!group){group={vertical:c.vertical,lane,min:axis,max:axis};crossingGroups.push(group);}else{group.min=Math.min(group.min,axis);group.max=Math.max(group.max,axis);}c.group=group;
+  }
+  function roadHazards(vehicle,hazards){
+    return hazards.filter(h=>{
+      if(!h.crossing)return true;
+      const g=h.crossing.group,axis=g.vertical?vehicle.y:vehicle.x,lane=g.vertical?vehicle.x:vehicle.y;
+      return !(Math.abs(lane-g.lane)<h.crossing.width/2+2&&axis>g.min-9&&axis<g.max+9);
+    });
+  }
   function tickCrossings(dt){
     for(const c of crossings){
       c.closed=crossingPassages.get(c.id).some(p=>railServices.some(t=>{
@@ -91,7 +106,7 @@ function createCityLife(world, models){
     const along=c.vertical?y-c.y:x-c.x,across=c.vertical?x-c.x:y-c.y;
     return Math.abs(along-side*9)<.3+radius&&Math.abs(across)<c.width/2+radius;
   }));}
-  function crossingHazards(){return crossings.flatMap(c=>c.closed?[-1,1].flatMap(side=>Array.from({length:Math.ceil(c.width/2)+1},(_,i)=>({id:c.id+'-'+side+'-'+i,x:c.x+(c.vertical?-c.width/2+i*2:side*9),y:c.y+(c.vertical?side*9:-c.width/2+i*2),r:1.5}))):[]);}
+  function crossingHazards(){return crossings.flatMap(c=>c.closed?[-1,1].flatMap(side=>Array.from({length:Math.ceil(c.width/2)+1},(_,i)=>({id:c.id+'-'+side+'-'+i,crossing:c,x:c.x+(c.vertical?-c.width/2+i*2:side*9),y:c.y+(c.vertical?side*9:-c.width/2+i*2),r:1.5}))):[]);}
   // Pavement circuits around city blocks. Lane offsets keep opposing cars apart.
   const blocks=[[-45,-27,-34,-70],[-27,0,-34,-88],[0,27,-34,-88],[27,45,-52,-106],[-45,-27,-121,-175],[0,27,-139,-193],[-27,0,-271,-325],[0,27,-289,-343]];
   for(const town of world.towns||[])blocks.push([town.x-22,town.x,town.y+12,town.y-11]);
@@ -144,7 +159,7 @@ function createCityLife(world, models){
     tickCommuters(dt,[...onlinePlayers,...(player?[player]:[])]);
     for(const car of cars){
       const ahead={x:car.x+Math.cos(car.heading)*5,y:car.y+Math.sin(car.heading)*5};
-      const blocked=aheadBlocked(car,buses,8)||hazards.some(o=>Math.hypot(ahead.x-o.x,ahead.y-o.y)<o.r+1.5)||cars.some(o=>{
+      const blocked=aheadBlocked(car,buses,8)||roadHazards(car,hazards).some(o=>Math.hypot(ahead.x-o.x,ahead.y-o.y)<o.r+1.5)||cars.some(o=>{
         if(o===car)return false;const dx=o.x-car.x,dy=o.y-car.y;
         const forward=dx*Math.cos(car.heading)+dy*Math.sin(car.heading),side=-dx*Math.sin(car.heading)+dy*Math.cos(car.heading);
         return forward>0&&forward<8&&Math.abs(side)<2.2&&(Math.cos(o.heading-car.heading)>.5||o.id<car.id);

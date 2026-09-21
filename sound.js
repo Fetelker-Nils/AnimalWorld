@@ -160,7 +160,7 @@ function createSound(storage){
     return announcementCache.get(url);
   }
   function announce({line,stop,next=false,terminal=false}){
-    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^(R)?\d+$/.test(String(line)))return false;
+    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^(R|RE|IC|ICE|UE)?\d+$/.test(String(line)))return false;
     cancelAnnouncement();effect('phone');const token=announcementToken;
     const name=stop.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
     const urls=['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];

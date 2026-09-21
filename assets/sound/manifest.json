@@ -155,6 +155,54 @@
       "text": "Linie sechsunddreissig."
     },
     {
+      "file": "line-37.mp3",
+      "text": "Linie siebenunddreissig."
+    },
+    {
+      "file": "line-38.mp3",
+      "text": "Linie achtunddreissig."
+    },
+    {
+      "file": "line-39.mp3",
+      "text": "Linie neununddreissig."
+    },
+    {
+      "file": "line-40.mp3",
+      "text": "Linie vierzig."
+    },
+    {
+      "file": "line-41.mp3",
+      "text": "Linie einundvierzig."
+    },
+    {
+      "file": "line-42.mp3",
+      "text": "Linie zweiundvierzig."
+    },
+    {
+      "file": "line-43.mp3",
+      "text": "Linie dreiundvierzig."
+    },
+    {
+      "file": "line-44.mp3",
+      "text": "Linie vierundvierzig."
+    },
+    {
+      "file": "line-45.mp3",
+      "text": "Linie fünfundvierzig."
+    },
+    {
+      "file": "line-46.mp3",
+      "text": "Linie sechsundvierzig."
+    },
+    {
+      "file": "line-47.mp3",
+      "text": "Linie siebenundvierzig."
+    },
+    {
+      "file": "line-48.mp3",
+      "text": "Linie achtundvierzig."
+    },
+    {
       "file": "line-R1.mp3",
       "text": "Regionalzug eins."
     },
@@ -249,6 +297,38 @@
     {
       "file": "line-R24.mp3",
       "text": "Regionalzug vierundzwanzig."
+    },
+    {
+      "file": "line-RE1.mp3",
+      "text": "Regional Express eins."
+    },
+    {
+      "file": "line-RE2.mp3",
+      "text": "Regional Express zwei."
+    },
+    {
+      "file": "line-IC1.mp3",
+      "text": "Inter City eins."
+    },
+    {
+      "file": "line-IC2.mp3",
+      "text": "Inter City zwei."
+    },
+    {
+      "file": "line-ICE1.mp3",
+      "text": "Inter City Express eins."
+    },
+    {
+      "file": "line-ICE2.mp3",
+      "text": "Inter City Express zwei."
+    },
+    {
+      "file": "line-UE1.mp3",
+      "text": "Ultra Express eins."
+    },
+    {
+      "file": "line-UE2.mp3",
+      "text": "Ultra Express zwei."
     },
     {
       "file": "station-nordstadt.mp3",
@@ -451,12 +531,12 @@
       "text": "Nächste Station: Mauz Hauptbahnhof."
     },
     {
-      "file": "station-mauz-zentrum.mp3",
-      "text": "Station: Mauz Zentrum."
+      "file": "station-mauz-hauptbahnhof-halle.mp3",
+      "text": "Station: Mauz Hauptbahnhof Halle."
     },
     {
-      "file": "next-mauz-zentrum.mp3",
-      "text": "Nächste Station: Mauz Zentrum."
+      "file": "next-mauz-hauptbahnhof-halle.mp3",
+      "text": "Nächste Station: Mauz Hauptbahnhof Halle."
     },
     {
       "file": "station-weststadt-bahnhof.mp3",
@@ -907,6 +987,198 @@
       "text": "Nächste Station: Rehweiler Zentrum."
     },
     {
+      "file": "station-nordhafen-bahnhof.mp3",
+      "text": "Station: Nordhafen Bahnhof."
+    },
+    {
+      "file": "next-nordhafen-bahnhof.mp3",
+      "text": "Nächste Station: Nordhafen Bahnhof."
+    },
+    {
+      "file": "station-nordhafen-zentrum.mp3",
+      "text": "Station: Nordhafen Zentrum."
+    },
+    {
+      "file": "next-nordhafen-zentrum.mp3",
+      "text": "Nächste Station: Nordhafen Zentrum."
+    },
+    {
+      "file": "station-frosthain-bahnhof.mp3",
+      "text": "Station: Frosthain Bahnhof."
+    },
+    {
+      "file": "next-frosthain-bahnhof.mp3",
+      "text": "Nächste Station: Frosthain Bahnhof."
+    },
+    {
+      "file": "station-frosthain-zentrum.mp3",
+      "text": "Station: Frosthain Zentrum."
+    },
+    {
+      "file": "next-frosthain-zentrum.mp3",
+      "text": "Nächste Station: Frosthain Zentrum."
+    },
+    {
+      "file": "station-polarstadt-bahnhof.mp3",
+      "text": "Station: Polarstadt Bahnhof."
+    },
+    {
+      "file": "next-polarstadt-bahnhof.mp3",
+      "text": "Nächste Station: Polarstadt Bahnhof."
+    },
+    {
+      "file": "station-polarstadt-zentrum.mp3",
+      "text": "Station: Polarstadt Zentrum."
+    },
+    {
+      "file": "next-polarstadt-zentrum.mp3",
+      "text": "Nächste Station: Polarstadt Zentrum."
+    },
+    {
+      "file": "station-schneedorf-bahnhof.mp3",
+      "text": "Station: Schneedorf Bahnhof."
+    },
+    {
+      "file": "next-schneedorf-bahnhof.mp3",
+      "text": "Nächste Station: Schneedorf Bahnhof."
+    },
+    {
+      "file": "station-schneedorf-zentrum.mp3",
+      "text": "Station: Schneedorf Zentrum."
+    },
+    {
+      "file": "next-schneedorf-zentrum.mp3",
+      "text": "Nächste Station: Schneedorf Zentrum."
+    },
+    {
+      "file": "station-aurorastadt-bahnhof.mp3",
+      "text": "Station: Aurorastadt Bahnhof."
+    },
+    {
+      "file": "next-aurorastadt-bahnhof.mp3",
+      "text": "Nächste Station: Aurorastadt Bahnhof."
+    },
+    {
+      "file": "station-aurorastadt-zentrum.mp3",
+      "text": "Station: Aurorastadt Zentrum."
+    },
+    {
+      "file": "next-aurorastadt-zentrum.mp3",
+      "text": "Nächste Station: Aurorastadt Zentrum."
+    },
+    {
+      "file": "station-eiswinkel-bahnhof.mp3",
+      "text": "Station: Eiswinkel Bahnhof."
+    },
+    {
+      "file": "next-eiswinkel-bahnhof.mp3",
+      "text": "Nächste Station: Eiswinkel Bahnhof."
+    },
+    {
+      "file": "station-eiswinkel-zentrum.mp3",
+      "text": "Station: Eiswinkel Zentrum."
+    },
+    {
+      "file": "next-eiswinkel-zentrum.mp3",
+      "text": "Nächste Station: Eiswinkel Zentrum."
+    },
+    {
+      "file": "station-suedhafen-bahnhof.mp3",
+      "text": "Station: Südhafen Bahnhof."
+    },
+    {
+      "file": "next-suedhafen-bahnhof.mp3",
+      "text": "Nächste Station: Südhafen Bahnhof."
+    },
+    {
+      "file": "station-suedhafen-zentrum.mp3",
+      "text": "Station: Südhafen Zentrum."
+    },
+    {
+      "file": "next-suedhafen-zentrum.mp3",
+      "text": "Nächste Station: Südhafen Zentrum."
+    },
+    {
+      "file": "station-palmenau-bahnhof.mp3",
+      "text": "Station: Palmenau Bahnhof."
+    },
+    {
+      "file": "next-palmenau-bahnhof.mp3",
+      "text": "Nächste Station: Palmenau Bahnhof."
+    },
+    {
+      "file": "station-palmenau-zentrum.mp3",
+      "text": "Station: Palmenau Zentrum."
+    },
+    {
+      "file": "next-palmenau-zentrum.mp3",
+      "text": "Nächste Station: Palmenau Zentrum."
+    },
+    {
+      "file": "station-korallenstadt-bahnhof.mp3",
+      "text": "Station: Korallenstadt Bahnhof."
+    },
+    {
+      "file": "next-korallenstadt-bahnhof.mp3",
+      "text": "Nächste Station: Korallenstadt Bahnhof."
+    },
+    {
+      "file": "station-korallenstadt-zentrum.mp3",
+      "text": "Station: Korallenstadt Zentrum."
+    },
+    {
+      "file": "next-korallenstadt-zentrum.mp3",
+      "text": "Nächste Station: Korallenstadt Zentrum."
+    },
+    {
+      "file": "station-mangodorf-bahnhof.mp3",
+      "text": "Station: Mangodorf Bahnhof."
+    },
+    {
+      "file": "next-mangodorf-bahnhof.mp3",
+      "text": "Nächste Station: Mangodorf Bahnhof."
+    },
+    {
+      "file": "station-mangodorf-zentrum.mp3",
+      "text": "Station: Mangodorf Zentrum."
+    },
+    {
+      "file": "next-mangodorf-zentrum.mp3",
+      "text": "Nächste Station: Mangodorf Zentrum."
+    },
+    {
+      "file": "station-sonnenhafen-bahnhof.mp3",
+      "text": "Station: Sonnenhafen Bahnhof."
+    },
+    {
+      "file": "next-sonnenhafen-bahnhof.mp3",
+      "text": "Nächste Station: Sonnenhafen Bahnhof."
+    },
+    {
+      "file": "station-sonnenhafen-zentrum.mp3",
+      "text": "Station: Sonnenhafen Zentrum."
+    },
+    {
+      "file": "next-sonnenhafen-zentrum.mp3",
+      "text": "Nächste Station: Sonnenhafen Zentrum."
+    },
+    {
+      "file": "station-muschelheim-bahnhof.mp3",
+      "text": "Station: Muschelheim Bahnhof."
+    },
+    {
+      "file": "next-muschelheim-bahnhof.mp3",
+      "text": "Nächste Station: Muschelheim Bahnhof."
+    },
+    {
+      "file": "station-muschelheim-zentrum.mp3",
+      "text": "Station: Muschelheim Zentrum."
+    },
+    {
+      "file": "next-muschelheim-zentrum.mp3",
+      "text": "Nächste Station: Muschelheim Zentrum."
+    },
+    {
       "file": "station-weststadt.mp3",
       "text": "Station: Weststadt."
     },
@@ -1129,6 +1401,102 @@
     {
       "file": "next-rehweiler.mp3",
       "text": "Nächste Station: Rehweiler."
+    },
+    {
+      "file": "station-nordhafen.mp3",
+      "text": "Station: Nordhafen."
+    },
+    {
+      "file": "next-nordhafen.mp3",
+      "text": "Nächste Station: Nordhafen."
+    },
+    {
+      "file": "station-frosthain.mp3",
+      "text": "Station: Frosthain."
+    },
+    {
+      "file": "next-frosthain.mp3",
+      "text": "Nächste Station: Frosthain."
+    },
+    {
+      "file": "station-polarstadt.mp3",
+      "text": "Station: Polarstadt."
+    },
+    {
+      "file": "next-polarstadt.mp3",
+      "text": "Nächste Station: Polarstadt."
+    },
+    {
+      "file": "station-schneedorf.mp3",
+      "text": "Station: Schneedorf."
+    },
+    {
+      "file": "next-schneedorf.mp3",
+      "text": "Nächste Station: Schneedorf."
+    },
+    {
+      "file": "station-aurorastadt.mp3",
+      "text": "Station: Aurorastadt."
+    },
+    {
+      "file": "next-aurorastadt.mp3",
+      "text": "Nächste Station: Aurorastadt."
+    },
+    {
+      "file": "station-eiswinkel.mp3",
+      "text": "Station: Eiswinkel."
+    },
+    {
+      "file": "next-eiswinkel.mp3",
+      "text": "Nächste Station: Eiswinkel."
+    },
+    {
+      "file": "station-suedhafen.mp3",
+      "text": "Station: Südhafen."
+    },
+    {
+      "file": "next-suedhafen.mp3",
+      "text": "Nächste Station: Südhafen."
+    },
+    {
+      "file": "station-palmenau.mp3",
+      "text": "Station: Palmenau."
+    },
+    {
+      "file": "next-palmenau.mp3",
+      "text": "Nächste Station: Palmenau."
+    },
+    {
+      "file": "station-korallenstadt.mp3",
+      "text": "Station: Korallenstadt."
+    },
+    {
+      "file": "next-korallenstadt.mp3",
+      "text": "Nächste Station: Korallenstadt."
+    },
+    {
+      "file": "station-mangodorf.mp3",
+      "text": "Station: Mangodorf."
+    },
+    {
+      "file": "next-mangodorf.mp3",
+      "text": "Nächste Station: Mangodorf."
+    },
+    {
+      "file": "station-sonnenhafen.mp3",
+      "text": "Station: Sonnenhafen."
+    },
+    {
+      "file": "next-sonnenhafen.mp3",
+      "text": "Nächste Station: Sonnenhafen."
+    },
+    {
+      "file": "station-muschelheim.mp3",
+      "text": "Station: Muschelheim."
+    },
+    {
+      "file": "next-muschelheim.mp3",
+      "text": "Nächste Station: Muschelheim."
     }
   ]
 }

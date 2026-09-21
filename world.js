@@ -1,6 +1,10 @@
 const Island = (() => {
   const radius=560,border=16000;
   const continent={x:-7300,y:0,radius:6700,name:'Pfotenland'};
+  const outerIslands=[{x:-6000,y:-9800,radius:2200,name:'Nordinsel'},{x:-6000,y:9800,radius:2200,name:'Suedinsel'}];
+  const seaLinks=[{x:-6000,y:-7100,w:900,d:3400},{x:-6000,y:7100,w:900,d:3400},{x:-650,y:-200,w:500,d:600}];
+  const centralStation={x:-185,y:-430,w:100,d:42,name:'Mauz Hauptbahnhof'};
+  const onSeaLink=(x,y)=>seaLinks.some(b=>Math.abs(x-b.x)<b.w/2&&Math.abs(y-b.y)<b.d/2);
   const luxury={x:900,y:0,radius:radius/Math.sqrt(5),name:'Perleninsel'};
   const docks=[{x:559,y:0,w:28,d:6},{x:645,y:0,w:28,d:6}];
   const airfields=[{x:210,y:230,w:32,d:110},{x:900,y:155,w:32,d:100}];
@@ -8,7 +12,7 @@ const Island = (() => {
   const bridge={x:610,y:14,w:140,d:12};
   const onBridge=(x,y)=>Math.abs(x-bridge.x)<=bridge.w/2&&Math.abs(y-bridge.y)<=bridge.d/2;
   const bridgeBarrier=(x,y)=>Math.abs(x-bridge.x)<bridge.w/2&&Math.abs(y-bridge.y)>bridge.d/2-.7&&Math.abs(y-bridge.y)<bridge.d/2+.7;
-  const inSea=(x,y)=>railStructures.some(r=>r.kind==='bridge'&&Math.abs(x-r.x)<r.w/2-4&&Math.abs(y-r.y)>r.d/2&&Math.abs(y-r.y)<37.5)||Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&Math.hypot(x-continent.x,y-continent.y)>continent.radius-1&&!(x>-635&&x<-495&&y>-25&&y<145)&&!inDock(x,y)&&!onBridge(x,y);
+  const inSea=(x,y)=>railStructures.some(r=>r.kind==='bridge'&&Math.abs(x-r.x)<r.w/2-4&&Math.abs(y-r.y)>r.d/2&&Math.abs(y-r.y)<37.5)||Math.hypot(x,y)>radius-1&&Math.hypot(x-luxury.x,y-luxury.y)>luxury.radius-1&&Math.hypot(x-continent.x,y-continent.y)>continent.radius-1&&!outerIslands.some(i=>Math.hypot(x-i.x,y-i.y)<i.radius-1)&&!onSeaLink(x,y)&&!(x>-635&&x<-495&&y>-25&&y<145)&&!inDock(x,y)&&!onBridge(x,y);
   const inBounds=(x,y)=>Math.hypot(x,y)<border;
 
   const towns=[
@@ -22,6 +26,13 @@ const Island = (() => {
   const expansionPositions=[[-6800,-2700],[-8300,-3500],[-10400,-2400],[-11900,-1100],[-7200,-1350],[-9150,-1850],[-10850,-450],[-12300,850],[-6650,350],[-8450,-200],[-9700,850],[-11350,2100],[-7200,1950],[-8850,2400],[-10050,3300],[-11500,3650],[-6450,3650],[-8000,4250],[-9450,4750],[-5400,2600]];
   const newTowns=expansionNames.map((name,i)=>({name,x:expansionPositions[i][0],y:expansionPositions[i][1],city:i%2===0,expanded:true}));
   towns.push(...newTowns);
+  const islandTowns=[
+    {name:'Nordhafen',x:-6000,y:-9000,city:true},{name:'Frosthain',x:-6900,y:-8650},{name:'Polarstadt',x:-7300,y:-9900,city:true},{name:'Schneedorf',x:-6500,y:-11100},{name:'Aurorastadt',x:-5300,y:-10800,city:true},{name:'Eiswinkel',x:-4750,y:-9500},
+    {name:'Suedhafen',x:-6000,y:8800,city:true},{name:'Palmenau',x:-7100,y:9100},{name:'Korallenstadt',x:-7300,y:10100,city:true},{name:'Mangodorf',x:-6350,y:11000},{name:'Sonnenhafen',x:-5150,y:10400,city:true},{name:'Muschelheim',x:-4750,y:9200}
+  ].map(t=>({...t,expanded:true,island:true}));
+  towns.push(...islandTowns);
+  const trainTypes={R:{name:'Regionalzug',speed:48,dwell:24,acceleration:3},RE:{name:'RegionalExpress',speed:60,dwell:20,acceleration:3.5},IC:{name:'InterCity',speed:75,dwell:18,acceleration:4},ICE:{name:'InterCityExpress',speed:90,dwell:15,acceleration:4.5},UE:{name:'UltraExpress',speed:110,dwell:12,acceleration:5}};
+
   const railLines=[{id:'R1',name:'Westbahn',color:'#b65349',starts:[0,5],route:[
     {x:-170,y:-10,name:'Mauz Hauptbahnhof',terminal:true},{x:-1000,y:-10,name:'Weststadt'},
     {x:-2200,y:-10,name:'Lindenau'},{x:-3500,y:-10,name:'Bergstadt'},{x:-5000,y:-10,name:'Tannenheim',terminal:true},
@@ -54,7 +65,7 @@ const Island = (() => {
     {x:-3890,y:1660},{x:-3890,y:1130,name:'Seestadt'},{x:-3890,y:300},{x:-3290,y:300},{x:-3290,y:-36}
   ]});
   railLines.push({id:'R4',name:'Panoramabahn',color:'#8b65a6',starts:[0],route:[
-    {x:-1080,y:-36,name:'Weststadt',terminal:true},{x:-1250,y:-36},{x:-1250,y:800},{x:-2070,y:800},
+    {x:-1260,y:-36,name:'Weststadt',terminal:true},{x:-1390,y:-36},{x:-1390,y:800},{x:-2070,y:800},
     {x:-2070,y:1130,name:'Sonnenfeld'},{x:-2070,y:1740},{x:-1780,y:1740,name:'Blumental',terminal:true},
     {x:-1500,y:1740},{x:-1500,y:210},{x:-2070,y:210,name:'Lindenau'},{x:-2450,y:210},{x:-2450,y:-380},
     {x:-750,y:-380},{x:-750,y:-36}
@@ -64,8 +75,13 @@ const Island = (() => {
   const links=linkPairs.map(([a,b])=>[newTowns[a],newTowns[b]]);
   links.push([towns.find(t=>t.name==='Tannenheim'),newTowns[8]]);
   const regionalRoads=[];
+  // Give incident routes distinct platform pairs and approach tracks.
+  const regionalLanes=new Map();
   for(const [i,[a,b]] of links.entries()){
-    const id='R'+(i+5),offset=160+(i%3)*24,ay=a.expanded?a.y+offset:320,by=b.y+offset,ax=a.x+300,bx=b.x+300;
+    const used=new Set([...(regionalLanes.get(a.name)||[]),...(regionalLanes.get(b.name)||[])]);
+    let lane=0;while(used.has(lane))lane++;
+    for(const town of [a,b])regionalLanes.set(town.name,[...(regionalLanes.get(town.name)||[]),lane]);
+    const id='R'+(i+5),offset=160+lane*44,ay=a.expanded?a.y+offset:320,by=b.y+offset,ax=a.x+300+lane*44,bx=b.x+300+lane*44;
     const segmentClear=(x1,y1,x2,y2)=>!towns.some(t=>Math.max(x1,x2)>t.x-190&&Math.min(x1,x2)<t.x+190&&Math.max(y1,y2)>t.y-180&&Math.min(y1,y2)<t.y+125);
     const candidates=[(ay+by)/2,Math.min(ay,by)-360,Math.max(ay,by)+360,...Array.from({length:30},(_,n)=>Math.min(ay,by)-500-n*160)];
     const cy=candidates.find(y=>segmentClear(ax,ay,ax,y)&&segmentClear(ax,y,bx,y)&&segmentClear(bx,y,bx,by));
@@ -74,6 +90,25 @@ const Island = (() => {
     railLines.push({id,name:a.name+' - '+b.name,color:['#4c8a9c','#a36e56','#7e8c4b','#8469a8','#b18e45'][i%5],starts:[1],route});
     const road=[{x:a.x,y:a.expanded?a.y+230:200},{x:ax+70,y:a.expanded?a.y+230:200},{x:ax+70,y:cy+90},{x:bx+70,y:cy+90},{x:bx+70,y:b.y+230},{x:b.x,y:b.y+230}];
     for(let n=1;n<road.length;n++){const p=road[n-1],q=road[n];regionalRoads.push({x:(p.x+q.x)/2,y:(p.y+q.y)/2,w:Math.abs(q.x-p.x)+8,d:Math.abs(q.y-p.y)+8});}
+  }
+  // Eight independent hub services, on separated paired tracks.
+  for(const [typeIndex,type] of ['RE','IC','ICE','UE'].entries())for(const [islandIndex,sign] of [-1,1].entries()){
+    const id=type+(islandIndex+1),offset=typeIndex*44+islandIndex*176,hubY=-66-typeIndex*44-(1-islandIndex)*176;
+    const destinations=islandTowns.slice(islandIndex*6,islandIndex*6+6);
+    const served=type==='RE'?[0,1,2,3,4,5]:type==='IC'?[0,2,4]:type==='ICE'?[0,4]:[0];
+    // North platforms lie north of south platforms, avoiding crossing fans at the hub.
+    const approachX=islandIndex===0?-900+typeIndex*44:-1000-typeIndex*44;
+    const outbound=[{x:-260,y:hubY,name:'Mauz Hauptbahnhof',terminal:true},{x:approachX,y:hubY},{x:approachX,y:sign*700+offset},{x:-6000+typeIndex*44,y:sign*700+offset}];
+    const chosen=destinations.filter((t,i)=>served.includes(i));
+    for(const [i,town] of chosen.entries()){
+      const x=town.x+typeIndex*44,y=town.y+160+typeIndex*44,approach=town.x-180+typeIndex*44,last=outbound.at(-1);
+      if(i>0){const exit=chosen[i-1].x+230+typeIndex*44,mid=(last.y+y)/2;outbound.push({x:exit,y:last.y},{x:exit,y:mid},{x:approach,y:mid});}
+      else if(last.x!==approach)outbound.push({x:approach,y:last.y});
+      if(outbound.at(-1).y!==y)outbound.push({x:approach,y});
+      outbound.push({x,y,name:town.name,terminal:i===chosen.length-1});
+    }
+    const last=outbound.at(-1),route=[{x:-160,y:hubY},...outbound,{x:last.x+100,y:last.y},{x:last.x+100,y:last.y+18},...outbound.slice().reverse().map(p=>({...p,x:p.x+18,y:p.y+18})),{x:-160,y:hubY+18}];
+    railLines.push({...trainTypes[type],id,type,name:'Mauz - '+outerIslands[islandIndex].name,color:['#549976','#4279a7','#c64f46','#8154ad'][typeIndex],starts:[1],route});
   }
   // Round bends into short quadratic segments; coaches follow the same track independently.
   for(const line of railLines){
@@ -105,11 +140,14 @@ const Island = (() => {
     }
   }
   const railReserved=(x,y,margin=9)=>{
+    if(Math.abs(x-centralStation.x)<centralStation.w/2+margin&&Math.abs(y-centralStation.y)<centralStation.d/2+margin)return true;
     for(let ix=Math.floor((x-margin)/railCellSize);ix<=Math.floor((x+margin)/railCellSize);ix++)for(let iy=Math.floor((y-margin)/railCellSize);iy<=Math.floor((y+margin)/railCellSize);iy++)for(const {a,b} of railCells.get(ix+','+iy)||[]){
       const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1)));if((x-a.x-t*dx)**2+(y-a.y-t*dy)**2<margin*margin)return true;
     }return false;
   };
   const railWalls=railStructures.flatMap(r=>[-1,1].map(side=>({x:r.x,y:r.y+side*(r.kind==='tunnel'?r.d/2+12:r.d/2-.3),w:r.w,d:r.kind==='tunnel'?24:.6,h:r.kind==='tunnel'?12:1.2})));
+  for(const side of [-1,1])for(let x=centralStation.x-centralStation.w/2+4;x<centralStation.x+centralStation.w/2;x+=20)railWalls.push({x,y:centralStation.y+side*18,w:2,d:2,h:9});
+  for(const x of [-42,42])railWalls.push({x:centralStation.x+x,y:centralStation.y,w:2,d:1,h:2.8});
   const railBlocked=(x,y)=>railWalls.some(b=>Math.abs(x-b.x)<b.w/2+.4&&Math.abs(y-b.y)<b.d/2+.4);
   const buildings=[];
   const palette=['#e9d3af','#bfd7de','#d0d9bd','#e2c5bb','#d0ccdf'];
@@ -350,22 +388,42 @@ const Island = (() => {
   // A street loop in each settlement, with an interchange on its station side.
   for(const [index,town] of [{name:'Mauz',x:-215,y:-80,main:true},...towns].entries()){
     const n=town.city?6:4,half=town.main?105:town.expanded?155:town.y<0?155:n*11+18;
-    const left=town.x-half,right=town.x+half,top=town.main?-220:town.y-n*23-15,bottom=town.expanded?town.y+230:town.y<0?200:town.y+12;
+    const left=town.x-half,right=town.x+half,top=town.main?-465:town.y-n*23-15,bottom=town.expanded?town.y+230:town.y<0?200:town.y+12;
     roads.push({x:(left+right)/2,y:top,w:right-left+8,d:8},{x:(left+right)/2,y:bottom,w:right-left+8,d:8},
       {x:left,y:(top+bottom)/2,w:8,d:bottom-top+8},{x:right,y:(top+bottom)/2,w:8,d:bottom-top+8});
     const id=String(index+8),name=town.main?'Mauz Hauptbahnhof':town.name;
     const route=[{x:town.x,y:bottom-1.8,name:(town.main?name:name+' Bahnhof'),terminal:true},{x:left+1.8,y:bottom-1.8},
-      {x:left+1.8,y:top+1.8},{x:town.x,y:top+1.8,name:town.name+' Zentrum'},
+      {x:left+1.8,y:top+1.8},{x:town.x,y:top+1.8,name:town.main?'Mauz Hauptbahnhof Halle':town.name+' Zentrum'},
       {x:right-1.8,y:top+1.8},{x:right-1.8,y:bottom-1.8}];
     if(town.y<0&&!town.expanded){
       delete route[0].name;delete route[0].terminal;
       route.splice(2,0,{x:left+1.8,y:-23,name:(town.main?name:name+' Bahnhof'),terminal:true});
       route.splice(-1,0,{x:right-1.8,y:102,name:(town.main?name:name+' Bahnhof')});
     }
-    busLines.push({id,name:town.name+' Bahnhofslinie',color:['#638fba','#b97762','#809a52'][index%3],starts:[route.findIndex(p=>p.name),route.findIndex(p=>p.name?.endsWith("Zentrum"))],route});
+    busLines.push({id,name:town.name+' Bahnhofslinie',color:['#638fba','#b97762','#809a52'][index%3],starts:[route.findIndex(p=>p.name),route.findIndex(p=>p.name?.endsWith("Zentrum")||p.name==='Mauz Hauptbahnhof Halle')],route});
   }
   roads.push(...regionalRoads);
-  // Keep complete platform footprints off buildings and streets, moving the stop along its track.
+  for(const sign of [-1,1]){
+    const local=islandTowns.filter(t=>Math.sign(t.y)===sign),chain=[{x:-6200,y:sign*6000},...local.map(t=>({x:t.x+155,y:t.y+230}))];
+    for(let i=1;i<chain.length;i++){const a=chain[i-1],b=chain[i];roads.push({x:a.x,y:(a.y+b.y)/2,w:8,d:Math.abs(a.y-b.y)+8},{x:(a.x+b.x)/2,y:b.y,w:Math.abs(a.x-b.x)+8,d:8});}
+  }
+
+  // Reject every track segment inside a platform, including neighbouring services.
+  function trackThroughPlatform(x,y,c,sn){
+    for(const line of railLines)for(let i=0;i<line.route.length;i++){
+      const a=line.route[i],b=line.route[(i+1)%line.route.length];
+      const ax=(a.x-x)*c+(a.y-y)*sn,ay=-(a.x-x)*sn+(a.y-y)*c;
+      const bx=(b.x-x)*c+(b.y-y)*sn,by=-(b.x-x)*sn+(b.y-y)*c;
+      let lo=0,hi=1;
+      for(const [v,d,h] of [[ax,bx-ax,42],[ay,by-ay,6.5]]){
+        if(Math.abs(d)<1e-8){if(Math.abs(v)>=h){lo=2;break;}}
+        else{const t1=(-h-v)/d,t2=(h-v)/d;lo=Math.max(lo,Math.min(t1,t2));hi=Math.min(hi,Math.max(t1,t2));}
+      }
+      if(lo<hi)return true;
+    }return false;
+  }
+  // Keep complete platform footprints off buildings, streets and all tracks.
+
   for(const station of railStations){
     const line=railLines.find(l=>l.id===station.line),i=line.route.findIndex(p=>p.stopId===station.id),p=line.route[i],a=line.route[(i+line.route.length-1)%line.route.length],b=line.route[(i+1)%line.route.length];
     const c=Math.cos(station.heading),sn=Math.sin(station.heading),w=Math.abs(c)*80+Math.abs(sn)*9,d=Math.abs(sn)*80+Math.abs(c)*9;
@@ -373,6 +431,7 @@ const Island = (() => {
       const tx=p.x+c*delta,ty=p.y+sn*delta,x=tx-c*21-sn*7,y=ty-sn*21+c*7;
       if((tx-a.x)*c+(ty-a.y)*sn<65||(b.x-tx)*c+(b.y-ty)*sn<15)continue;
       if([...buildings,...roads].some(o=>Math.abs(x-o.x)<(w+o.w)/2+1&&Math.abs(y-o.y)<(d+o.d)/2+1))continue;
+      if(trackThroughPlatform(x,y,c,sn))continue;
       Object.assign(p,{x:tx,y:ty});Object.assign(station,{x,y,trackX:tx,trackY:ty});break;
     }
     station.platform=railStations.filter(s=>s.name===station.name).indexOf(station)+1;
@@ -432,7 +491,7 @@ const Island = (() => {
   }
   // Deterministic terrain patches stay completely clear of established infrastructure.
   const terrainTargets=[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...venues,...homes,...booths,...busStops,...railStations];
-  for(const region of [{x:0,y:0,r:480,gap:95,size:34},{x:900,y:0,r:205,gap:85,size:27},{x:continent.x,y:continent.y,r:6200,gap:650,size:145}]){
+  for(const region of [{x:0,y:0,r:480,gap:95,size:34},{x:900,y:0,r:205,gap:85,size:27},{x:continent.x,y:continent.y,r:6200,gap:650,size:145},...outerIslands.map(i=>({x:i.x,y:i.y,r:1900,gap:480,size:120}))]){
     for(let gx=-region.r;gx<=region.r;gx+=region.gap)for(let gy=-region.r;gy<=region.r;gy+=region.gap){
       const x=region.x+gx,y=region.y+gy,r=region.size;
       if(Math.hypot(gx,gy)>region.r-r||Math.hypot(x-mountain.x,y-mountain.y)<r+mountain.radius+12)continue;
@@ -456,7 +515,7 @@ const Island = (() => {
   }
   const nearReservedTarget=nearbyPoints(reservedTargets,6),nearReservedBuilding=nearbyPoints(buildings,14),nearReservedLamp=nearbyPoints(lamps,1.5);
   const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||nearReservedLamp(x,y)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||nearReservedTarget(x,y)||nearReservedBuilding(x,y);
-  return {terrain,crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  return {centralStation,outerIslands,seaLinks,trainTypes,terrain,crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;
