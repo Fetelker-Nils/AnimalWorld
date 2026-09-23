@@ -4,7 +4,8 @@ const Island = (() => {
   const outerIslands=[{x:-6000,y:-9800,radius:2200,name:'Nordinsel'},{x:-6000,y:9800,radius:2200,name:'Suedinsel'}];
   const seaLinks=[{x:-6000,y:-7100,w:900,d:3400},{x:-6000,y:7100,w:900,d:3400},{x:-650,y:-200,w:500,d:600}];
   const centralStation={x:-185,y:-430,w:100,d:42,name:'Mauz Hauptbahnhof'};
-  const onSeaLink=(x,y)=>seaLinks.some(b=>Math.abs(x-b.x)<b.w/2&&Math.abs(y-b.y)<b.d/2);
+  const seaLinkCells=new Map();
+  const onSeaLink=(x,y)=>(seaLinkCells.get(Math.floor(x/256)+':'+Math.floor(y/256))||[]).some(b=>Math.abs(x-b.x)<b.w/2&&Math.abs(y-b.y)<b.d/2);
   const luxury={x:900,y:0,radius:radius/Math.sqrt(5),name:'Perleninsel'};
   const docks=[{x:559,y:0,w:28,d:6},{x:645,y:0,w:28,d:6}];
   const airfields=[{x:210,y:230,w:32,d:110},{x:900,y:155,w:32,d:100}];
@@ -91,15 +92,63 @@ const Island = (() => {
     const road=[{x:a.x,y:a.expanded?a.y+230:200},{x:ax+70,y:a.expanded?a.y+230:200},{x:ax+70,y:cy+90},{x:bx+70,y:cy+90},{x:bx+70,y:b.y+230},{x:b.x,y:b.y+230}];
     for(let n=1;n<road.length;n++){const p=road[n-1],q=road[n];regionalRoads.push({x:(p.x+q.x)/2,y:(p.y+q.y)/2,w:Math.abs(q.x-p.x)+8,d:Math.abs(q.y-p.y)+8});}
   }
+  const railStructures=[{kind:'tunnel',x:-2800,y:-10,w:230,d:14},{kind:'tunnel',x:-2800,y:90,w:230,d:14},
+    {kind:'bridge',x:-4200,y:-10,w:190,d:12},{kind:'bridge',x:-4200,y:90,w:190,d:12},
+    {kind:'tunnel',x:-3000,y:1600,w:190,d:14},{kind:'bridge',x:-3000,y:1200,w:190,d:12},
+    {kind:'tunnel',x:-4500,y:-450,w:220,d:14},{kind:'bridge',x:-4650,y:1660,w:160,d:12},
+    {kind:'tunnel',x:-1800,y:-380,w:200,d:14},{kind:'bridge',x:-1600,y:1740,w:120,d:12}];
   // Eight independent hub services, on separated paired tracks.
   for(const [typeIndex,type] of ['RE','IC','ICE','UE'].entries())for(const [islandIndex,sign] of [-1,1].entries()){
     const id=type+(islandIndex+1),offset=typeIndex*44+islandIndex*176,hubY=-66-typeIndex*44-(1-islandIndex)*176;
     const destinations=islandTowns.slice(islandIndex*6,islandIndex*6+6);
-    const served=type==='RE'?[0,1,2,3,4,5]:type==='IC'?[0,2,4]:type==='ICE'?[0,4]:[0];
+    // Fixed service patterns: regional loops, western IC branches, express city links.
+    const patterns=islandIndex===0
+      ? {RE:[0,1,2,3,4,5],IC:[0,1,2],ICE:[0,4],UE:[0]}
+      : {RE:[0,1,2,3,4,5],IC:[0,1,3],ICE:[0,2],UE:[0]};
+    const served=patterns[type];
     // North platforms lie north of south platforms, avoiding crossing fans at the hub.
     const approachX=islandIndex===0?-900+typeIndex*44:-1000-typeIndex*44;
-    const outbound=[{x:-260,y:hubY,name:'Mauz Hauptbahnhof',terminal:true},{x:approachX,y:hubY},{x:approachX,y:sign*700+offset},{x:-6000+typeIndex*44,y:sign*700+offset}];
-    const chosen=destinations.filter((t,i)=>served.includes(i));
+    // Geographically separate routes, not a bundle of almost identical parallel tracks.
+    const corridors=[
+      [[-3700,1200],[-8200,2850],[-8200,4800],[-7400,5600],[-7400,8400]],
+      [[-3100,1050],[-7000,2350],[-7000,4700],[-6600,5600],[-6600,8350]],
+      [[-2450,1350],[-5700,2050],[-5700,4500],[-5700,5600],[-5700,8300]],
+      [[-1900,1250],[-4400,1850],[-4400,4200],[-4950,5600],[-4950,8250]]
+    ];
+    const waypoints=corridors[typeIndex].map(([x,y])=>({x,y:sign*y}));
+    const mainlandNames=islandIndex===0
+      ? {RE:['Bergstadt','Silberstadt','Birkenhain'],IC:['Lindenau','Auenstadt'],ICE:['Weststadt'],UE:[]}
+      : {RE:['Morgenstadt','Blaubeertal','Tannengrund'],IC:['Edelstadt','Abendstadt'],ICE:['Rehweiler'],UE:[]};
+    const mainlandStops=mainlandNames[type];
+    const outbound=[{x:-260,y:hubY,name:'Mauz Hauptbahnhof',terminal:true},{x:approachX,y:hubY},{x:approachX,y:sign*700+offset}];
+    const obstacles=[...towns.map(t=>({x:t.x,y:t.y,w:420,d:880})),...railStructures.map(r=>({...r,w:r.w+150,d:200}))];
+    const clearSegment=(a,b)=>!obstacles.some(o=>Math.max(a.x,b.x)>o.x-o.w/2&&Math.min(a.x,b.x)<o.x+o.w/2&&Math.max(a.y,b.y)>o.y-o.d/2&&Math.min(a.y,b.y)<o.y+o.d/2);
+    function appendOrthogonal(p){
+      const a=outbound.at(-1);
+      const candidates=[[{x:p.x,y:a.y},p],[{x:a.x,y:p.y},p]];
+      for(const distance of [100,250,500,800,1200])for(const sign of [-1,1]){
+        const x=a.x+distance*sign,y=a.y+distance*sign;
+        candidates.push([{x,y:a.y},{x,y:p.y},p],[{x:a.x,y},{x:p.x,y},p]);
+      }
+      const valid=candidates.filter(points=>points.every((b,i)=>clearSegment(i?points[i-1]:a,b)));
+      valid.sort((u,v)=>u.reduce((sum,b,i)=>sum+Math.hypot(b.x-(i?u[i-1]:a).x,b.y-(i?u[i-1]:a).y),0)-v.reduce((sum,b,i)=>sum+Math.hypot(b.x-(i?v[i-1]:a).x,b.y-(i?v[i-1]:a).y),0));
+      for(const q of valid[0]||candidates[0])if(q.x!==outbound.at(-1).x||q.y!==outbound.at(-1).y)outbound.push(q);
+    }
+    appendOrthogonal({x:-3300-typeIndex*60,y:outbound.at(-1).y});
+    for(const name of mainlandStops){
+      const town=towns.find(t=>t.name===name),y=town.y+sign*((sign<0?730:540)+typeIndex*64);
+      appendOrthogonal({x:town.x-160,y});
+      outbound.push({x:town.x,y,name},{x:town.x+160,y},{x:town.x+160,y:y+sign*120});
+    }
+    for(const p of (mainlandStops.length?waypoints.slice(3):waypoints))appendOrthogonal(p);
+    // Support the orthogonal sea approaches with narrow rectangular causeways.
+    for(let i=1;i<outbound.length;i++){
+      const a=outbound[i-1],b=outbound[i];
+      if(Math.max(Math.abs(a.y),Math.abs(b.y))<4700)continue;
+      seaLinks.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,w:Math.abs(b.x-a.x)+110,d:Math.abs(b.y-a.y)+110});
+    }
+
+    const chosen=served.map(i=>destinations[i]);
     for(const [i,town] of chosen.entries()){
       const x=town.x+typeIndex*44,y=town.y+160+typeIndex*44,approach=town.x-180+typeIndex*44,last=outbound.at(-1);
       if(i>0){const exit=chosen[i-1].x+230+typeIndex*44,mid=(last.y+y)/2;outbound.push({x:exit,y:last.y},{x:exit,y:mid},{x:approach,y:mid});}
@@ -108,8 +157,9 @@ const Island = (() => {
       outbound.push({x,y,name:town.name,terminal:i===chosen.length-1});
     }
     const last=outbound.at(-1),route=[{x:-160,y:hubY},...outbound,{x:last.x+100,y:last.y},{x:last.x+100,y:last.y+18},...outbound.slice().reverse().map(p=>({...p,x:p.x+18,y:p.y+18})),{x:-160,y:hubY+18}];
-    railLines.push({...trainTypes[type],id,type,name:'Mauz - '+outerIslands[islandIndex].name,color:['#549976','#4279a7','#c64f46','#8154ad'][typeIndex],starts:[1],route});
+    railLines.push({...trainTypes[type],id,type,name:'Mauz - '+chosen.at(-1).name,terminus:chosen.at(-1).name,mainlandStops,callingAt:chosen.map(t=>t.name),color:['#549976','#4279a7','#c64f46','#8154ad'][typeIndex],starts:[1],route});
   }
+  for(const b of seaLinks)for(let x=Math.floor((b.x-b.w/2)/256);x<=Math.floor((b.x+b.w/2)/256);x++)for(let y=Math.floor((b.y-b.d/2)/256);y<=Math.floor((b.y+b.d/2)/256);y++){const key=x+':'+y;if(!seaLinkCells.has(key))seaLinkCells.set(key,[]);seaLinkCells.get(key).push(b);}
   // Round bends into short quadratic segments; coaches follow the same track independently.
   for(const line of railLines){
     const raw=line.route,out=[];
@@ -127,11 +177,7 @@ const Island = (() => {
     p.stopId='rail-'+l.id+'-'+i;
     return [{id:p.stopId,line:l.id,name:p.name,heading,x:p.x-Math.cos(heading)*21-Math.sin(heading)*7,y:p.y-Math.sin(heading)*21+Math.cos(heading)*7,trackX:p.x,trackY:p.y,color:l.color}];
   }));
-  const railStructures=[{kind:'tunnel',x:-2800,y:-10,w:230,d:14},{kind:'tunnel',x:-2800,y:90,w:230,d:14},
-    {kind:'bridge',x:-4200,y:-10,w:190,d:12},{kind:'bridge',x:-4200,y:90,w:190,d:12},
-    {kind:'tunnel',x:-3000,y:1600,w:190,d:14},{kind:'bridge',x:-3000,y:1200,w:190,d:12},
-    {kind:'tunnel',x:-4500,y:-450,w:220,d:14},{kind:'bridge',x:-4650,y:1660,w:160,d:12},
-    {kind:'tunnel',x:-1800,y:-380,w:200,d:14},{kind:'bridge',x:-1600,y:1740,w:120,d:12}];
+
   const railCells=new Map(),railCellSize=256;
   for(const l of railLines)for(const [i,b] of l.route.entries()){
     const a=l.route[(i+l.route.length-1)%l.route.length],segment={a,b};

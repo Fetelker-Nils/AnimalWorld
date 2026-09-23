@@ -11,6 +11,14 @@
       "text": "Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!"
     },
     {
+      "file": "departure-30.mp3",
+      "text": "Dieser Zug fährt voraussichtlich in dreißig Sekunden ab. Bitte einsteigen."
+    },
+    {
+      "file": "departure-10.mp3",
+      "text": "Dieser Zug fährt voraussichtlich in zehn Sekunden ab. Bitte halten Sie die Türen frei."
+    },
+    {
       "file": "line-1.mp3",
       "text": "Linie eins."
     },

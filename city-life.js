@@ -36,7 +36,7 @@ function createCityLife(world, models){
   }
   const railServices=railPaths.flatMap(path=>path.starts.map((start,i)=>{
     const point=path.points[start],stops=path.points.filter(p=>p.name),index=stops.indexOf(point);
-    return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:path.dwell||24,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
+    return {id:path.id+'-'+i,path,distance:point.distance,speed:0,wait:60,doors:0,departure:0,stop:point.name,stopId:point.stopId,terminal:!!point.terminal,next:stops[(index+1)%stops.length]};
   }));
   const trains=railServices.flatMap(t=>Array.from({length:3},(_,coach)=>({id:'train-'+t.id+'-'+coach,service:t.id,coach,kind:'train',trainType:t.path.type||'R',line:t.path.id,color:t.path.color,scaleF:2.1,scaleS:1.35,scaleZ:1.35})));
   function syncTrains(){for(const b of trains){const t=railServices.find(t=>t.id===b.service);Object.assign(b,railAt(t.path,t.distance-b.coach*21),{speed:t.speed,wait:t.wait,doors:t.doors,departure:t.departure,stop:t.stop,stopId:t.stopId,terminal:t.terminal,nextStop:t.next.name,nextTerminal:!!t.next.terminal});}}

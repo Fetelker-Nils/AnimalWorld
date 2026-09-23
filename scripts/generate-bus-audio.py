@@ -4,6 +4,7 @@ Uses the Edge speech service through https://github.com/rany2/edge-tts.
 The browser game uses only the generated local MP3s, never this service.
 """
 import asyncio
+import base64
 import json
 from pathlib import Path
 import re
@@ -22,6 +23,7 @@ async def main():
     world = json.loads(subprocess.check_output(['node', '-e',
         "require('./world.js');console.log(JSON.stringify({lines:[...AnimalIsland.busLines,...AnimalIsland.railLines].map(l=>l.id),stops:[...new Set([...AnimalIsland.busStops,...AnimalIsland.railStations].map(s=>s.name))]}));"], cwd=ROOT))
     clips = [{'file':'terminal-next.mp3','text':'Diese Fahrt endet an der nächsten Station.'},{'file':'terminal-arrival.mp3','text':'Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!'}]
+    clips.extend([{'file':'departure-30.mp3','text':'Dieser Zug f\u00e4hrt voraussichtlich in drei\u00dfig Sekunden ab. Bitte einsteigen.'},{'file':'departure-10.mp3','text':'Dieser Zug f\u00e4hrt voraussichtlich in zehn Sekunden ab. Bitte halten Sie die T\u00fcren frei.'}])
     for line in world['lines']:
         match = re.fullmatch(r'([A-Z]*)([0-9]+)', line)
         prefix, number = match.group(1), int(match.group(2))
@@ -62,6 +64,11 @@ async def main():
                     await asyncio.sleep(2)
     await asyncio.gather(*(generate(clip) for clip in clips))
     (OUTPUT / 'manifest.json').write_text(json.dumps({'voice':VOICE,'rate':RATE,'clips':clips}, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+    sound_path = ROOT / 'sound.js'
+    sound_source = sound_path.read_text(encoding='utf-8')
+    embedded = {'assets/sound/'+name:'data:audio/mpeg;base64,'+base64.b64encode((OUTPUT/name).read_bytes()).decode('ascii') for name in ['departure-30.mp3','departure-10.mp3']}
+    sound_source = re.sub(r'  const departureClips=.*?;\n', lambda _: '  const departureClips='+json.dumps(embedded, separators=(',',':'))+';\n', sound_source)
+    sound_path.write_text(sound_source, encoding='utf-8')
     print(f'Created {len(clips)} local MP3 announcements.', flush=True)
 
 if __name__ == '__main__':

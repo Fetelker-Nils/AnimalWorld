@@ -75,5 +75,18 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','sound.js'),'utf8'),san
   Object.assign(bus,{speed:13,wait:0,doors:0});sound.update('explore',riding);assert(sound.ambience.busRoad>0,'Rolling bus audible');
   sound.update('explore',{...riding,listener:{x:500,y:500},busId:null});assert.equal(sound.ambience.busRoad,0,'Distant rolling bus silent');
   for(let i=0;i<100;i++)sound.update('explore',outdoors);assert.equal(context.sources.filter(s=>s.loop).length,4,'Frames do not allocate additional loops');
+  sound.cancelAnnouncement();
+  sandbox.fetch=async url=>{fetched.push(url);return {ok:true,arrayBuffer:async()=>new ArrayBuffer(8)};};
+  const stationTrain={id:'train-UE1-test',kind:'train',coach:0,line:'UE1',stop:'Nordhafen',stopId:'north',departure:0,x:0,y:0,speed:0,wait:30,doors:1};
+  const platform={listener:{x:5,y:0},buses:[stationTrain],stations:[{id:'north',x:20,y:0}]};
+  sound.update('explore',platform);await new Promise(setImmediate);
+  assert(fetched.includes('assets/sound/departure-30.mp3'),'Platform announces 30-second departure');
+  const speakerGain=context.gains.find(g=>Math.abs(g.gain.value-.64)<1e-8);assert(speakerGain);const nearVolume=speakerGain.gain.value;
+  sound.update('explore',{...platform,listener:{x:65,y:0}});assert(speakerGain.gain.value<nearVolume,'Walking away lowers speaker volume');
+  sound.update('explore',{...platform,listener:{x:120,y:0}});assert.equal(speakerGain.gain.value,0,'Speaker silent outside radius');
+  sound.update('explore',{...platform,listener:{x:20,y:0}});assert.equal(speakerGain.gain.value,1,'Full volume at platform centre');
+  sound.cancelAnnouncement();const played=context.sources.length;sound.update('explore',platform);await new Promise(setImmediate);assert.equal(context.sources.length,played,'Same call is not repeated');
+  stationTrain.wait=10;sound.update('explore',platform);await new Promise(setImmediate);assert(fetched.includes('assets/sound/departure-10.mp3'),'Short station dwell has a 10-second call');
+  sound.cancelAnnouncement();stationTrain.departure++;stationTrain.wait=30;const far=context.sources.length;sound.update('explore',{...platform,listener:{x:1000,y:0}});await new Promise(setImmediate);assert.equal(context.sources.length,far,'Distant station calls are silent');
   console.log('PASS: eleven musical themes, six effects, lazy audio activation, engine shutdown, mute and volume persistence');
 })().catch(error=>{console.error(error);process.exitCode=1;});
