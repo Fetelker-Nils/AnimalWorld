@@ -134,7 +134,8 @@ const Island = (() => {
       valid.sort((u,v)=>u.reduce((sum,b,i)=>sum+Math.hypot(b.x-(i?u[i-1]:a).x,b.y-(i?u[i-1]:a).y),0)-v.reduce((sum,b,i)=>sum+Math.hypot(b.x-(i?v[i-1]:a).x,b.y-(i?v[i-1]:a).y),0));
       for(const q of valid[0]||candidates[0])if(q.x!==outbound.at(-1).x||q.y!==outbound.at(-1).y)outbound.push(q);
     }
-    appendOrthogonal({x:-3300-typeIndex*60,y:outbound.at(-1).y});
+    const firstApproach=mainlandStops.length?towns.find(t=>t.name===mainlandStops[0]).x-160:waypoints[0].x;
+    appendOrthogonal({x:Math.max(-3300-typeIndex*60,firstApproach),y:outbound.at(-1).y});
     for(const name of mainlandStops){
       const town=towns.find(t=>t.name===name),y=town.y+sign*((sign<0?730:540)+typeIndex*64);
       appendOrthogonal({x:town.x-160,y});
@@ -162,7 +163,32 @@ const Island = (() => {
   for(const b of seaLinks)for(let x=Math.floor((b.x-b.w/2)/256);x<=Math.floor((b.x+b.w/2)/256);x++)for(let y=Math.floor((b.y-b.d/2)/256);y<=Math.floor((b.y+b.d/2)/256);y++){const key=x+':'+y;if(!seaLinkCells.has(key))seaLinkCells.set(key,[]);seaLinkCells.get(key).push(b);}
   // Round bends into short quadratic segments; coaches follow the same track independently.
   for(const line of railLines){
-    const raw=line.route,out=[];
+    // Remove redundant collinear waypoints, including unintended out-and-back spurs.
+    const raw=line.route.map(p=>({...p})),out=[];
+    let simplified=true;
+    while(simplified&&raw.length>3){
+      simplified=false;
+      for(let i=0;i<raw.length;i++){
+        const a=raw[(i+raw.length-1)%raw.length],p=raw[i],b=raw[(i+1)%raw.length];
+        if(!p.name&&Math.abs((p.x-a.x)*(b.y-p.y)-(p.y-a.y)*(b.x-p.x))<.001){raw.splice(i,1);simplified=true;break;}
+      }
+    }
+    // A named stop must remain, but a reversal there needs a real loop of track.
+    for(let i=0;i<raw.length;i++){
+      const a=raw[(i+raw.length-1)%raw.length],p=raw[i],b=raw[(i+1)%raw.length],dx=p.x-a.x,dy=p.y-a.y,ex=b.x-p.x,ey=b.y-p.y,length=Math.hypot(dx,dy);
+      if(p.name&&length>0&&Math.abs(dx*ey-dy*ex)<.001&&dx*ex+dy*ey<0){
+        const ux=dx/length,uy=dy/length,q={x:p.x+ux*90,y:p.y+uy*90};
+        raw.splice(i+1,0,q,{x:q.x-uy*120,y:q.y+ux*120},{x:b.x-uy*120,y:b.y+ux*120});i+=3;
+      }
+    }
+    simplified=true;
+    while(simplified&&raw.length>3){
+      simplified=false;
+      for(let i=0;i<raw.length;i++){
+        const a=raw[(i+raw.length-1)%raw.length],p=raw[i],b=raw[(i+1)%raw.length];
+        if(!p.name&&Math.abs((p.x-a.x)*(b.y-p.y)-(p.y-a.y)*(b.x-p.x))<.001){raw.splice(i,1);simplified=true;break;}
+      }
+    }
     for(let i=0;i<raw.length;i++){
       const p=raw[i],a=raw[(i+raw.length-1)%raw.length],b=raw[(i+1)%raw.length];
       const da=Math.hypot(p.x-a.x,p.y-a.y),db=Math.hypot(b.x-p.x,b.y-p.y),r=Math.min(35,da*.3,db*.3);
