@@ -108,7 +108,7 @@ export class World extends DurableObject {
       return;
     }
     if(data.type==='bus-seat'){
-      const b=[...this.life.buses,...this.life.trains].find(b=>b.id===p.busId&&b.id===data.busId);
+      const b=[...this.life.buses,...this.life.trains,...this.life.planes].find(b=>b.id===p.busId&&b.id===data.busId);
       if(!b||p.room!=='world'||p.car||p.riding)return;
       const seat=data.seat,point=i=>({f:-1-Math.floor(i/2)*2+(i>=4?6:0),s:i%2?.95:-.95});
       if(seat!==null){
@@ -156,7 +156,8 @@ export class World extends DurableObject {
       p.crashed=now;p.impact={x:data.x,y:data.y,heading:data.heading,speed:data.speed,z:data.z??0,model:p.car,scenery:data.scenery===true,at:now};this.impacts=this.impacts.filter(i=>now-i.at<5000);this.impacts.push(p.impact);ws.serializeAttachment(p);this.broadcast({type:'crash',impact:p.impact},ws);return;
     }
     if(data.type!=='state'||now-p.last<80)return;
-    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||!globalThis.AnimalIsland.inBounds(data.x,data.y)||Math.abs(data.heading)>1e6||data.jump<0||data.jump>6)return;
+    const passengerFlight=this.life.planes.find(b=>b.id===p.busId&&b.id===data.busId&&Math.hypot(b.x-data.x,b.y-data.y)<40);
+    if(![data.x,data.y,data.heading,data.jump].every(Number.isFinite)||!globalThis.AnimalIsland.inBounds(data.x,data.y)||Math.abs(data.heading)>1e6||data.jump<0||data.jump>(passengerFlight?passengerFlight.z+2.5:6))return;
     const home=typeof data.room==='string'&&data.room.startsWith('home:')?globalThis.AnimalIsland.homes.find(h=>'home:'+h.id===data.room):null;
     const lobby=typeof data.room==='string'&&data.room.startsWith('lobby:')?globalThis.AnimalIsland.homes.find(h=>h.type==='apartment'&&(data.room==='lobby:'+h.buildingId||data.room==='lobby:'+h.buildingId+':'+h.floor)):null;
     const room=rooms.has(data.room)?data.room:home&&this.properties.get('property:'+home.id)?.owner===p.ownerToken?data.room:lobby?data.room:null;
@@ -169,7 +170,7 @@ export class World extends DurableObject {
     const elevation=lobby?data.elevation??0:0;
     if(!Number.isFinite(elevation)||elevation<0||elevation>(lobby?.floors-1)*4)return;
     Object.assign(p,{elevation,x:data.x,y:data.y,heading:data.heading,jump:data.jump,moving:data.moving===true,room,outfit:outfits.has(data.outfit)?data.outfit:null,car:['compact','roadster','pickup','plane','helicopter','boat'].includes(data.car)?data.car:null,last:now});
-    p.busId=[...this.life.buses,...this.life.trains].find(b=>b.id===data.busId&&Math.hypot(b.x-p.x,b.y-p.y)<(b.kind==='train'?24:7))?.id||null;
+    p.busId=[...this.life.buses,...this.life.trains,...this.life.planes].find(b=>b.id===data.busId&&Math.hypot(b.x-p.x,b.y-p.y)<(b.kind==='plane'?32:b.kind==='train'?24:7))?.id||null;
     p.busF=p.busId&&Number.isFinite(data.busF)&&Math.abs(data.busF)<4.7?data.busF:null;
     p.busS=p.busId&&Number.isFinite(data.busS)&&Math.abs(data.busS)<2.6?data.busS:null;
     if(!p.busId||p.room!=='world'||p.car||p.riding){p.busSeat=null;p.seated=false;}

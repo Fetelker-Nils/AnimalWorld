@@ -1,0 +1,4 @@
+﻿const assert=require('node:assert/strict');require('../world.js');require('../city-life.js');const w=AnimalIsland,life=createCityLife(w,[{id:'car'}]);
+for(const v of [life.buses.find(v=>v.stopId),life.trains[0],life.planes[0]]){const row=life.arrivals(v.stopId).find(r=>r.id===v.id);assert(row?.depart);assert.equal(row.seconds,Math.ceil(v.wait));}
+const plane=life.planes[0],a=life.arrivals(plane.stopId).find(r=>r.id===plane.id);plane.wait-=10;assert.equal(life.arrivals(plane.stopId).find(r=>r.id===plane.id).seconds,a.seconds-10);const dest=w.flightLines[0].route[1];assert(life.arrivals(dest.id).some(r=>r.id===plane.id&&!r.depart&&r.seconds>180));
+const copy=createCityLife(w,[{id:'car'}]);copy.accept(life.snapshot());assert.deepEqual(copy.arrivals(dest.id),life.arrivals(dest.id));assert(plane.scaleF*10.8>45);assert.deepEqual(life.arrivals('missing'),[]);console.log('PASS bus/train/plane countdowns, destination estimates, online snapshot and enlarged plane');

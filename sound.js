@@ -85,12 +85,12 @@ function createSound(storage){
   function updateBuses(state){
     speakerListener=state.paused?null:state.listener;
     if(announcementGain&&announcementSpeaker)announcementGain.gain.setTargetAtTime(speakerVolume(announcementSpeaker),ctx.currentTime,.12);
-    let loudest=0,speed=0,train=false;
+    let loudest=0,speed=0,train=false,plane=false;
     for(const b of state.buses||[]){
       const old=busStates.get(b.id),phase=b.wait>1?'open':b.wait>0||b.doors>0?'closing':'closed';
-      const distance=state.listener?Math.hypot(b.x-state.listener.x,b.y-state.listener.y):Infinity;
+      const distance=state.listener?Math.hypot(b.x-state.listener.x,b.y-state.listener.y,(b.z||0)-(state.listener.jump||0)):Infinity;
       const volume=state.paused||settings.muted?0:state.busId===b.id?1:Math.max(0,1-distance/32)**2;
-      if(volume>loudest){loudest=volume;speed=Math.abs(b.speed);train=b.kind==='train';}
+      if(volume>loudest){loudest=volume;speed=Math.abs(b.speed);train=b.kind==='train';plane=b.kind==='plane';}
       if(old&&volume>0){
         if(old.speed>.3&&b.speed<=.3)effect('bus-stop',volume);
         if(b.kind==='train'&&old.phase!=='closed'&&phase==='closed'&&b.coach===0){tone(390,ctx.currentTime,.65,.045*volume,'sine');tone(520,ctx.currentTime,.65,.03*volume,'sine');}
@@ -101,7 +101,7 @@ function createSound(storage){
     }
     if(!state.paused&&!state.busId&&!settings.muted&&settings.effects>0&&!announcementSources.length&&!announcementLoading&&state.listener){
       const platforms=new Map((state.stations||[]).map(s=>[s.id,s]));
-      const nearby=(state.buses||[]).filter(b=>b.kind==='train'&&b.coach===0&&b.wait>2&&b.wait<=30)
+      const nearby=(state.buses||[]).filter(b=>(b.kind==='train'||b.kind==='plane')&&b.coach===0&&b.wait>2&&b.wait<=30)
         .map(b=>({b,speaker:platforms.get(b.stopId)})).filter(p=>p.speaker&&speakerVolume(p.speaker)>0)
         .sort((a,b)=>speakerVolume(b.speaker)-speakerVolume(a.speaker));
       for(const {b,speaker} of nearby){
@@ -114,8 +114,8 @@ function createSound(storage){
       }
     }
     for(const id of busStates.keys())if(!(state.buses||[]).some(b=>b.id===id))busStates.delete(id);
-    busEngine.frequency.setTargetAtTime(train?105+speed*3:38+speed*3,ctx.currentTime,.15);
-    busFilter.frequency.setTargetAtTime(train?650+speed*18:220+speed*22,ctx.currentTime,.2);
+    busEngine.frequency.setTargetAtTime(plane?180+speed*2:train?105+speed*3:38+speed*3,ctx.currentTime,.15);
+    busFilter.frequency.setTargetAtTime(plane?1500+speed*8:train?650+speed*18:220+speed*22,ctx.currentTime,.2);
     const duck=announcementSources.length?.55:1;
     busGain.gain.setTargetAtTime(loudest*(speed>.3?.17:.055)*duck,ctx.currentTime,.15);
     if(train&&speed>1&&loudest>0&&!settings.muted&&settings.effects>0&&ctx.currentTime>nextRail){noise(.035,.08*loudest,1300);tone(140,ctx.currentTime,.045,.04*loudest,'triangle');nextRail=ctx.currentTime+Math.max(.12,3/speed);}
@@ -190,10 +190,10 @@ function createSound(storage){
     return announcementCache.get(url);
   }
   function announce({line,stop,next=false,terminal=false,departureSeconds=0,speaker=null}){
-    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^(R|RE|IC|ICE|UE)?\d+$/.test(String(line)))return false;
+    if(!unlocked||settings.muted||settings.effects===0||!stop||!/^(R|RE|IC|ICE|UE|F)?\d+$/.test(String(line)))return false;
     cancelAnnouncement();announcementSpeaker=speaker;const token=announcementToken;
     const name=stop.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-    const urls=departureSeconds?['assets/sound/line-'+line+'.mp3','assets/sound/departure-'+departureSeconds+'.mp3']:['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];
+    const urls=departureSeconds?['assets/sound/line-'+line+'.mp3','assets/sound/'+(String(line).startsWith('F')?'flight-departure-':'departure-')+departureSeconds+'.mp3']:['assets/sound/line-'+line+'.mp3','assets/sound/'+(next?'next-':'station-')+name+'.mp3'];
     if(terminal)urls.push('assets/sound/terminal-'+(next?'next':'arrival')+'.mp3');
     announcementLoading=true;
     Promise.all(urls.map(loadAnnouncement)).then(buffers=>{

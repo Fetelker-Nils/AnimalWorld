@@ -561,8 +561,24 @@ const Island = (() => {
     buildings.push(building);job.workplace=id;
     venues.push({id,jobId:job.id,name:workplaceNames[job.type||job.id]+(job.settlement?' '+job.settlement:''),public:true,x:place.x,y:place.y+d/2+2,building,color:building.color,floor:'#d2c9b3',message:'Auftraege und Lohn gibt es am Empfang.'});
   }
+  // Passenger airports only serve selected large cities; keep whole sites clear.
+  const airports=[];
+  for(const name of ['Weststadt','Bergstadt','Polarstadt','Korallenstadt']){
+    const town=towns.find(t=>t.name===name&&t.city);let site=null;
+    for(const radius of [450,650,850,1050,1250,1450])for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]]){
+      if(site)break;const x=town.x+dx*radius,y=town.y+dy*radius;
+      if(buildings.some(b=>Math.abs(b.x-x)<b.w/2+240&&Math.abs(b.y-y)<b.d/2+95))continue;
+      if(roads.some(r=>Math.abs(r.x-x)<r.w/2+240&&Math.abs(r.y-y)<r.d/2+95))continue;
+      let clear=true;for(let f=-220;f<=220;f+=20)for(let side=-70;side<=70;side+=20)if(blocked(x+f,y+side)||railReserved(x+f,y+side,20)||heightAt(x+f,y+side)>0)clear=false;
+      if(clear)site={id:'airport-'+airports.length,name:'Flughafen '+name,city:name,x,y,w:440,d:140};
+    }
+    if(!site)throw Error('Kein Flughafenplatz bei '+name);
+    airports.push(site);airfields.push({...site,w:440,d:140});
+    buildings.push({x:site.x-80,y:site.y+48,w:52,d:22,h:8,color:'#bdcfd0',roof:'#557987'});
+  }
+  const flightLines=[{id:'F1',stops:[0,2],color:'#4d8fb5'},{id:'F2',stops:[1,3],color:'#bc6c4f'},{id:'F3',stops:[2,3],color:'#7c63a8'}].map(l=>({...l,name:l.stops.map(i=>airports[i].city).join(' - '),route:l.stops.map(i=>airports[i])}));
   // Deterministic terrain patches stay completely clear of established infrastructure.
-  const terrainTargets=[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...venues,...homes,...booths,...busStops,...railStations];
+  const terrainTargets=[depot,...deliveries,...jobs,...jobs.flatMap(j=>j.points),...venues,...homes,...booths,...busStops,...railStations,...airports.flatMap(a=>[{x:a.x-180,y:a.y},{x:a.x,y:a.y},{x:a.x+180,y:a.y}])];
   for(const region of [{x:0,y:0,r:480,gap:95,size:34},{x:900,y:0,r:205,gap:85,size:27},{x:continent.x,y:continent.y,r:6200,gap:650,size:145},...outerIslands.map(i=>({x:i.x,y:i.y,r:1900,gap:480,size:120}))]){
     for(let gx=-region.r;gx<=region.r;gx+=region.gap)for(let gy=-region.r;gy<=region.r;gy+=region.gap){
       const x=region.x+gx,y=region.y+gy,r=region.size;
@@ -587,7 +603,7 @@ const Island = (() => {
   }
   const nearReservedTarget=nearbyPoints(reservedTargets,6),nearReservedBuilding=nearbyPoints(buildings,14),nearReservedLamp=nearbyPoints(lamps,1.5);
   const reserved=(x,y)=>railReserved(x,y)||railStations.some(p=>Math.hypot(p.x-x,p.y-y)<45)||busStops.some(p=>Math.hypot(p.x-x,p.y-y)<7)||airfields.some(a=>Math.abs(x-a.x)<a.w/2+8&&Math.abs(y-a.y)<a.d/2+8)||inDock(x,y)||nearReservedLamp(x,y)||onRoad(x,y,2)||heightAt(x,y)>0||Math.hypot(x,y)<15||nearReservedTarget(x,y)||nearReservedBuilding(x,y);
-  return {centralStation,outerIslands,seaLinks,trainTypes,terrain,crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
+  return {airports,flightLines,centralStation,outerIslands,seaLinks,trainTypes,terrain,crossings,continent,towns,railLines,railStations,railStructures,railWalls,railBlocked,railReserved,bridge,onBridge,bridgeBarrier,busLines,busRoute,busStops,inSea,inBounds,inDock,border,luxury,docks,airfields,radius,buildings,roads,lamps,outfits,venues,depot,deliveries,booths,jobs,homes,pond,mountain,heightAt,inPond,onRoad,blocked,reserved};
 })();
 
 globalThis.AnimalIsland=Island;

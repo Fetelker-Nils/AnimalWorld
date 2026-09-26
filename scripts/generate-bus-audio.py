@@ -21,9 +21,10 @@ def slug(name):
 
 async def main():
     world = json.loads(subprocess.check_output(['node', '-e',
-        "require('./world.js');console.log(JSON.stringify({lines:[...AnimalIsland.busLines,...AnimalIsland.railLines].map(l=>l.id),stops:[...new Set([...AnimalIsland.busStops,...AnimalIsland.railStations].map(s=>s.name))]}));"], cwd=ROOT))
+        "require('./world.js');console.log(JSON.stringify({lines:[...AnimalIsland.busLines,...AnimalIsland.railLines,...AnimalIsland.flightLines].map(l=>l.id),stops:[...new Set([...AnimalIsland.busStops,...AnimalIsland.railStations,...AnimalIsland.airports].map(s=>s.name))]}));"], cwd=ROOT))
     clips = [{'file':'terminal-next.mp3','text':'Diese Fahrt endet an der nächsten Station.'},{'file':'terminal-arrival.mp3','text':'Endstation. Bitte alle aussteigen. Vielen Dank für die Mitfahrt!'}]
     clips.extend([{'file':'departure-30.mp3','text':'Dieser Zug f\u00e4hrt voraussichtlich in drei\u00dfig Sekunden ab. Bitte einsteigen.'},{'file':'departure-10.mp3','text':'Dieser Zug f\u00e4hrt voraussichtlich in zehn Sekunden ab. Bitte halten Sie die T\u00fcren frei.'}])
+    clips.extend([{'file':'flight-departure-30.mp3','text':'Dieser Flug startet voraussichtlich in drei\u00dfig Sekunden. Bitte steigen Sie ein.'},{'file':'flight-departure-10.mp3','text':'Dieser Flug startet in zehn Sekunden. Bitte nehmen Sie Platz.'}])
     for line in world['lines']:
         match = re.fullmatch(r'([A-Z]*)([0-9]+)', line)
         prefix, number = match.group(1), int(match.group(2))
@@ -36,7 +37,7 @@ async def main():
             word = (('ein' if unit == 1 else ones[unit])+'und' if unit else '') + tens[number-unit]
         else:
             raise ValueError(f'Add spoken number for line {line}')
-        kind = {'R':'Regionalzug','RE':'Regional Express','IC':'Inter City','ICE':'Inter City Express','UE':'Ultra Express'}.get(prefix,'Linie')
+        kind = {'R':'Regionalzug','RE':'Regional Express','IC':'Inter City','ICE':'Inter City Express','UE':'Ultra Express','F':'Flug'}.get(prefix,'Linie')
         clips.append({'file':f'line-{line}.mp3', 'text':f'{kind} {word}.'})
     for name in world['stops']:
         spoken = name.replace('Sued', 'Süd').replace('Bruecke', 'Brücke').replace('Hafenstrasse', 'Hafenstraße')
